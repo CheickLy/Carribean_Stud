@@ -1,16 +1,21 @@
-# ReefRoyale — Caribbean Stud
+# CS 482 Carribean Stud 
 
-Team project scaffold for CS482. Existing project documentation remains in the GitHub `Docs/` directory.
+Developers: Miles, Sam, Cheick, Olu
 
-## Structure
-- `client/`: React + TypeScript frontend
-- `server/`: Express + TypeScript backend
-- `server/src/modules/auth/`: S1 player login and S4 registration
+## Project Links
 
-## Start locally
-1. Install Node.js 20+ and PostgreSQL.
-2. In `server/`, run `npm install`, copy `.env.example` to `.env`, then `npm run dev`.
-3. In `client/`, run `npm install` and `npm run dev`.
-4. Run backend tests with `cd server && npm run test:coverage`.
+<table border="1" style="border-collapse: collapse; width: 100%;">
+  <tr>
+    <th style="padding: 8px; text-align: left;">Document</th>
+    <th style="padding: 8px; text-align: left;">Link</th>
+  </tr>
+  <tr>
+    <td style="padding: 8px;">Client Meeting Notes (Word)</td>
+    <td style="padding: 8px;"><a href="https://studentsloyola-my.sharepoint.com/:w:/r/personal/sghersick_loyola_edu/Documents/Caribbean_Stud_Client_Meeting_Notes.docx?d=w6f0246f0a541400ea0bd71549cd27d25&csf=1&web=1&e=Hg6TLo">Meeting Notes</a></td>
+  </tr>
+  <tr>
+    <td style="padding: 8px;">User Stories (Excel)</td>
+    <td style="padding: 8px;"><a href="https://studentsloyola-my.sharepoint.com/:x:/r/personal/sghersick_loyola_edu/Documents/Carribean_Stud_User_Stories.xlsx?d=w24368562c21c4f109a5c1fa71e056404&csf=1&web=1&e=jprSWG">User Stories</a></td>
+  </tr>
+</table>
 
-Authentication routes are intentionally placeholders until S1/S4 are implemented. Do not commit `.env` or real credentials.
