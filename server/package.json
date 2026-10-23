@@ -8,20 +8,26 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "db:migrate": "sequelize-cli db:migrate",
+    "db:seed": "sequelize-cli db:seed:all"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
-    "pg": "^8.13.1"
+    "pg": "^8.13.1",
+    "sequelize": "^6.37.8"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^22.10.0",
     "@types/pg": "^8.11.10",
+    "@types/supertest": "^7.2.1",
     "@vitest/coverage-v8": "^5.0.5",
+    "sequelize-cli": "^6.6.5",
+    "supertest": "^7.3.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vitest": "^5.0.5"

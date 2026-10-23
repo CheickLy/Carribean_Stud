@@ -1,5 +1,4 @@
-import 'dotenv/config';
+import { env } from './config/env.js';
 import { app } from './app.js';
 
-const port = Number(process.env.PORT ?? 3001);
-app.listen(port, () => console.log(`ReefRoyale API listening on ${port}`));
+app.listen(env.port, () => console.log(`ReefRoyale API listening on ${env.port}`));
