@@ -36,6 +36,42 @@ Docker
 
 Stop the database with `docker compose down` from the repo root. If `POSTGRES_PORT` is already in use, the container will not start. `docker compose down -v` also deletes the database volume. After that, run migrate and seed again.
 
+## Client
+
+The UI lives in `client/`. Vite serves it during development.
+
+### Tech stack
+
+- **React.** Each screen is a component. Shared pieces, such as the login form, stay out of the page folders.
+- **React Router.** `App.tsx` holds a short route list. The `path` is the URL, and `element` is the screen. Add one entry when you add a page.
+- **TypeScript.** Page and service types stay explicit, matching the server.
+- **Vite.** `npm run dev` in `client/` serves the app and reloads it as files change.
+
+### Folder structure
+
+```text
+client/
+  src/
+    main.tsx                 mounts the app
+    App.tsx                  route list and root component
+    pages/
+      guest/                 only guest pages (login)
+      play/                  guest + player pages
+      player/                only player pages (profile, friends, history, etc.)
+      Admin/                 staff screens, starting with the dashboard
+    components/              shared UI components
+    services/                calls to the API
+    styles/                  CSS files
+```
+
+### Current Development Url Paths
+| Path | Screen |
+| --- | --- |
+| `/` | Login |
+| `/admin` | Admin dashboard |
+
+Any other path redirects to `/`.
+
 ## Server
 
 The API lives in `server/`. PostgreSQL runs in Docker. The Express process runs on your machine and connects to that database.
