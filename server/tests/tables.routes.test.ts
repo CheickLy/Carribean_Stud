@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import request from "supertest";
 import { app } from "../src/app.js";
 import { createLobby, getPublicLobbies } from "../src/modules/tables/tables.service.js";
-
+import express from "express";
+import { tablesRouter } from "../src/modules/tables/tables.routes.js";
 
 vi.mock("../src/modules/tables/tables.service.js", () => ({
   createLobby: vi.fn(),
@@ -26,6 +27,35 @@ describe("Create Table API", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
+  it("creates a lobby for an authenticated user", async () => {
+  const testApp = express();
+
+  testApp.use(express.json());
+
+
+  testApp.use((_req, res, next) => {
+    res.locals.userId = 42;
+    next();
+  });
+
+  testApp.use("/api/lobbies", tablesRouter);
+
+  vi.mocked(createLobby).mockResolvedValue({
+    lobbyId: 1,
+    hostId: 42,
+    ...validLobby,
+  });
+
+  const response = await request(testApp)
+    .post("/api/lobbies")
+    .send(validLobby);
+
+  expect(response.status).toBe(201);
+  expect(response.body.lobbyId).toBe(1);
+  expect(response.body.hostId).toBe(42);
+
+  expect(createLobby).toHaveBeenCalledWith(validLobby, 42);
+});
 
   it("returns active public lobbies", async () => {
     vi.mocked(getPublicLobbies).mockResolvedValue([
