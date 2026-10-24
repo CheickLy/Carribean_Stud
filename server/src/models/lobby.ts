@@ -12,6 +12,11 @@ export class Lobby extends Model {
   declare allowBets: boolean;
   declare isActive: boolean;
   declare autoIncr: boolean;
+  declare maxPlayers: number;
+  declare startingMoney: string;
+  declare botsEnabled: boolean;
+  declare increaseAmount: string;
+  declare increaseEveryHands: number;
 }
 
 Lobby.init(
@@ -62,6 +67,35 @@ Lobby.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,
+    },
+    maxPlayers: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 6,
+      validate: {
+        min: 2,
+        max: 10,
+      },
+    },
+    startingMoney: {
+      type: DataTypes.DECIMAL(12, 2),
+      allowNull: false,
+      defaultValue: 1000,
+    },
+    botsEnabled: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    increaseAmount: {
+      type: DataTypes.DECIMAL(12, 2),
+      allowNull: false,
+      defaultValue: 10,
+    },
+    increaseEveryHands: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 15,
     },
   },
   {
