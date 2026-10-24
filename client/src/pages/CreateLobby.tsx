@@ -50,7 +50,7 @@ export default function CreateLobby() {
     setSuccess("");
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+ async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const name = settings.name.trim();
@@ -100,8 +100,46 @@ export default function CreateLobby() {
       return;
     }
 
-    // TODO: Send validated settings to the Express API.
-    // Do not log or expose the private lobby password.
+   try {
+  const response = await fetch("http://localhost:3001/api/lobbies", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({
+      name: settings.name.trim(),
+      maxPlayers: settings.maxPlayers,
+      startingMoney: settings.startingMoney,
+      minBet: settings.minBet,
+      maxBet: settings.maxBet,
+      isPrivate: settings.visibility === "private",
+      passcode: settings.visibility === "private" ? settings.password : undefined,
+      botsEnabled: settings.botsEnabled,
+      autoIncr: settings.autoIncrease,
+      increaseAmount: settings.increaseAmount,
+      increaseEveryHands: settings.increaseEveryHands,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.error ||
+        data.errors?.join(" ") ||
+        "Unable to create your table."
+    );
+  }
+
+  setSuccess("Your table was created successfully!");
+} catch (error) {
+  setError(
+    error instanceof Error
+      ? error.message
+      : "Something went wrong while creating your table."
+  );
+}
     setSuccess("Settings validated. Table creation will be connected to the server next.");
   }
 
