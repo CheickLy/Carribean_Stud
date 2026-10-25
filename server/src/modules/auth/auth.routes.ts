@@ -83,6 +83,7 @@ authRouter.post('/login', async (req, res) => {
         email: user.email,
         role: user.role,
         balance: user.balance,
+        isGuest: user.isGuest,
       },
     });
   } catch (error) {
