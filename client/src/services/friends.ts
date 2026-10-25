@@ -14,7 +14,7 @@ export interface FriendRequest {
 }
 
 export interface SentFriendRequest {
-    friendshipID: number;
+    friendshipId: number;
     recipientId: number;
     recipientUsername: string;
     status: string;

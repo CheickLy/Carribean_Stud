@@ -9,12 +9,14 @@ import {
 
 export const friendsRouter = Router();
 
-friendsRouter.use((_req, res, next) => {
-  if (!Number.isInteger(res.locals.userId) || res.locals.userId <= 0) {
+friendsRouter.use((req, res, next) => {
+  const userId = req.session?.userId;
+  if (!Number.isInteger(userId) || !userId || userId <= 0) {
     res.status(401).json({ error: 'Authentication required.' });
     return;
   }
 
+  res.locals.userId = userId;
   next();
 });
 

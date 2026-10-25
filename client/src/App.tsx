@@ -1,18 +1,42 @@
 import {
-    createBrowserRouter,
-    Navigate,
-    RouterProvider,
+  createBrowserRouter,
+  Navigate,
+  RouterProvider,
+  useNavigate,
 } from "react-router-dom";
+
 import LoginSection from "./components/LoginSection";
-import AdminDashboard from "./pages/Admin/AdminDashboard";
 import Friends from "./pages/player/Friends";
+import RegistrationSection from "./components/RegistrationSection";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+
+function LoginPage() {
+  const navigate = useNavigate();
+
+  return (
+    <LoginSection
+      onRegisterClick={() => navigate("/register")}
+    />
+  );
+}
+
+function RegistrationPage() {
+  const navigate = useNavigate();
+
+  return (
+    <RegistrationSection
+      onBackToLogin={() => navigate("/")}
+    />
+  );
+}
 
 
 const router = createBrowserRouter([
-  { path: "/", element: <LoginSection /> },
+  { path: "/", element: <LoginPage /> },
+  { path: "/register", element: <RegistrationPage /> },
   { path: "/admin", element: <AdminDashboard /> },
+  { path: "/friends", element: <Friends /> },
   { path: "*", element: <Navigate to="/" replace /> },
-  { path: "/friends", element: <Friends /> }
 ]);
 
 export default function App() {
