@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
@@ -5,6 +6,44 @@ import { Op, UniqueConstraintError } from 'sequelize';
 import { User } from '../../models/user.js';
 
 export const authRouter = Router();
+
+const STARTING_CHIPS = '500.00';
+const userDTO = (u: User) => ({
+  userId: u.userId, username: u.username, role: u.role,
+  isGuest: u.isGuest, balance: u.balance,
+  email: u.isGuest ? null : u.email
+});
+
+authRouter.post('/guest', async (req, res) => {
+  try {
+    if (req.session.userId) {
+      const current = await User.findByPk(req.session.userId);
+      if (current && !current.isBanned) {
+        res.json({ message: 'Session already active', user: userDTO(current) });
+        return;
+      }
+      req.session.userId = undefined;
+    }
+    const id = crypto.randomUUID();
+    const guest = await User.create({
+      username: 'guest_' + id, email: 'guest_' + id + '@guest.reefroyale.invalid',
+      passwordHash: crypto.randomUUID(), role: 'player', isGuest: true,
+      isBanned: false, topupCount: 0, balance: STARTING_CHIPS
+    });
+    req.session.regenerate((error) => {
+      if (error) { res.status(500).json({ error: 'Could not establish session' }); return; }
+      req.session.userId = guest.userId;
+      req.session.save((saveError) => {
+        if (saveError) { res.status(500).json({ error: 'Could not save session' }); return; }
+        res.status(201).json({ message: 'Guest session started', user: userDTO(guest) });
+      });
+    });
+  } catch (error) {
+    console.error('Guest login error:', error);
+    res.status(500).json({ error: 'Could not create guest' });
+  }
+});
+
 
 authRouter.post('/login', async (req, res) => {
   try {
@@ -153,27 +192,29 @@ authRouter.post('/register', async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 12);
 
     
-    const user = await User.create({
-      username: cleanUsername,
-      email: cleanEmail,
-      passwordHash,
-      role: 'player',
-      isGuest: false,
-      isBanned: false,
-      topupCount: 0,
-      balance: '0.00',
-    });
+    const current = req.session.userId
+      ? await User.findByPk(req.session.userId) : null;
 
-    
+    if (current?.isBanned) {
+      res.status(403).json({ error: 'This account is disabled' });
+      return;
+    }
+
+    // Convert guest in place: same ID, virtual chips and game associations.
+    const user = current?.isGuest
+      ? await current.update({
+          username: cleanUsername, email: cleanEmail,
+          passwordHash, role: 'player', isGuest: false
+        })
+      : await User.create({
+          username: cleanUsername, email: cleanEmail,
+          passwordHash, role: 'player', isGuest: false,
+          isBanned: false, topupCount: 0, balance: '0.00'
+        });
+
     res.status(201).json({
       message: 'Registration successful',
-      user: {
-        userId: user.userId,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        balance: user.balance,
-      },
+      user: userDTO(user)
     });
   } catch (error) {
     if (error instanceof UniqueConstraintError) {
