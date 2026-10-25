@@ -5,23 +5,12 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-import LoginSection from "./components/LoginSection";
+import Home from "./pages/guest/Home";
 import Friends from "./pages/player/Friends";
 import RegistrationSection from "./components/RegistrationSection";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import { useEffect, useState } from "react";
 import { getCurrentUser, logout } from "./services/auth";
-
-function LoginPage() {
-  const navigate = useNavigate();
-
-  return (
-    <LoginSection
-      onRegisterClick={() => navigate("/register")}
-      onAuthenticated={() => navigate("/play")}
-    />
-  );
-}
 
 function RegistrationPage() {
   const navigate = useNavigate();
@@ -65,7 +54,7 @@ function PlayPage() {
 }
 
 const router = createBrowserRouter([
-  { path: "/", element: <LoginPage /> },
+  { path: "/", element: <Home /> },
   { path: "/register", element: <RegistrationPage /> },
   { path: "/admin", element: <AdminDashboard /> },
   { path: "/friends", element: <Friends /> },
