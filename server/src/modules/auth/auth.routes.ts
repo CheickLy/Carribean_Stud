@@ -214,6 +214,13 @@ authRouter.post('/register', async (req, res) => {
           isBanned: false, topupCount: 0, balance: '0.00'
         });
 
+    if (req.session) {
+      req.session.userId = user.userId;
+      await new Promise<void>((resolve, reject) => {
+        req.session.save((error) => error ? reject(error) : resolve());
+      });
+    }
+
     res.status(201).json({
       message: 'Registration successful',
       user: userDTO(user)
