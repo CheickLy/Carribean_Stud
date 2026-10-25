@@ -91,6 +91,26 @@ describe('Guest account flow', () => {
     expect(User.create).toHaveBeenCalledTimes(1);
   });
 
+  it('restores converted player chips after logging out and back in', async () => {
+    const agent = request.agent(app);
+    const started = await agent.post('/api/auth/guest');
+    users.get(started.body.user.userId).balance = '925.00';
+    const registered = await agent.post('/api/auth/register').send({
+      username: 'returning_player', email: 'returning@example.com',
+      password: 'Password123!'
+    });
+    expect(registered.status).toBe(201);
+    const stored = users.get(started.body.user.userId);
+    vi.mocked(User.findOne).mockResolvedValue(stored as User);
+    await agent.post('/api/auth/logout');
+    const login = await agent.post('/api/auth/login').send({
+      email: 'returning@example.com', password: 'Password123!'
+    });
+    expect(login.status).toBe(200);
+    expect(login.body.user.balance).toBe('925.00');
+    expect((await agent.get('/api/auth/me')).body.user.balance).toBe('925.00');
+  });
+
   it('invalidates the guest session on logout', async () => {
     const agent = request.agent(app);
     await agent.post('/api/auth/guest');
