@@ -5,10 +5,12 @@ import "../styles/LoginSection.css";
 
 type RegistrationSectionProps = {
   onBackToLogin: () => void;
+  onRegistered?: () => void;
 };
 
 export default function RegistrationSection({
   onBackToLogin,
+  onRegistered,
 }: RegistrationSectionProps) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -37,6 +39,7 @@ export default function RegistrationSection({
       );
 
       setRegistered(true);
+      if (onRegistered) onRegistered();
       setPassword("");
       setConfirmPassword("");
     } catch (error: unknown) {
