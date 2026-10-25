@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import './models/index.js';
 import { usersRouter } from './modules/users/users.routes.js';
+import { tablesRouter } from "./modules/tables/tables.routes.js";
 import { friendsRouter } from './modules/friends/friends.routes.js';
 
 import session from 'express-session';
@@ -18,6 +19,7 @@ const sessionStore = new SequelizeStore({
 
 
 export const app = express();
+
 
 app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 
@@ -47,5 +49,6 @@ app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 app.use('/api/users', usersRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/friends', friendsRouter);
+app.use('/api/lobbies', tablesRouter);
 
 void sessionStore.sync();
