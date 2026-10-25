@@ -74,7 +74,7 @@ Lobby.init(
       defaultValue: 6,
       validate: {
         min: 2,
-        max: 10,
+        max: 6,
       },
     },
     startingMoney: {

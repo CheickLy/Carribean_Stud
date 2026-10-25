@@ -1,9 +1,9 @@
 export interface CreateLobbyInput {
     name: string;
     maxPlayers: number;
-    startingMoney: string;
+    startingMoney: number;
     botsEnabled: boolean;
-    increaseAmount: string;
+    increaseAmount: number;
     increaseEveryHands: number;
     minBet: number;
     maxBet: number;
