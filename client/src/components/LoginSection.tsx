@@ -15,8 +15,9 @@ export default function LoginSection() {
 
 
         try {
-            await login(email, password);
-            setMessage("Login successful!");
+            const data = await login(email, password);
+            setMessage(`Welcome back, ${data.user.username}!`);
+            setPassword("");
         } catch (error: any) {
           setMessage(error instanceof Error ? error.message :  "Login failed");
 
