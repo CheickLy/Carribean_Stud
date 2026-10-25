@@ -1,0 +1,141 @@
+.friends-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 48px 24px;
+  min-height: 100vh;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+  color: #214457;
+}
+
+.friends-header {
+  margin-bottom: 32px;
+}
+
+.friends-eyebrow {
+  color: #087f9d;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.friends-header h1 {
+  font-size: 42px;
+  margin: 8px 0;
+  color: #214457;
+}
+
+.friends-header p {
+  color: #718a97;
+}
+
+.friends-card {
+  background: #ffffff;
+  border: 1px solid #d5e3e9;
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.friends-card h2 {
+  margin-top: 0;
+  font-size: 22px;
+  color: #214457;
+}
+
+.add-friend-form label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.add-friend-controls {
+  display: flex;
+  gap: 12px;
+}
+
+.add-friend-controls input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #d5e3e9;
+  border-radius: 8px;
+  font-family: Arial, sans-serif;
+}
+
+.add-friend-controls input:focus {
+  outline: 2px solid #0782a0;
+  outline-offset: 1px;
+}
+
+.friends-page button {
+  padding: 11px 18px;
+  border: none;
+  border-radius: 8px;
+  background: #0782a0;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.friends-page button:hover:not(:disabled) {
+  background: #066b85;
+}
+
+.friends-page button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.friends-page .secondary-button {
+  background: #e7f5f8;
+  color: #0782a0;
+}
+
+.friends-page .secondary-button:hover:not(:disabled) {
+  background: #d5e3e9;
+}
+
+.friends-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.friend-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid #d5e3e9;
+}
+
+.friend-row:last-child {
+  border-bottom: none;
+}
+
+.friend-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.friends-message {
+  padding: 14px;
+  margin-bottom: 24px;
+  border-radius: 8px;
+  background: #e7f5f8;
+  color: #214457;
+}
+
+@media (max-width: 600px) {
+  .add-friend-controls,
+  .friend-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .friend-actions {
+    flex-wrap: wrap;
+  }
+}
