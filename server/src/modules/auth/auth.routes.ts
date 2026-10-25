@@ -113,6 +113,7 @@ authRouter.get('/me', async (req, res) => {
       email: user.email,
       role: user.role,
       balance: user.balance,
+      isGuest: user.isGuest,
     },
   });
 });
@@ -193,7 +194,7 @@ authRouter.post('/register', async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 12);
 
     
-    const current = req.session.userId
+    const current = req.session?.userId
       ? await User.findByPk(req.session.userId) : null;
 
     if (current?.isBanned) {
