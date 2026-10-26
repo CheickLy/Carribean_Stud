@@ -21,6 +21,7 @@ export async function setUserBanned(
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify({ isBanned }),
   });
   const data = await response.json();
@@ -33,7 +34,7 @@ export async function setUserBanned(
 }
 
 export async function listUsers(): Promise<AdminUser[]> {
-  const response = await fetch(API_URL);
+  const response = await fetch(API_URL, { credentials: "include" });
   const data = await response.json();
 
   if (!response.ok) {
