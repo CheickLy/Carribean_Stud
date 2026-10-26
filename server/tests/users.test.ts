@@ -45,6 +45,14 @@ describe('GET /api/users', () => {
     ]);
     expect(response.body[0].passwordHash).toBeUndefined();
   });
+
+  it('forwards a database error', async () => {
+    vi.spyOn(User, 'findAll').mockRejectedValue(new Error('db down'));
+
+    const response = await request(app).get('/api/users');
+
+    expect(response.status).toBe(500);
+  });
 });
 
 describe('PATCH /api/users/:userId/ban', () => {
@@ -113,5 +121,55 @@ describe('PATCH /api/users/:userId/ban', () => {
 
     expect(response.status).toBe(400);
     expect(findByPk).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for a non-numeric user id', async () => {
+    const response = await request(app)
+      .patch('/api/users/abc/ban')
+      .send({ isBanned: true });
+
+    expect(response.status).toBe(400);
+  });
+
+  it('returns 400 for a non-positive user id', async () => {
+    const response = await request(app)
+      .patch('/api/users/0/ban')
+      .send({ isBanned: true });
+
+    expect(response.status).toBe(400);
+  });
+
+  it('returns 400 when the ban flag is not a boolean', async () => {
+    const response = await request(app)
+      .patch('/api/users/2/ban')
+      .send({ isBanned: 'true' });
+
+    expect(response.status).toBe(400);
+  });
+
+  it('returns 404 when the user disappears after the update', async () => {
+    vi.spyOn(User, 'findByPk')
+      .mockResolvedValueOnce({
+        update: vi.fn().mockResolvedValue(undefined),
+      } as unknown as User)
+      .mockResolvedValueOnce(null);
+
+    const response = await request(app)
+      .patch('/api/users/2/ban')
+      .send({ isBanned: true });
+
+    expect(response.status).toBe(404);
+  });
+
+  it('forwards a database error', async () => {
+    vi.spyOn(User, 'findByPk').mockResolvedValue({
+      update: vi.fn().mockRejectedValue(new Error('db down')),
+    } as unknown as User);
+
+    const response = await request(app)
+      .patch('/api/users/2/ban')
+      .send({ isBanned: true });
+
+    expect(response.status).toBe(500);
   });
 });
