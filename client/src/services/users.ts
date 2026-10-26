@@ -1,0 +1,24 @@
+const API_URL = "http://localhost:3001/api/users";
+
+export interface AdminUser {
+  userId: number;
+  username: string;
+  email: string;
+  role: string;
+  topupCount: number;
+  isGuest: boolean;
+  isBanned: boolean;
+  balance: string;
+  createdAt: string;
+}
+
+export async function listUsers(): Promise<AdminUser[]> {
+  const response = await fetch(API_URL);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Could not load users");
+  }
+
+  return data;
+}
