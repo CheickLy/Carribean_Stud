@@ -1,6 +1,7 @@
-
 import { useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/CreateLobby.css";
+
 
 type Visibility = "public" | "private";
 
@@ -33,6 +34,7 @@ const initialSettings: LobbySettings = {
 };
 
 export default function CreateLobby() {
+ const navigate = useNavigate();
   const [settings, setSettings] =
     useState<LobbySettings>(initialSettings);
   const [error, setError] = useState("");
@@ -132,7 +134,11 @@ export default function CreateLobby() {
     );
   }
 
-  setSuccess("Your table was created successfully!");
+  if (!Number.isInteger(data.lobbyId) || data.lobbyId <= 0) {
+  throw new Error("Table created, but the server did not return a valid lobby ID.");
+}
+
+navigate(`/lobbies/${data.lobbyId}/invite`);
 } catch (error) {
   setError(
     error instanceof Error
@@ -140,7 +146,7 @@ export default function CreateLobby() {
       : "Something went wrong while creating your table."
   );
 }
-    setSuccess("Settings validated. Table creation will be connected to the server next.");
+    
   }
 
   return (

@@ -26,9 +26,9 @@ tablesRouter.post("/", async (req, res, next) => {
     }
 
   
-    const hostId = res.locals.userId;
+    const hostId = req.session.userId;
 
-    if (!Number.isInteger(hostId) || hostId <= 0) {
+    if (typeof hostId !== "number" || !Number.isInteger(hostId) || hostId <= 0) {
       res.status(401).json({
         error: "You must be signed in to create a table.",
       });

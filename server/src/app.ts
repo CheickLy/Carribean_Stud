@@ -9,6 +9,7 @@ import session from 'express-session';
 import connectionSessionSequelize from 'connect-session-sequelize';
 import {sequelize} from './db/sequelize.js';
 import {authRouter} from './modules/auth/auth.routes.js';
+import { invitationsRouter } from "./modules/invitations/invitations.routes.js";
 
 const SequelizeStore = connectionSessionSequelize(session.Store);
 
@@ -50,5 +51,5 @@ app.use('/api/users', usersRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/friends', friendsRouter);
 app.use('/api/lobbies', tablesRouter);
-
+app.use("/api/invitations", invitationsRouter);
 void sessionStore.sync();

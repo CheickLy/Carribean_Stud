@@ -33,10 +33,13 @@ describe("Create Table API", () => {
   testApp.use(express.json());
 
 
-  testApp.use((_req, res, next) => {
-    res.locals.userId = 42;
-    next();
-  });
+  testApp.use((req, _res, next) => {
+  req.session = {
+    userId: 42,
+  } as typeof req.session;
+
+  next();
+});
 
   testApp.use("/api/lobbies", tablesRouter);
 

@@ -2,6 +2,7 @@
 import { useState, type FormEvent } from "react";
 import { login } from "../services/auth";
 import "../styles/LoginSection.css";
+import { useNavigate } from "react-router-dom";
 
 type LoginSectionProps = {
   onRegisterClick: () => void;
@@ -14,6 +15,7 @@ export default function LoginSection({
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -21,10 +23,10 @@ export default function LoginSection({
     setLoading(true);
 
     try {
-      const data = await login(email, password);
+    await login(email, password);
 
-      setMessage(`Welcome back, ${data.user.username}!`);
-      setPassword("");
+setPassword("");
+navigate("/lobbies");
     } catch (error: unknown) {
       setMessage(
         error instanceof Error ? error.message : "Login failed"
@@ -32,6 +34,7 @@ export default function LoginSection({
     } finally {
       setLoading(false);
     }
+  
   }
 
   return (

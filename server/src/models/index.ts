@@ -4,6 +4,8 @@ import { Lobby } from './lobby.js';
 import { Session } from './session.js';
 import { SupportTicket } from './supportTicket.js';
 import { User } from './user.js';
+import { LobbyInvitation } from "./lobbyInvitation.js";
+import { LobbyMember } from "./lobbyMember.js";
 
 User.hasMany(Lobby, { foreignKey: 'hostId', as: 'hostedLobbies' });
 Lobby.belongsTo(User, { foreignKey: 'hostId', as: 'host' });
@@ -24,4 +26,63 @@ GameHand.belongsTo(User, { foreignKey: 'userId', as: 'player' });
 User.hasMany(SupportTicket, { foreignKey: 'userId', as: 'supportTickets' });
 SupportTicket.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-export { Friendship, GameHand, Lobby, Session, SupportTicket, User };
+Lobby.hasMany(LobbyInvitation, {
+  foreignKey: "lobbyId",
+  as: "invitations",
+});
+
+LobbyInvitation.belongsTo(Lobby, {
+  foreignKey: "lobbyId",
+  as: "lobby",
+});
+
+User.hasMany(LobbyInvitation, {
+  foreignKey: "senderId",
+  as: "sentLobbyInvitations",
+});
+
+User.hasMany(LobbyInvitation, {
+  foreignKey: "recipientId",
+  as: "receivedLobbyInvitations",
+});
+
+LobbyInvitation.belongsTo(User, {
+  foreignKey: "senderId",
+  as: "sender",
+});
+
+LobbyInvitation.belongsTo(User, {
+  foreignKey: "recipientId",
+  as: "recipient",
+});
+
+Lobby.hasMany(LobbyMember, {
+  foreignKey: "lobbyId",
+  as: "members",
+});
+
+LobbyMember.belongsTo(Lobby, {
+  foreignKey: "lobbyId",
+  as: "lobby",
+});
+
+User.hasMany(LobbyMember, {
+  foreignKey: "userId",
+  as: "lobbyMemberships",
+});
+
+LobbyMember.belongsTo(User, {
+  foreignKey: "userId",
+  as: "user",
+});
+
+export {
+  Friendship,
+  GameHand,
+  Lobby,
+  LobbyInvitation,
+  LobbyMember,
+  Session,
+  SupportTicket,
+  User,
+};

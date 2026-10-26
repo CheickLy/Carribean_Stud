@@ -11,6 +11,7 @@ import LobbyBrowser from "./pages/LobbyBrowser";
 import Friends from "./pages/player/Friends";
 import RegistrationSection from "./components/RegistrationSection";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import InviteFriends from "./pages/InviteFriends";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -41,6 +42,10 @@ const router = createBrowserRouter([
   { path: "/create-lobby", element: <CreateLobby /> },
   { path: "/lobbies", element: <LobbyBrowser /> },
   { path: "*", element: <Navigate to="/" replace /> },
+  {
+  path: "/lobbies/:lobbyId/invite",
+  element: <InviteFriends />,
+},
 ]);
 
 export default function App() {
