@@ -20,6 +20,11 @@ const shared = {
 
 module.exports = {
   development: shared,
-  test: shared,
+
+  test: {
+    ...shared,
+    database: "reefroyale_test",
+  },
+
   production: shared,
 };

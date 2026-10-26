@@ -5,6 +5,26 @@ import {
   useNavigate,
 } from "react-router-dom";
 
+import LoginSection from "./components/LoginSection";
+import CreateLobby from "./pages/CreateLobby";
+import LobbyBrowser from "./pages/LobbyBrowser";
+import Friends from "./pages/player/Friends";
+import RegistrationSection from "./components/RegistrationSection";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import InviteFriends from "./pages/InviteFriends";
+import Home from "./pages/guest/Home";
+import { useEffect, useState } from "react";
+import { getCurrentUser, logout } from "./services/auth";
+
+function LoginPage() {
+  const navigate = useNavigate();
+
+  return (
+    <LoginSection
+      onRegisterClick={() => navigate("/register")}
+    />
+  );
+}
 import Home from "./pages/guest/Home";
 import Friends from "./pages/player/Friends";
 import RegistrationSection from "./components/RegistrationSection";
@@ -58,7 +78,13 @@ const router = createBrowserRouter([
   { path: "/register", element: <RegistrationPage /> },
   { path: "/admin", element: <AdminDashboard /> },
   { path: "/friends", element: <Friends /> },
+  { path: "/create-lobby", element: <CreateLobby /> },
+  { path: "/lobbies", element: <LobbyBrowser /> },
   { path: "/play", element: <PlayPage /> },
+  {
+    path: "/lobbies/:lobbyId/invite",
+    element: <InviteFriends />,
+  },
   { path: "*", element: <Navigate to="/" replace /> },
 ]);
 
