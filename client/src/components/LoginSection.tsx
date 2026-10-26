@@ -1,15 +1,17 @@
 
 import { useState, type FormEvent } from "react";
-import { login } from "../services/auth";
+import { login, startGuest } from "../services/auth";
 import "../styles/LoginSection.css";
 import { useNavigate } from "react-router-dom";
 
 type LoginSectionProps = {
   onRegisterClick: () => void;
+  onAuthenticated: () => void;
 };
 
 export default function LoginSection({
   onRegisterClick,
+  onAuthenticated,
 }: LoginSectionProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,14 +28,15 @@ export default function LoginSection({
     await login(email, password);
 
 setPassword("");
+onAuthenticated();
 navigate("/lobbies");
-    } catch (error: unknown) {
-      setMessage(
-        error instanceof Error ? error.message : "Login failed"
-      );
-    } finally {
-      setLoading(false);
-    }
+} catch (error: unknown) {
+  setMessage(
+    error instanceof Error ? error.message : "Login failed"
+  );
+} finally {
+  setLoading(false);
+}
   
   }
 
@@ -49,7 +52,13 @@ navigate("/lobbies");
           to keep your current point balance and track wins and losses.
         </p>
 
-        <button type="button" className="guest-button">
+        <button type="button" className="guest-button" disabled={loading} onClick={async () => {
+          setLoading(true);
+          setMessage("");
+          try { await startGuest(); onAuthenticated(); }
+          catch (error) { setMessage(error instanceof Error ? error.message : "Guest play failed"); }
+          finally { setLoading(false); }
+        }}>
           Play as Guest
         </button>
       </div>
