@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listUsers, type AdminUser } from "../../services/users";
+import { listUsers, setUserBanned, type AdminUser } from "../../services/users";
 import "../../styles/AdminDashboard.css";
 
 const admin = {
@@ -37,6 +37,8 @@ export default function AdminDashboard() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [pendingUserId, setPendingUserId] = useState<number | null>(null);
 
   useEffect(() => {
     if (section !== "players") return;
@@ -66,6 +68,26 @@ export default function AdminDashboard() {
       active = false;
     };
   }, [section]);
+
+  async function handleBanToggle(user: AdminUser) {
+    setActionError("");
+    setPendingUserId(user.userId);
+
+    try {
+      const updated = await setUserBanned(user.userId, !user.isBanned);
+      setUsers((current) =>
+        current.map((row) => (row.userId === updated.userId ? updated : row))
+      );
+    } catch (toggleError) {
+      setActionError(
+        toggleError instanceof Error
+          ? toggleError.message
+          : "Could not update ban status"
+      );
+    } finally {
+      setPendingUserId(null);
+    }
+  }
 
   const needle = query.trim().toLowerCase();
   const visibleUsers = needle
@@ -158,6 +180,7 @@ export default function AdminDashboard() {
 
               {loading && <p>Loading players...</p>}
               {error && <p role="alert">{error}</p>}
+              {actionError && <p role="alert">{actionError}</p>}
               {!loading && !error && visibleUsers.length === 0 && (
                 <p>
                   {users.length === 0
@@ -178,6 +201,7 @@ export default function AdminDashboard() {
                         <th>Banned</th>
                         <th>Balance</th>
                         <th>Created</th>
+                        <th>Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -190,6 +214,16 @@ export default function AdminDashboard() {
                           <td>{user.isBanned ? "Yes" : "No"}</td>
                           <td>{formatBalance(user.balance)}</td>
                           <td>{formatCreatedAt(user.createdAt)}</td>
+                          <td>
+                            <button
+                              type="button"
+                              className="admin-ban-button"
+                              disabled={pendingUserId === user.userId}
+                              onClick={() => handleBanToggle(user)}
+                            >
+                              {user.isBanned ? "Unban" : "Ban"}
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>

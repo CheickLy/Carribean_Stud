@@ -220,6 +220,24 @@ body {
   border-top: 1px solid #d9e8ed;
 }
 
+.admin-ban-button {
+  height: 32px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 8px;
+  background: #103e50;
+  color: white;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-ban-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 @media (max-width: 900px) {
   .admin-dashboard {
     flex-direction: column;
