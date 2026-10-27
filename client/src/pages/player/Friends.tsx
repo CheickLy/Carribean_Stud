@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useNavigate } from 'react-router-dom';
 import {
   getFriends,
   getPendingRequests,
@@ -16,6 +17,7 @@ import {
 } from "../../services/invitations";
 
 export default function Friends() {
+  const navigate = useNavigate();
   const [friends, setFriends] = useState<Friend[]>([]);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
   const [invitations, setInvitations] = useState<LobbyInvitation[]>([]);
@@ -270,8 +272,12 @@ setInvitations(invitationsData);
           <ul className="friends-list">
             {friends.map((friend) => (
               <li key={friend.friendshipId} className="friend-row">
-                <span>{friend.username}</span>
+                <div className="friend-player"><span className="friend-player-avatar" aria-hidden="true">{friend.username.slice(0, 1).toUpperCase()}</span><div><strong>{friend.username}</strong><small>ReefRoyale player</small></div></div>
 
+                <div className="friend-actions">
+                <button type="button" onClick={() => navigate(`/friends/${friend.userId}/messages?name=${encodeURIComponent(friend.username)}`)}>
+                  Open chat
+                </button>
                 <button
                   type="button"
                   className="secondary-button"
@@ -280,6 +286,7 @@ setInvitations(invitationsData);
                 >
                   Remove Friend
                 </button>
+                </div>
               </li>
             ))}
           </ul>

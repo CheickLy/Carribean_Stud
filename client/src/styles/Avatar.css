@@ -1,0 +1,110 @@
+.avatar-page {
+  max-width: 820px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 48px 24px;
+  box-sizing: border-box;
+  color: #214457;
+}
+
+.avatar-header { margin-bottom: 28px; }
+
+.avatar-eyebrow,
+.avatar-preview-label {
+  color: #087f9d;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.avatar-header h1 { margin: 8px 0; font-size: 42px; }
+.avatar-header p { color: #718a97; }
+
+.avatar-preview {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 22px;
+  margin-bottom: 24px;
+  background: #d8f2f7;
+  border-radius: 14px;
+}
+
+.avatar-preview-symbol {
+  display: grid;
+  width: 86px;
+  height: 86px;
+  place-items: center;
+  border-radius: 50%;
+  background: white;
+  font-size: 48px;
+}
+
+.avatar-preview h2 { margin: 6px 0 0; }
+
+.avatar-card {
+  padding: 24px;
+  border: 1px solid #d5e3e9;
+  border-radius: 14px;
+  background: white;
+}
+
+.avatar-card legend { padding: 0 8px; font-size: 20px; font-weight: 700; }
+
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.avatar-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 10px;
+  border: 2px solid #d5e3e9;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.avatar-option:hover,
+.avatar-option-selected { border-color: #0782a0; background: #eefbfc; }
+.avatar-option:focus-within { outline: 3px solid #f2ae63; outline-offset: 2px; }
+.avatar-option input { position: absolute; opacity: 0; pointer-events: none; }
+.avatar-symbol { font-size: 40px; }
+
+.avatar-message {
+  padding: 14px;
+  margin: 20px 0 0;
+  border-radius: 8px;
+  background: #d8f2f7;
+}
+
+.avatar-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.avatar-actions button {
+  padding: 11px 20px;
+  border: 0;
+  border-radius: 8px;
+  background: #0782a0;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.avatar-actions button:hover:not(:disabled) { background: #066b85; }
+.avatar-actions button:disabled { opacity: 0.5; cursor: not-allowed; }
+.avatar-actions .avatar-back { background: #e7f5f8; color: #0782a0; }
+
+@media (max-width: 600px) {
+  .avatar-header h1 { font-size: 34px; }
+  .avatar-grid { grid-template-columns: repeat(2, 1fr); }
+  .avatar-actions { flex-direction: column-reverse; }
+}
