@@ -62,11 +62,12 @@ export default function InviteFriends() {
   }
 
   return (
-    <main className="friends-page">
+    <div className="friends-page">
+    <main className="friends-container">
+      <Link className="friends-back" to="/lobbies">← Back to tables</Link>
       <header className="friends-header">
-        <p className="friends-eyebrow">REEF ROYALE</p>
-        <h1>Invite Friends</h1>
-        <p>Bring your crew to the table.</p>
+        <div><h1>Invite your crew.</h1>
+        <p>Bring your friends to the table.</p></div>
       </header>
 
       <section className="friends-card">
@@ -119,5 +120,6 @@ export default function InviteFriends() {
 
       <Link to="/lobbies">← Back to Tables</Link>
     </main>
+    </div>
   );
 }

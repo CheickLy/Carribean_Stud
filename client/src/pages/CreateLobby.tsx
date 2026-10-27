@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import "../styles/CreateLobby.css";
 
 
@@ -152,9 +152,9 @@ navigate(`/lobbies/${data.lobbyId}/invite`);
   return (
     <div className="reef-create-page">
       <div className="reef-create-container">
-        <a className="reef-back-link" href="/lobbies">
+        <Link className="reef-back-link" to="/lobbies">
           <span aria-hidden="true">←</span> Back to lobbies
-        </a>
+        </Link>
 
         <div className="reef-page-intro">
           <div>
@@ -558,9 +558,9 @@ navigate(`/lobbies/${data.lobbyId}/invite`);
               </div>
             </div>
 
-            <a href="/lobbies" className="reef-cancel-link">
+            <Link to="/lobbies" className="reef-cancel-link">
               Cancel and go back
-            </a>
+            </Link>
           </aside>
         </div>
 
