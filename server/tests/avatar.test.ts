@@ -73,4 +73,29 @@ describe('Change avatar (S18)', () => {
       avatar: 'dolphin',
     });
   });
+
+  it('lets a player change an avatar while admin routes stay closed', async () => {
+    const update = vi.fn().mockResolvedValue(undefined);
+    vi.spyOn(User, 'findByPk').mockResolvedValue({
+      userId: 7,
+      username: 'marina',
+      role: 'player',
+      isBanned: false,
+      avatar: 'wave',
+      update,
+    } as unknown as User);
+    const findAll = vi.spyOn(User, 'findAll');
+    const app = makeApp(7);
+
+    const avatar = await request(app)
+      .patch('/api/users/me/avatar')
+      .send({ avatar: 'dolphin' });
+    const list = await request(app).get('/api/users');
+
+    expect(avatar.status).toBe(200);
+    expect(update).toHaveBeenCalledWith({ avatar: 'dolphin' });
+    expect(list.status).toBe(403);
+    expect(list.body.error).toBe('Admin access required.');
+    expect(findAll).not.toHaveBeenCalled();
+  });
 });
