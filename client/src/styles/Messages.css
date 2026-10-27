@@ -1,0 +1,27 @@
+.messages-page { max-width: 820px; margin: 0 auto; padding: 40px 20px; color: #214457; }
+.messages-page header { margin-bottom: 20px; }
+.messages-page header a { color: #087f9d; text-decoration: none; font-weight: 700; }
+.messages-page header h1 { margin: 14px 0 0; }
+.messages-panel { overflow: hidden; background: white; border: 1px solid #d5e3e9; border-radius: 14px; box-shadow: 0 8px 24px rgba(33, 68, 87, .08); }
+.messages-player-bar { display: flex; align-items: center; gap: 11px; padding: 15px 18px; border-bottom: 1px solid #d5e3e9; background: #f4fbfc; }
+.messages-player-bar strong, .messages-player-bar small { display: block; }
+.messages-player-bar small { margin-top: 2px; color: #718a97; }
+.messages-player-dot { width: 11px; height: 11px; border-radius: 50%; background: #57a57d; box-shadow: 0 0 0 4px #dff1e7; }
+.messages-list { min-height: 330px; max-height: 480px; overflow-y: auto; padding: 20px; background: #fbfdfe; }
+.message-own, .message-other { width: fit-content; max-width: 72%; padding: 10px 14px; margin: 10px 0; border-radius: 13px; }
+.message-own { margin-left: auto; background: #cfeef4; border-bottom-right-radius: 4px; }
+.message-other { background: #f4efe2; border-bottom-left-radius: 4px; }
+.message-own p, .message-other p { margin: 0 0 6px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.message-own small, .message-other small { color: #718a97; font-size: 11px; }
+.messages-empty { max-width: 340px; margin: 78px auto; text-align: center; color: #718a97; }
+.messages-empty span { font-size: 34px; color: #4b9cb3; }
+.messages-empty h2 { margin: 10px 0 6px; color: #214457; font-size: 20px; }
+.messages-status { margin: 0; padding: 10px 18px; background: #fff0e6; }
+.message-form { display: grid; gap: 8px; padding: 16px 18px; border-top: 1px solid #d5e3e9; }
+.message-form label { font-weight: 700; }
+.message-compose { display: flex; gap: 10px; }
+.message-compose textarea { flex: 1; min-height: 54px; max-height: 120px; padding: 11px; resize: vertical; border: 1px solid #b9ccd4; border-radius: 8px; font: inherit; }
+.message-compose textarea:focus { outline: 2px solid #0782a0; outline-offset: 1px; }
+.message-compose button { align-self: flex-end; padding: 12px 22px; border: 0; border-radius: 8px; background: #0782a0; color: white; font-weight: 700; cursor: pointer; }
+.message-form > small { color: #718a97; }
+@media (max-width: 600px) { .messages-page { padding: 24px 12px; } .message-own, .message-other { max-width: 86%; } .message-compose { flex-direction: column; } .message-compose button { width: 100%; } }

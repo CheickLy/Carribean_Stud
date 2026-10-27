@@ -6,6 +6,8 @@ import { SupportTicket } from './supportTicket.js';
 import { User } from './user.js';
 import { LobbyInvitation } from "./lobbyInvitation.js";
 import { LobbyMember } from "./lobbyMember.js";
+import { FriendMessage } from './friendMessage.js';
+import { PasswordResetToken } from './passwordResetToken.js';
 
 User.hasMany(Lobby, { foreignKey: 'hostId', as: 'hostedLobbies' });
 Lobby.belongsTo(User, { foreignKey: 'hostId', as: 'host' });
@@ -76,6 +78,13 @@ LobbyMember.belongsTo(User, {
   as: "user",
 });
 
+User.hasMany(FriendMessage, { foreignKey: 'senderId', as: 'sentMessages' });
+User.hasMany(FriendMessage, { foreignKey: 'recipientId', as: 'receivedMessages' });
+FriendMessage.belongsTo(User, { foreignKey: 'senderId', as: 'sender' });
+FriendMessage.belongsTo(User, { foreignKey: 'recipientId', as: 'recipient' });
+User.hasMany(PasswordResetToken, { foreignKey: 'userId', as: 'passwordResetTokens' });
+PasswordResetToken.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 export {
   Friendship,
   GameHand,
@@ -85,4 +94,6 @@ export {
   Session,
   SupportTicket,
   User,
+  FriendMessage,
+  PasswordResetToken,
 };

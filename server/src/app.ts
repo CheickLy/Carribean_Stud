@@ -10,6 +10,7 @@ import connectionSessionSequelize from 'connect-session-sequelize';
 import {sequelize} from './db/sequelize.js';
 import {authRouter} from './modules/auth/auth.routes.js';
 import { invitationsRouter } from "./modules/invitations/invitations.routes.js";
+import { messagesRouter } from './modules/messages/messages.routes.js';
 
 const SequelizeStore = connectionSessionSequelize(session.Store);
 
@@ -52,4 +53,5 @@ app.use('/api/auth', authRouter);
 app.use('/api/friends', friendsRouter);
 app.use('/api/lobbies', tablesRouter);
 app.use("/api/invitations", invitationsRouter);
+app.use('/api/messages', messagesRouter);
 void sessionStore.sync();

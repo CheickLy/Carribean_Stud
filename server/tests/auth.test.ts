@@ -34,6 +34,8 @@ const testUser = {
   role: 'player',
   balance: '250.00',
   isBanned: false,
+  isGuest: false,
+  avatar: 'turtle',
 };
 
 beforeEach(() => {
@@ -61,6 +63,7 @@ describe('ReefRoyale authentication (S1)', () => {
     expect(response.body.message).toBe('Login successful');
     expect(response.body.user.username).toBe('marina');
     expect(response.body.user.role).toBe('player');
+    expect(response.body.user.avatar).toBe('turtle');
     expect(response.body.user.passwordHash).toBeUndefined();
   });
 
@@ -122,6 +125,7 @@ describe('ReefRoyale authentication (S1)', () => {
 
     expect(meResponse.status).toBe(200);
     expect(meResponse.body.user.username).toBe('marina');
+    expect(meResponse.body.user.avatar).toBe('turtle');
   });
 
   it('logs out and invalidates the session', async () => {

@@ -1,0 +1,15 @@
+.account-page { min-height: 100vh; padding: 48px 20px; box-sizing: border-box; }
+.account-card { max-width: 480px; margin: 0 auto; padding: 32px; background: white; border: 1px solid #d5e3e9; border-radius: 14px; box-shadow: 0 8px 24px rgba(33, 68, 87, .08); }
+.account-label { color: #087f9d; font-size: 12px; font-weight: 700; letter-spacing: 2px; }
+.account-card h1 { margin: 8px 0; }
+.account-intro { color: #718a97; line-height: 1.5; }
+.account-card form { display: grid; gap: 10px; margin: 24px 0; }
+.account-card form label { margin-top: 5px; font-weight: 700; }
+.account-card form small { color: #718a97; }
+.account-card input { padding: 12px; border: 1px solid #b9ccd4; border-radius: 7px; font: inherit; }
+.account-card input:focus { outline: 2px solid #0782a0; outline-offset: 1px; }
+.account-card button { padding: 12px; border: 0; border-radius: 7px; background: #0782a0; color: white; font-weight: 700; }
+.account-card a { display: block; margin-top: 16px; color: #087f9d; text-decoration: none; font-weight: 700; }
+.account-primary-link { padding: 12px; text-align: center; border: 1px solid #0782a0; border-radius: 7px; }
+.account-back { font-size: 14px; }
+.account-message { padding: 12px; background: #e7f5f8; border-radius: 7px; }

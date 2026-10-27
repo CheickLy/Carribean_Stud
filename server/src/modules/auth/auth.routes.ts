@@ -4,6 +4,8 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { Op, UniqueConstraintError } from 'sequelize';
 import { User } from '../../models/user.js';
+import { PasswordResetToken } from '../../models/passwordResetToken.js';
+import { sequelize } from '../../db/sequelize.js';
 
 export const authRouter = Router();
 
@@ -11,7 +13,7 @@ const STARTING_CHIPS = '500.00';
 const userDTO = (u: User) => ({
   userId: u.userId, username: u.username, role: u.role,
   isGuest: u.isGuest, balance: u.balance,
-  email: u.isGuest ? null : u.email
+  email: u.isGuest ? null : u.email, avatar: u.avatar
 });
 
 authRouter.post('/guest', async (req, res) => {
@@ -84,6 +86,7 @@ authRouter.post('/login', async (req, res) => {
         role: user.role,
         balance: user.balance,
         isGuest: user.isGuest,
+        avatar: user.avatar,
       },
     });
   } catch (error) {
@@ -114,8 +117,85 @@ authRouter.get('/me', async (req, res) => {
       role: user.role,
       balance: user.balance,
       isGuest: user.isGuest,
+      avatar: user.avatar,
     },
   });
+});
+
+authRouter.post('/forgot-password', async (req, res) => {
+  const message = 'If that email is registered, a reset link has been created.';
+  const email = typeof req.body?.email === 'string'
+    ? req.body.email.trim().toLowerCase()
+    : '';
+
+  if (!email) {
+    res.status(400).json({ error: 'Email is required' });
+    return;
+  }
+
+  try {
+    const user = await User.findOne({ where: { email, isGuest: false } });
+    let resetPath: string | undefined;
+
+    if (user) {
+      // save a hash so the real reset token is not stored
+      const token = crypto.randomBytes(32).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+      // remove old unused links before making a new one
+      await PasswordResetToken.destroy({ where: { userId: user.userId, usedAt: null } });
+      await PasswordResetToken.create({
+        userId: user.userId,
+        tokenHash,
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+        usedAt: null,
+      });
+
+      // this replaces email while the project is running locally
+      if (process.env.NODE_ENV !== 'production') {
+        resetPath = `/reset-password?token=${token}`;
+      }
+    }
+
+    res.json({ message, ...(resetPath ? { resetPath } : {}) });
+  } catch {
+    res.json({ message });
+  }
+});
+
+authRouter.post('/reset-password', async (req, res) => {
+  const { token, password } = req.body ?? {};
+  if (typeof token !== 'string' || typeof password !== 'string') {
+    res.status(400).json({ error: 'Reset token and password are required' });
+    return;
+  }
+  if (password.length < 8 || password.length > 72) {
+    res.status(400).json({ error: 'Password must be between 8 and 72 characters' });
+    return;
+  }
+
+  // hash the submitted token so it can be compared with the saved value
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  try {
+    const reset = await PasswordResetToken.findOne({
+      where: { tokenHash, usedAt: null, expiresAt: { [Op.gt]: new Date() } },
+    });
+    if (!reset) {
+      res.status(400).json({ error: 'This reset link is invalid or expired' });
+      return;
+    }
+
+    // update the password and use the token together
+    await sequelize.transaction(async (transaction) => {
+      const passwordHash = await bcrypt.hash(password, 12);
+      await User.update({ passwordHash }, { where: { userId: reset.userId }, transaction });
+      await reset.update({ usedAt: new Date() }, { transaction });
+    });
+
+    res.json({ message: 'Password reset successfully' });
+  } catch {
+    res.status(500).json({ error: 'Could not reset password' });
+  }
 });
 
 authRouter.post('/logout', (req, res) => {

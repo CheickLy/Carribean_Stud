@@ -120,6 +120,11 @@
   gap: 8px;
 }
 
+.friend-player { display: flex; align-items: center; gap: 12px; }
+.friend-player-avatar { display: grid; place-items: center; width: 42px; height: 42px; flex: none; border-radius: 50%; background: #d8f2f7; color: #087f9d; font-weight: 800; }
+.friend-player strong, .friend-player small { display: block; }
+.friend-player small { margin-top: 3px; color: #718a97; }
+
 .friends-message {
   padding: 14px;
   margin-bottom: 24px;
