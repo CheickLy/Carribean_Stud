@@ -1,12 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import request from "supertest";
 import { app } from "../src/app.js";
-import { createLobby, getPublicLobbies } from "../src/modules/tables/tables.service.js";
+import { createLobby, getAllLobbies, getPublicLobbies } from "../src/modules/tables/tables.service.js";
 import express from "express";
 import { tablesRouter } from "../src/modules/tables/tables.routes.js";
 
 vi.mock("../src/modules/tables/tables.service.js", () => ({
   createLobby: vi.fn(),
+  getAllLobbies: vi.fn(),
   getPublicLobbies: vi.fn(),
 }));
 
@@ -59,6 +60,19 @@ describe("Create Table API", () => {
 
   expect(createLobby).toHaveBeenCalledWith(validLobby, 42);
 });
+
+  it("returns every lobby", async () => {
+    vi.mocked(getAllLobbies).mockResolvedValue([
+      { lobbyId: 1, name: "Public Table", isPrivate: false },
+      { lobbyId: 2, name: "Private Table", isPrivate: true },
+    ] as any);
+
+    const response = await request(app).get("/api/lobbies/all");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(2);
+    expect(getAllLobbies).toHaveBeenCalledOnce();
+  });
 
   it("returns active public lobbies", async () => {
     vi.mocked(getPublicLobbies).mockResolvedValue([

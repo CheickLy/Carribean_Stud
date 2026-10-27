@@ -11,7 +11,7 @@ const admin = {
 const openReportCount = 7;
 
 const metrics = [
-  { label: "Rooms created", value: "0" },
+  { label: "Lobbies created", value: "0" },
   { label: "Registered players", value: "0" },
   { label: "Ad impressions", value: "0" },
   { label: "Open reports", value: "0" },
@@ -39,9 +39,10 @@ export default function AdminDashboard() {
   const [error, setError] = useState("");
   const [actionError, setActionError] = useState("");
   const [pendingUserId, setPendingUserId] = useState<number | null>(null);
+  const [lobbyCount, setLobbyCount] = useState(0);
 
   useEffect(() => {
-    if (section !== "players") return;
+    if (section !== "home" && section !== "players") return;
 
     let active = true;
     setLoading(true);
@@ -69,6 +70,31 @@ export default function AdminDashboard() {
     };
   }, [section]);
 
+  useEffect(() => {
+    if (section !== "home") return;
+
+    let active = true;
+
+    fetch("http://localhost:3001/api/lobbies/all")
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Could not load lobbies");
+        }
+        return data;
+      })
+      .then((loaded) => {
+        if (active) setLobbyCount(Array.isArray(loaded) ? loaded.length : 0);
+      })
+      .catch(() => {
+        if (active) setLobbyCount(0);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [section]);
+
   async function handleBanToggle(user: AdminUser) {
     setActionError("");
     setPendingUserId(user.userId);
@@ -88,6 +114,10 @@ export default function AdminDashboard() {
       setPendingUserId(null);
     }
   }
+
+  const registeredPlayers = users.filter(
+    (user) => !user.isGuest && user.role === "player"
+  ).length;
 
   const needle = query.trim().toLowerCase();
   const visibleUsers = needle
@@ -155,7 +185,13 @@ export default function AdminDashboard() {
               {metrics.map((metric) => (
                 <article key={metric.label} className="admin-metric">
                   <p>{metric.label}</p>
-                  <strong>{metric.value}</strong>
+                  <strong>
+                    {metric.label === "Registered players"
+                      ? registeredPlayers
+                      : metric.label === "Lobbies created"
+                        ? lobbyCount
+                        : metric.value}
+                  </strong>
                 </article>
               ))}
             </section>

@@ -51,3 +51,12 @@ export async function createLobby(
 
   return lobbies;
 }
+
+export async function getAllLobbies() {
+  return Lobby.findAll({
+    attributes: {
+      exclude: ["passcode"],
+    },
+    order: [["lobbyId", "DESC"]],
+  });
+}

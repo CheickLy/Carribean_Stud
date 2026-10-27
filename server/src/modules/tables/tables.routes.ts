@@ -1,9 +1,19 @@
 import { Router } from "express";
-import { createLobby, getPublicLobbies } from "./tables.service.js";
+import { createLobby, getAllLobbies, getPublicLobbies } from "./tables.service.js";
 import { validateLobby } from "./tables.validation.js";
 
 
 export const tablesRouter = Router();
+
+tablesRouter.get("/all", async (_req, res, next) => {
+  try {
+    const lobbies = await getAllLobbies();
+
+    res.status(200).json(lobbies);
+  } catch (error) {
+    next(error);
+  }
+});
 
 tablesRouter.get("/", async (_req, res, next) => {
   try {
