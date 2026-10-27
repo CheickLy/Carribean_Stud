@@ -51,6 +51,7 @@ describe('GET /api/users', () => {
           isGuest: false,
           isBanned: false,
           balance: '0.00',
+          avatar: 'wave',
           createdAt,
         }),
       },
@@ -69,6 +70,7 @@ describe('GET /api/users', () => {
         isGuest: false,
         isBanned: false,
         balance: '0.00',
+        avatar: 'wave',
         createdAt: createdAt.toISOString(),
       },
     ]);
@@ -144,6 +146,7 @@ describe('PATCH /api/users/:userId/ban', () => {
           isGuest: false,
           isBanned,
           balance: '250.00',
+          avatar: 'turtle',
           createdAt,
         }),
       } as unknown as User);

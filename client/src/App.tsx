@@ -5,10 +5,18 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-import Home from "./pages/guest/Home";
+import LoginSection from "./components/LoginSection";
+import CreateLobby from "./pages/CreateLobby";
+import LobbyBrowser from "./pages/LobbyBrowser";
 import Friends from "./pages/player/Friends";
 import RegistrationSection from "./components/RegistrationSection";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import InviteFriends from "./pages/InviteFriends";
+import Avatar from "./pages/player/Avatar";
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import Messages from './pages/player/Messages';
+import Home from "./pages/guest/Home";
 import { useEffect, useState } from "react";
 import { getCurrentUser, logout } from "./services/auth";
 
@@ -26,7 +34,7 @@ function RegistrationPage() {
 
 function PlayPage() {
   const navigate = useNavigate();
-  const [user, setUser] = useState<{ username: string; balance: string; isGuest: boolean } | null>(null);
+  const [user, setUser] = useState<{ username: string; balance: string; isGuest: boolean; avatar: string } | null>(null);
   const [error, setError] = useState("");
   useEffect(() => {
     let active = true;
@@ -45,9 +53,10 @@ function PlayPage() {
     <h1>ReefRoyale</h1>
     {error && <p role="alert">{error}</p>}
     {!user ? <p>Loading session...</p> : <>
-      <p>{user.isGuest ? "Guest" : user.username} · {Number(user.balance).toFixed(2)} chips</p>
+      <p><span aria-hidden="true">{AVATAR_SYMBOLS[user.avatar] ?? "🌊"}</span> {user.isGuest ? "Guest" : user.username} · {Number(user.balance).toFixed(2)} chips</p>
       <p>The poker game page is not in the add-friend branch yet. Your server-side balance is ready for game integration.</p>
       {user.isGuest && <button onClick={() => navigate("/register")}>Register and save my chips</button>}
+      {!user.isGuest && <button onClick={() => navigate("/profile/avatar")}>Change avatar</button>}
       <button onClick={handleLogout}>Log out</button>
     </>}
   </main>;
@@ -58,10 +67,29 @@ const router = createBrowserRouter([
   { path: "/register", element: <RegistrationPage /> },
   { path: "/admin", element: <AdminDashboard /> },
   { path: "/friends", element: <Friends /> },
+  { path: "/create-lobby", element: <CreateLobby /> },
+  { path: "/lobbies", element: <LobbyBrowser /> },
   { path: "/play", element: <PlayPage /> },
+  { path: "/profile/avatar", element: <Avatar /> },
+  { path: "/forgot-password", element: <ForgotPassword /> },
+  { path: "/reset-password", element: <ResetPassword /> },
+  { path: "/friends/:friendId/messages", element: <Messages /> },
+  {
+    path: "/lobbies/:lobbyId/invite",
+    element: <InviteFriends />,
+  },
   { path: "*", element: <Navigate to="/" replace /> },
 ]);
 
 export default function App() {
   return <RouterProvider router={router} />;
 }
+
+const AVATAR_SYMBOLS: Record<string, string> = {
+  wave: "🌊",
+  turtle: "🐢",
+  dolphin: "🐬",
+  octopus: "🐙",
+  shark: "🦈",
+  crab: "🦀",
+};

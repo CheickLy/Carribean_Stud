@@ -11,6 +11,7 @@ export class User extends Model {
   declare isGuest: boolean;
   declare isBanned: boolean;
   declare balance: string;
+  declare avatar: string;
   declare createdAt: Date;
 }
 
@@ -58,6 +59,11 @@ User.init(
       type: DataTypes.DECIMAL(12, 2),
       allowNull: false,
       defaultValue: 0,
+    },
+    avatar: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: 'wave',
     },
   },
   {

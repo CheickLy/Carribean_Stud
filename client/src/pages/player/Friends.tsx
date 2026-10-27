@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useNavigate } from 'react-router-dom';
 import {
   getFriends,
   getPendingRequests,
@@ -9,24 +10,34 @@ import {
   type FriendRequest,
 } from "../../services/friends";
 import "../../styles/Friends.css";
+import {
+  getIncomingInvitations,
+  respondToLobbyInvitation,
+  type LobbyInvitation,
+} from "../../services/invitations";
 
 export default function Friends() {
+  const navigate = useNavigate();
   const [friends, setFriends] = useState<Friend[]>([]);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
+  const [invitations, setInvitations] = useState<LobbyInvitation[]>([]);
   const [username, setUsername] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  
 
   async function loadFriends() {
     try {
-      const [friendsData, requestsData] = await Promise.all([
-        getFriends(),
-        getPendingRequests(),
-      ]);
+      const [friendsData, requestsData, invitationsData] = await Promise.all([
+  getFriends(),
+  getPendingRequests(),
+  getIncomingInvitations(),
+]);
 
-      setFriends(friendsData);
-      setRequests(requestsData);
+setFriends(friendsData);
+setRequests(requestsData);
+setInvitations(invitationsData);
     } catch (error) {
       setMessage(
         error instanceof Error ? error.message : "Failed to load friends."
@@ -82,6 +93,33 @@ export default function Friends() {
       setBusy(false);
     }
   }
+  async function handleInvitation(
+  invitationId: number,
+  action: "accept" | "decline"
+) {
+  setMessage("");
+  setBusy(true);
+
+  try {
+    await respondToLobbyInvitation(invitationId, action);
+
+    setMessage(
+      action === "accept"
+        ? "Table invitation accepted! You've joined the table."
+        : "Table invitation declined."
+    );
+
+    await loadFriends();
+  } catch (error) {
+    setMessage(
+      error instanceof Error
+        ? error.message
+        : "Failed to respond to table invitation."
+    );
+  } finally {
+    setBusy(false);
+  }
+}
 
   async function handleRemove(friendshipId: number) {
     setMessage("");
@@ -177,7 +215,52 @@ export default function Friends() {
           </ul>
         )}
       </section>
+<section className="friends-card">
+  <h2>Table Invitations ({invitations.length})</h2>
 
+  {loading ? (
+    <p>Loading table invitations...</p>
+  ) : invitations.length === 0 ? (
+    <p>No pending table invitations.</p>
+  ) : (
+    <ul className="friends-list">
+      {invitations.map((invitation) => (
+        <li
+          key={invitation.invitationId}
+          className="friend-row"
+        >
+          <span>
+            <strong>{invitation.sender.username}</strong> invited you
+            to join <strong>{invitation.lobby.name}</strong>
+          </span>
+
+          <div className="friend-actions">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() =>
+                handleInvitation(invitation.invitationId, "accept")
+              }
+            >
+              Accept
+            </button>
+
+            <button
+              type="button"
+              className="secondary-button"
+              disabled={busy}
+              onClick={() =>
+                handleInvitation(invitation.invitationId, "decline")
+              }
+            >
+              Decline
+            </button>
+          </div>
+        </li>
+      ))}
+    </ul>
+  )}
+</section>
       <section className="friends-card">
         <h2>My Friends ({friends.length})</h2>
 
@@ -189,8 +272,12 @@ export default function Friends() {
           <ul className="friends-list">
             {friends.map((friend) => (
               <li key={friend.friendshipId} className="friend-row">
-                <span>{friend.username}</span>
+                <div className="friend-player"><span className="friend-player-avatar" aria-hidden="true">{friend.username.slice(0, 1).toUpperCase()}</span><div><strong>{friend.username}</strong><small>ReefRoyale player</small></div></div>
 
+                <div className="friend-actions">
+                <button type="button" onClick={() => navigate(`/friends/${friend.userId}/messages?name=${encodeURIComponent(friend.username)}`)}>
+                  Open chat
+                </button>
                 <button
                   type="button"
                   className="secondary-button"
@@ -199,6 +286,7 @@ export default function Friends() {
                 >
                   Remove Friend
                 </button>
+                </div>
               </li>
             ))}
           </ul>
