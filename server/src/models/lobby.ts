@@ -2,6 +2,7 @@ import { DataTypes, Model } from 'sequelize';
 import { sequelize } from '../db/sequelize.js';
 
 export class Lobby extends Model {
+  declare createdAt: Date;
   declare lobbyId: number;
   declare hostId: number;
   declare name: string;
@@ -21,6 +22,11 @@ export class Lobby extends Model {
 
 Lobby.init(
   {
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
     lobbyId: {
       type: DataTypes.INTEGER,
       primaryKey: true,
