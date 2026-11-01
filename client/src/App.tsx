@@ -13,12 +13,13 @@ import RegistrationSection from "./components/RegistrationSection";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import InviteFriends from "./pages/InviteFriends";
 import Avatar from "./pages/player/Avatar";
+import Profile, { ProfileComingSoon } from "./pages/player/Profile";
+import PlayerHome from "./pages/player/PlayerHome";
+import GameRules from "./pages/GameRules";
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Messages from './pages/player/Messages';
 import Home from "./pages/guest/Home";
-import { useEffect, useState } from "react";
-import { getCurrentUser, logout } from "./services/auth";
 
 function RegistrationPage() {
   const navigate = useNavigate();
@@ -32,36 +33,6 @@ function RegistrationPage() {
 }
 
 
-function PlayPage() {
-  const navigate = useNavigate();
-  const [user, setUser] = useState<{ username: string; balance: string; isGuest: boolean; avatar: string } | null>(null);
-  const [error, setError] = useState("");
-  useEffect(() => {
-    let active = true;
-    getCurrentUser().then((u) => {
-      if (!active) return;
-      if (!u) navigate("/", { replace: true });
-      else setUser(u);
-    }).catch((e) => { if (active) setError(e instanceof Error ? e.message : "Session error"); });
-    return () => { active = false; };
-  }, [navigate]);
-  async function handleLogout() {
-    try { await logout(); navigate("/", { replace: true }); }
-    catch (e) { setError(e instanceof Error ? e.message : "Logout failed"); }
-  }
-  return <main style={{ maxWidth: 760, margin: "3rem auto", padding: "1rem" }}>
-    <h1>ReefRoyale</h1>
-    {error && <p role="alert">{error}</p>}
-    {!user ? <p>Loading session...</p> : <>
-      <p><span aria-hidden="true">{AVATAR_SYMBOLS[user.avatar] ?? "🌊"}</span> {user.isGuest ? "Guest" : user.username} · {Number(user.balance).toFixed(2)} chips</p>
-      <p>The poker game page is not in the add-friend branch yet. Your server-side balance is ready for game integration.</p>
-      {user.isGuest && <button onClick={() => navigate("/register")}>Register and save my chips</button>}
-      {!user.isGuest && <button onClick={() => navigate("/profile/avatar")}>Change avatar</button>}
-      <button onClick={handleLogout}>Log out</button>
-    </>}
-  </main>;
-}
-
 const router = createBrowserRouter([
   { path: "/", element: <Home /> },
   { path: "/register", element: <RegistrationPage /> },
@@ -69,8 +40,12 @@ const router = createBrowserRouter([
   { path: "/friends", element: <Friends /> },
   { path: "/create-lobby", element: <CreateLobby /> },
   { path: "/lobbies", element: <LobbyBrowser /> },
-  { path: "/play", element: <PlayPage /> },
+  { path: "/play", element: <PlayerHome /> },
+  { path: "/rules", element: <GameRules /> },
   { path: "/profile/avatar", element: <Avatar /> },
+  { path: "/profile", element: <Profile /> },
+  { path: "/profile/statistics", element: <ProfileComingSoon title="Statistics" /> },
+  { path: "/profile/history", element: <ProfileComingSoon title="Game History" /> },
   { path: "/forgot-password", element: <ForgotPassword /> },
   { path: "/reset-password", element: <ResetPassword /> },
   { path: "/friends/:friendId/messages", element: <Messages /> },
@@ -84,12 +59,3 @@ const router = createBrowserRouter([
 export default function App() {
   return <RouterProvider router={router} />;
 }
-
-const AVATAR_SYMBOLS: Record<string, string> = {
-  wave: "🌊",
-  turtle: "🐢",
-  dolphin: "🐬",
-  octopus: "🐙",
-  shark: "🦈",
-  crab: "🦀",
-};

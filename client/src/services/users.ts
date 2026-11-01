@@ -7,6 +7,10 @@ export const AVATARS = [
   { id: "octopus", label: "Octopus", symbol: "🐙" },
   { id: "shark", label: "Shark", symbol: "🦈" },
   { id: "crab", label: "Crab", symbol: "🦀" },
+  { id: "penguin", label: "Penguin", symbol: "🐧" },
+  { id: "seal", label: "Seal", symbol: "🦭" },
+  { id: "whale", label: "Whale", symbol: "🐳" },
+  { id: "jellyfish", label: "Jellyfish", symbol: "🪼" },
 ] as const;
 
 export type AvatarId = (typeof AVATARS)[number]["id"];
@@ -54,7 +58,7 @@ export async function listUsers(): Promise<AdminUser[]> {
   return data;
 }
 
-export async function updateAvatar(avatar: AvatarId) {
+export async function updateAvatar(avatar: string) {
   const response = await fetch(`${API_URL}/me/avatar`, {
     method: "PATCH",
     headers: {
@@ -69,5 +73,5 @@ export async function updateAvatar(avatar: AvatarId) {
     throw new Error(data.error || "Could not update avatar");
   }
 
-  return data.user as { userId: number; username: string; avatar: AvatarId };
+  return data.user as { userId: number; username: string; avatar: string };
 }

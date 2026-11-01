@@ -4,14 +4,13 @@ import { getCurrentUser } from "../../services/auth";
 import {
   AVATARS,
   updateAvatar,
-  type AvatarId,
 } from "../../services/users";
 import "../../styles/Avatar.css";
 
 export default function Avatar() {
   const navigate = useNavigate();
-  const [savedAvatar, setSavedAvatar] = useState<AvatarId>("wave");
-  const [selectedAvatar, setSelectedAvatar] = useState<AvatarId>("wave");
+  const [savedAvatar, setSavedAvatar] = useState("wave");
+  const [selectedAvatar, setSelectedAvatar] = useState("wave");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -27,9 +26,8 @@ export default function Avatar() {
           return;
         }
 
-        const current = AVATARS.some((avatar) => avatar.id === user.avatar)
-          ? (user.avatar as AvatarId)
-          : "wave";
+        const current = AVATARS.some((avatar) => avatar.id === user.avatar) || user.avatar?.startsWith("data:image/")
+          ? user.avatar : "wave";
         setSavedAvatar(current);
         setSelectedAvatar(current);
       })
@@ -63,7 +61,19 @@ export default function Avatar() {
     }
   }
 
-  const preview = AVATARS.find((avatar) => avatar.id === selectedAvatar)!;
+  const preview = AVATARS.find((avatar) => avatar.id === selectedAvatar);
+
+  async function chooseImage(file?: File) {
+    if (!file) return;
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 100_000) {
+      setMessage("Choose a PNG, JPEG, or WebP image under 100 KB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => { if (typeof reader.result === "string") { setSelectedAvatar(reader.result); setMessage(""); } };
+    reader.onerror = () => setMessage("Could not read that image.");
+    reader.readAsDataURL(file);
+  }
 
   return (
     <main className="avatar-page">
@@ -78,12 +88,10 @@ export default function Avatar() {
       ) : (
         <>
           <section className="avatar-preview" aria-live="polite">
-            <span className="avatar-preview-symbol" aria-hidden="true">
-              {preview.symbol}
-            </span>
+            <span className="avatar-preview-symbol" aria-hidden="true">{selectedAvatar.startsWith("data:image/") ? <img src={selectedAvatar} alt="" /> : preview?.symbol ?? "🌊"}</span>
             <div>
               <span className="avatar-preview-label">Preview</span>
-              <h2>{preview.label}</h2>
+              <h2>{preview?.label ?? "Your image"}</h2>
             </div>
           </section>
 
@@ -117,6 +125,7 @@ export default function Avatar() {
               ))}
             </div>
           </fieldset>
+          <label className="avatar-upload">Upload your own image <span>PNG, JPEG, or WebP · under 100 KB</span><input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => void chooseImage(event.target.files?.[0])} /></label>
 
           {message && (
             <p className="avatar-message" role="status">

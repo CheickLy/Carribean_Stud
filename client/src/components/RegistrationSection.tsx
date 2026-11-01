@@ -34,12 +34,9 @@ export default function RegistrationSection({
     try {
       const data = await register(username, email, password);
 
-      setMessage(
-        `Account created successfully for ${data.user.username}! You can now log in.`
-      );
+      setMessage(`Account created successfully for ${data.user.username}!`);
 
       setRegistered(true);
-      if (onRegistered) onRegistered();
       setPassword("");
       setConfirmPassword("");
     } catch (error: unknown) {
@@ -132,7 +129,9 @@ export default function RegistrationSection({
         ) : (
           <div className="registration-success">
             <h3>Registration successful!</h3>
-            <p>Your account is ready. You can now log in.</p>
+            <p>Your account is ready. Continue to your new account or log in later.</p>
+
+            {onRegistered && <button type="button" onClick={onRegistered}>Continue to my account</button>}
 
             <button type="button" onClick={onBackToLogin}>
               Continue to login
@@ -142,7 +141,7 @@ export default function RegistrationSection({
 
         {message && <p role="status">{message}</p>}
 
-        <p className="register-link">
+        {!registered && <p className="register-link">
           Already have an account?{" "}
           <button
             type="button"
@@ -151,7 +150,7 @@ export default function RegistrationSection({
           >
             Log in →
           </button>
-        </p>
+        </p>}
       </div>
     </section>
   );

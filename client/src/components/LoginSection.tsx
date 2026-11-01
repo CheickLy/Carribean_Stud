@@ -2,11 +2,11 @@
 import { useState, type FormEvent } from "react";
 import { login, startGuest } from "../services/auth";
 import "../styles/LoginSection.css";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 type LoginSectionProps = {
   onRegisterClick: () => void;
-  onAuthenticated: () => void;
+  onAuthenticated: (role?: string) => void;
 };
 
 export default function LoginSection({
@@ -17,7 +17,6 @@ export default function LoginSection({
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -25,11 +24,9 @@ export default function LoginSection({
     setLoading(true);
 
     try {
-    await login(email, password);
-
-setPassword("");
-onAuthenticated();
-navigate("/lobbies");
+    const result = await login(email, password);
+    setPassword("");
+    onAuthenticated(result.user?.role);
 } catch (error: unknown) {
   setMessage(
     error instanceof Error ? error.message : "Login failed"
@@ -41,7 +38,7 @@ navigate("/lobbies");
   }
 
   return (
-    <section className="login-section">
+    <section className="login-section" id="sign-in" aria-label="Sign in or play as a guest">
       <div className="login-intro">
         <span className="eyebrow">NO ACCOUNT REQUIRED</span>
 
@@ -94,7 +91,7 @@ navigate("/lobbies");
               {loading ? "Logging in..." : "Log in"}
             </button>
 
-            <a href="/forgot-password">Forgot password?</a>
+            <Link to="/forgot-password">Forgot password?</Link>
           </div>
 
           {message && <p role="status">{message}</p>}
