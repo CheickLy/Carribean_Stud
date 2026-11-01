@@ -1,11 +1,17 @@
+import { User } from "../src/models/user.js";
+import { LobbyMember } from "../src/models/lobbyMember.js";
+vi.mock("../src/models/user.js", () => ({ User: { findAll: vi.fn() } }));
+vi.mock("../src/models/lobbyMember.js", () => ({ LobbyMember: { findAll: vi.fn() } }));
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import bcrypt from "bcryptjs";
 import { Lobby } from "../src/models/lobby.js";
-import { createLobby } from "../src/modules/tables/tables.service.js";
+import { createLobby, getLobbies, getLobbyDetails } from "../src/modules/tables/tables.service.js";
 
 vi.mock("../src/models/lobby.js", () => ({
   Lobby: {
     create: vi.fn(),
+    findAll: vi.fn(),
+    findByPk: vi.fn(),
   },
 }));
 
@@ -98,5 +104,43 @@ describe("Create Lobby Service", () => {
         hostId: 42,
       })
     );
+  });
+});
+ describe("Browse tables", () => {
+  it("includes private tables, excludes passcodes, and counts the host only once", async () => {
+    const rows = [
+      { lobbyId: 1, hostId: 42, maxPlayers: 2, isPrivate: true },
+      { lobbyId: 2, hostId: 42, maxPlayers: 3, isPrivate: false },
+    ];
+    vi.mocked(Lobby.findAll).mockResolvedValue(rows.map(row => ({ ...row, toJSON: () => row })) as any);
+    vi.mocked(User.findAll).mockResolvedValue([{ userId: 42, username: "Alice" }] as any);
+    vi.mocked(LobbyMember.findAll).mockResolvedValue([
+      { lobbyId: 1, userId: 42 }, { lobbyId: 1, userId: 7 },
+      { lobbyId: 2, userId: 7 },
+    ] as any);
+    const result = await getLobbies();
+    expect(Lobby.findAll).toHaveBeenCalledWith({
+      where: { isActive: true },
+      attributes: { exclude: ["passcode"] },
+      order: [["createdAt", "DESC"], ["lobbyId", "DESC"]],
+    });
+    expect(result).toEqual([
+      { ...rows[0], creator: "Alice", seatsAvailable: 0 },
+      { ...rows[1], creator: "Alice", seatsAvailable: 1 },
+    ]);
+  });
+});
+
+describe("Lobby details", () => {
+  it("keeps room details restricted to members", async () => {
+    vi.mocked(Lobby.findByPk).mockResolvedValue({ lobbyId: 1, hostId: 42, isActive: true, maxPlayers: 6, toJSON: () => ({ lobbyId: 1 }) } as any);
+    vi.mocked(LobbyMember.findAll).mockResolvedValue([{ userId: 7 }] as any);
+    expect(await getLobbyDetails(1, 99)).toBeNull();
+    vi.mocked(User.findAll).mockResolvedValue([{ userId: 42, username: "Alice", isGuest: false }, { userId: 7, username: "guest_random", isGuest: true }] as any);
+    expect(await getLobbyDetails(1, 42)).toEqual({
+      lobbyId: 1, isHost: true, seatsAvailable: 4,
+      players: [{ userId: 42, username: "Alice", isHost: true }, { userId: 7, username: "Guest", isHost: false }],
+    });
+    expect(Lobby.findByPk).toHaveBeenCalledWith(1, { attributes: { exclude: ["passcode"] } });
   });
 });

@@ -46,8 +46,8 @@ export default function Home() {
     </section>
     <section className="home-lobbies" id="tables">
       <div className="home-section">
-        <div className="home-heading"><div><p className="home-eyebrow">PUBLIC LOBBIES</p><h2>Find a table.</h2><p>Join a public lobby or watch a hand before taking a seat.</p></div><button type="button" className="home-secondary" onClick={() => navigate("/play")}>Browse all lobbies</button></div>
-        <div className="home-grid three">{lobbies.map(lobby => <article className="home-lobby" key={lobby.name}><div className="home-lobby-top"><span className="home-card-suit">♣</span><span className="home-pill">Public</span></div><h3>{lobby.name}</h3><p>Hosted by {lobby.host} · {lobby.detail}</p><div className="home-lobby-meta"><span>{lobby.seats}</span><span>{lobby.points}</span></div><div className="home-buttons"><button type="button" onClick={() => navigate("/play")}>Join table</button><button type="button" className="home-secondary" onClick={() => navigate("/play")}>Watch</button></div></article>)}</div>
+        <div className="home-heading"><div><p className="home-eyebrow">PUBLIC LOBBIES</p><h2>Find a table.</h2><p>Join a public lobby or watch a hand before taking a seat.</p></div><button type="button" className="home-secondary" onClick={() => navigate("/lobbies")}>Browse all lobbies</button></div>
+        <div className="home-grid three">{lobbies.map(lobby => <article className="home-lobby" key={lobby.name}><div className="home-lobby-top"><span className="home-card-suit">♣</span><span className="home-pill">Public</span></div><h3>{lobby.name}</h3><p>Hosted by {lobby.host} · {lobby.detail}</p><div className="home-lobby-meta"><span>{lobby.seats}</span><span>{lobby.points}</span></div><div className="home-buttons"><button type="button" onClick={() => navigate("/lobbies")}>Join table</button><button type="button" className="home-secondary" onClick={() => navigate("/lobbies")}>Watch</button></div></article>)}</div>
         <p className="home-fineprint">Example lobbies. Player counts are not live.</p>
       </div>
     </section>

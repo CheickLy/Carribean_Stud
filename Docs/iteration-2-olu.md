@@ -16,10 +16,11 @@ The player home now shows live public lobbies, account information, and a rules 
 - Client build: passed.
 - Client UI tests: 5 passed. They cover login and registration dialogs, admin login route, profile access, player logout, public rules, and support ticket editing.
 - Server build: passed.
-- Server tests: 105 passed across 15 files. The new tests cover admin-only support access and accepted-friend messaging.
+- Server tests: 114 passed across 16 files after merging the current team main. The new tests cover admin-only support access and accepted-friend messaging.
 - Live local support check: admin login succeeded; a temporary ticket was listed, changed to resolved with a note, and read back as resolved. The ticket was then removed.
-- Server coverage: 81.97% statements, 74.33% branches, 87.14% functions, 82.94% lines.
-- Client coverage: 15.78% statements, 66.43% branches, 26.02% functions, 15.78% lines. Many existing client pages have no automated tests yet.
+- Server coverage: 83.03% statements, 74.87% branches, 89.74% functions, 84.02% lines.
+- Client coverage: 15.18% statements, 65.97% branches, 25.67% functions, 15.18% lines. Many existing client pages have no automated tests yet.
+- The latest team main included a lobby sorting test without its helper or controls. The helper and controls were added during merge integration; the lobby tests now pass.
 
 The generated coverage summaries and a printable image are in `Docs/coverage/`. The full HTML coverage reports can be regenerated with `npm run test:coverage` in each package. The client percentage is below the assignment's overall coverage target, so the team needs more UI tests before claiming that target.
 

@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import "../styles/LobbyBrowser.css";
+import { Link } from "react-router-dom";
+import { selectLobbies, type BrowserLobby } from "./lobbyBrowserControls";
 
-type PublicLobby = {
+type PublicLobby = BrowserLobby & {
   lobbyId: number;
   name: string;
   maxPlayers: number;
@@ -15,6 +17,11 @@ export default function LobbyBrowser() {
   const [lobbies, setLobbies] = useState<PublicLobby[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [direction, setDirection] = useState<'asc' | 'desc'>('desc');
+  const [privacy, setPrivacy] = useState('all');
+  const [openSeats, setOpenSeats] = useState(false);
+  const visibleLobbies = selectLobbies(lobbies, sortBy, direction, privacy, openSeats);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -55,9 +62,9 @@ export default function LobbyBrowser() {
       <main className="reef-browser-container">
         <header className="reef-browser-header">
           <div>
-            <a href="/" className="reef-browser-back">
+            <Link to="/" className="reef-browser-back">
               ← Back
-            </a>
+            </Link>
 
             <h1>Find your table.</h1>
             <p>
@@ -65,9 +72,9 @@ export default function LobbyBrowser() {
             </p>
           </div>
 
-          <a href="/create-lobby" className="reef-browser-create">
+          <Link to="/create-lobby" className="reef-browser-create">
             + Create Table
-          </a>
+          </Link>
         </header>
 
         <section className="reef-browser-section">
@@ -79,9 +86,16 @@ export default function LobbyBrowser() {
 
             {!loading && !error && (
               <span className="reef-browser-count">
-                {lobbies.length} available
+                {visibleLobbies.length} available
               </span>
             )}
+          </div>
+
+          <div className="reef-browser-controls">
+            <label>Sort by <select value={sortBy} onChange={event => setSortBy(event.target.value)}><option value="createdAt">Date created</option><option value="creator">Creator</option><option value="startingMoney">Starting chips</option><option value="minBet">Minimum bet</option></select></label>
+            <label>Order <select value={direction} onChange={event => setDirection(event.target.value as 'asc' | 'desc')}><option value="desc">Descending</option><option value="asc">Ascending</option></select></label>
+            <label>Tables <select value={privacy} onChange={event => setPrivacy(event.target.value)}><option value="all">All</option><option value="public">Public</option><option value="private">Private</option></select></label>
+            <label><input type="checkbox" checked={openSeats} onChange={event => setOpenSeats(event.target.checked)} /> Open seats only</label>
           </div>
 
           {loading && (
@@ -96,23 +110,23 @@ export default function LobbyBrowser() {
             </div>
           )}
 
-          {!loading && !error && lobbies.length === 0 && (
+          {!loading && !error && visibleLobbies.length === 0 && (
             <div className="reef-browser-empty">
               <div className="reef-browser-empty-icon">♠</div>
-              <h3>No public tables yet.</h3>
+              <h3>No matching tables yet.</h3>
               <p>
                 The room is quiet. Be the first to bring the game to life.
               </p>
 
-              <a href="/create-lobby" className="reef-browser-create">
+              <Link to="/create-lobby" className="reef-browser-create">
                 Create a Table
-              </a>
+              </Link>
             </div>
           )}
 
-          {!loading && !error && lobbies.length > 0 && (
+          {!loading && !error && visibleLobbies.length > 0 && (
             <div className="reef-browser-grid">
-              {lobbies.map((lobby) => (
+              {visibleLobbies.map((lobby) => (
                 <article
                   key={lobby.lobbyId}
                   className="reef-browser-card"
