@@ -167,13 +167,7 @@ export default function LobbyBrowser() {
                       {lobby.botsEnabled ? "Bots allowed" : "Players only"}
                     </span>
 
-                    <button
-                      type="button"
-                      disabled
-                      title="Joining tables will be available in a future sprint."
-                    >
-                      Join Table
-                    </button>
+                    <Link to={`/lobbies/${lobby.lobbyId}/game`}>Join Table</Link>
                   </div>
                 </article>
               ))}

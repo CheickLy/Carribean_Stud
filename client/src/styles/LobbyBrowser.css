@@ -196,14 +196,18 @@
   font-size: 12px;
 }
 
-.reef-browser-card-footer button {
+.reef-browser-card-footer a {
   padding: 11px 16px;
-  border: none;
   border-radius: 8px;
-  background: #e6edf0;
-  color: #82959d;
+  background: #087f9b;
+  color: white;
+  font-size: 14px;
   font-weight: 700;
-  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.reef-browser-card-footer a:hover {
+  background: #066b83;
 }
 
 @media (max-width: 640px) {

@@ -4,6 +4,7 @@ import LoginSection from "./components/LoginSection";
 import RegistrationSection from "./components/RegistrationSection";
 import CreateLobby from "./pages/CreateLobby";
 import LobbyBrowser from "./pages/LobbyBrowser";
+import Gameplay from "./pages/Gameplay";
 import Friends from "./pages/player/Friends";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import InviteFriends from "./pages/InviteFriends";
@@ -44,7 +45,7 @@ function Layout() {
       setSession(previous => ({ ...previous, error: error instanceof Error ? error.message : "Could not log out" }));
     }
   }
-  const ownHeader = location.pathname === "/" || location.pathname === "/play" || location.pathname === "/rules" || location.pathname === "/admin" || location.pathname.startsWith("/profile");
+  const ownHeader = location.pathname === "/" || location.pathname === "/play" || location.pathname === "/rules" || location.pathname === "/admin" || location.pathname.startsWith("/profile") || /^\/lobbies\/[^/]+\/game$/.test(location.pathname);
   return <>
     {!ownHeader && <header className="site-header">
       <Link className="site-brand" to="/">♠ ReefRoyale</Link>
@@ -106,6 +107,7 @@ const router = createBrowserRouter([{
       { path: "/profile/avatar", element: <Avatar /> },
       { path: "/friends/:friendId/messages", element: <Messages /> },
       { path: "/create-lobby", element: <CreateLobby /> },
+      { path: "/lobbies/:lobbyId/game", element: <Gameplay /> },
       { path: "/lobbies/:lobbyId/invite", element: <InviteFriends /> },
     ] },
     { element: <RequireSession admin />, children: [{ path: "/admin", element: <AdminDashboard /> }] },
