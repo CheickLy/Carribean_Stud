@@ -75,7 +75,7 @@ export default function AdminDashboard() {
 
     let active = true;
 
-    fetch("http://localhost:3001/api/lobbies/all")
+    fetch("http://localhost:3001/api/lobbies/all", { credentials: "include" })
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok) {

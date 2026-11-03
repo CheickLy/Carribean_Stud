@@ -5,7 +5,7 @@ vi.mock("../src/models/lobbyMember.js", () => ({ LobbyMember: { findAll: vi.fn()
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import bcrypt from "bcryptjs";
 import { Lobby } from "../src/models/lobby.js";
-import { createLobby, getLobbies, getLobbyDetails } from "../src/modules/tables/tables.service.js";
+import { createLobby, getAllLobbies, getLobbies, getLobbyDetails } from "../src/modules/tables/tables.service.js";
 
 vi.mock("../src/models/lobby.js", () => ({
   Lobby: {
@@ -106,6 +106,19 @@ describe("Create Lobby Service", () => {
     );
   });
 });
+describe("All lobbies", () => {
+  it("returns every lobby and leaves out passcodes", async () => {
+    vi.mocked(Lobby.findAll).mockResolvedValue([] as any);
+
+    await getAllLobbies();
+
+    expect(Lobby.findAll).toHaveBeenCalledWith({
+      attributes: { exclude: ["passcode"] },
+      order: [["createdAt", "DESC"], ["lobbyId", "DESC"]],
+    });
+  });
+});
+
  describe("Browse tables", () => {
   it("includes private tables, excludes passcodes, and counts the host only once", async () => {
     const rows = [

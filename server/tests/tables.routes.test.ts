@@ -1,13 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import request from "supertest";
 import { app } from "../src/app.js";
-import { createLobby, getLobbies, getLobbyDetails } from "../src/modules/tables/tables.service.js";
+import { User } from "../src/models/user.js";
+import { createLobby, getAllLobbies, getLobbies, getLobbyDetails } from "../src/modules/tables/tables.service.js";
 import express from "express";
 import { tablesRouter } from "../src/modules/tables/tables.routes.js";
 
 vi.mock("../src/modules/tables/tables.service.js", () => ({
   createLobby: vi.fn(),
-  getPublicLobbies: vi.fn(),
+  getAllLobbies: vi.fn(),
+  getLobbies: vi.fn(),
+  getLobbyDetails: vi.fn(),
 }));
 
 const validLobby = {
@@ -23,8 +26,20 @@ const validLobby = {
   increaseEveryHands: 15,
 };
 
+function appAs(userId?: number) {
+  const testApp = express();
+  testApp.use(express.json());
+  testApp.use((req, _res, next) => {
+    req.session = { userId } as typeof req.session;
+    next();
+  });
+  testApp.use("/api/lobbies", tablesRouter);
+  return testApp;
+}
+
 describe("Create Table API", () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     vi.clearAllMocks();
   });
   it("creates a lobby for an authenticated user", async () => {
@@ -60,17 +75,44 @@ describe("Create Table API", () => {
   expect(createLobby).toHaveBeenCalledWith(validLobby, 42);
 });
 
-  it("returns every lobby", async () => {
+  it("returns every lobby to an admin", async () => {
+    vi.spyOn(User, "findByPk").mockResolvedValue({
+      userId: 1,
+      role: "admin",
+      isBanned: false,
+    } as User);
     vi.mocked(getAllLobbies).mockResolvedValue([
       { lobbyId: 1, name: "Public Table", isPrivate: false },
       { lobbyId: 2, name: "Private Table", isPrivate: true },
     ] as any);
 
-    const response = await request(app).get("/api/lobbies/all");
+    const response = await request(appAs(1)).get("/api/lobbies/all");
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveLength(2);
     expect(getAllLobbies).toHaveBeenCalledOnce();
+  });
+
+  it("rejects an anonymous caller from every lobby", async () => {
+    const response = await request(app).get("/api/lobbies/all");
+
+    expect(response.status).toBe(401);
+    expect(response.body.error).toBe("Authentication required.");
+    expect(getAllLobbies).not.toHaveBeenCalled();
+  });
+
+  it("rejects a player from every lobby", async () => {
+    vi.spyOn(User, "findByPk").mockResolvedValue({
+      userId: 2,
+      role: "player",
+      isBanned: false,
+    } as User);
+
+    const response = await request(appAs(2)).get("/api/lobbies/all");
+
+    expect(response.status).toBe(403);
+    expect(response.body.error).toBe("Admin access required.");
+    expect(getAllLobbies).not.toHaveBeenCalled();
   });
 
   it("returns active lobbies", async () => {

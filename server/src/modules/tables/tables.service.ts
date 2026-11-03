@@ -40,6 +40,13 @@ export async function createLobby(
     delete result.passcode;
     return result;
 }
+export async function getAllLobbies() {
+  return Lobby.findAll({
+    attributes: { exclude: ["passcode"] },
+    order: [["createdAt", "DESC"], ["lobbyId", "DESC"]],
+  });
+}
+
 export async function getLobbies() {
   const lobbies = await Lobby.findAll({
     where: { isActive: true },

@@ -5,7 +5,9 @@ coverage/
 .env
 .env.local
 .DS_Store
+.agents/
 
 Agent.md
 Docs/Caribbean_Stud_Client_Meeting_Notes.pdf
 Docs/Carribean_Stud_User_Stories.pdf
+skills-lock.json
