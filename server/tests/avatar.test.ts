@@ -4,6 +4,7 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { User } from '../src/models/user.js';
 import { usersRouter } from '../src/modules/users/users.routes.js';
+import { setUserAvatar } from '../src/modules/users/users.service.js';
 
 function makeApp(userId?: number) {
   const app = express();
@@ -72,5 +73,37 @@ describe('Change avatar (S18)', () => {
       username: 'marina',
       avatar: 'dolphin',
     });
+  });
+
+  it('lets a player change an avatar while admin routes stay closed', async () => {
+    const update = vi.fn().mockResolvedValue(undefined);
+    vi.spyOn(User, 'findByPk').mockResolvedValue({
+      userId: 7,
+      username: 'marina',
+      role: 'player',
+      isBanned: false,
+      avatar: 'wave',
+      update,
+    } as unknown as User);
+    const findAll = vi.spyOn(User, 'findAll');
+    const app = makeApp(7);
+
+    const avatar = await request(app)
+      .patch('/api/users/me/avatar')
+      .send({ avatar: 'dolphin' });
+    const list = await request(app).get('/api/users');
+
+    expect(avatar.status).toBe(200);
+    expect(update).toHaveBeenCalledWith({ avatar: 'dolphin' });
+    expect(list.status).toBe(403);
+    expect(list.body.error).toBe('Admin access required.');
+    expect(findAll).not.toHaveBeenCalled();
+  });
+
+  it('returns null for an invalid avatar and undefined when the user is gone', async () => {
+    expect(await setUserAvatar(7, 'custom-picture')).toBeNull();
+    vi.spyOn(User, 'findByPk').mockResolvedValueOnce(null);
+
+    expect(await setUserAvatar(7, 'wave')).toBeUndefined();
   });
 });

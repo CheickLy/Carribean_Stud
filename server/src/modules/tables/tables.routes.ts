@@ -1,9 +1,49 @@
 import { Router } from "express";
-import { createLobby, getLobbies, getLobbyDetails } from "./tables.service.js";
+import type { Request, Response } from "express";
+import { User } from "../../models/user.js";
+import { createLobby, getAllLobbies, getLobbies, getLobbyDetails } from "./tables.service.js";
 import { validateLobby } from "./tables.validation.js";
 
 
 export const tablesRouter = Router();
+
+async function requireAdmin(req: Request, res: Response) {
+  const userId = req.session?.userId;
+  if (!Number.isInteger(userId) || !userId || userId <= 0) {
+    res.status(401).json({ error: "Authentication required." });
+    return false;
+  }
+
+  const user = await User.findByPk(userId);
+  if (!user) {
+    res.status(401).json({ error: "Authentication required." });
+    return false;
+  }
+
+  if (user.isBanned) {
+    res.status(403).json({ error: "This account is disabled" });
+    return false;
+  }
+
+  if (user.role !== "admin") {
+    res.status(403).json({ error: "Admin access required." });
+    return false;
+  }
+
+  return true;
+}
+
+tablesRouter.get("/all", async (req, res, next) => {
+  try {
+    if (!(await requireAdmin(req, res))) return;
+
+    const lobbies = await getAllLobbies();
+
+    res.status(200).json(lobbies);
+  } catch (error) {
+    next(error);
+  }
+});
 
 tablesRouter.get("/", async (_req, res, next) => {
   try {

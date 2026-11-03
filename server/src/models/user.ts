@@ -61,7 +61,7 @@ User.init(
       defaultValue: 0,
     },
     avatar: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false,
       defaultValue: 'wave',
     },

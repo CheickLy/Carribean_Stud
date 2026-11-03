@@ -36,7 +36,7 @@ Session.init(
   },
   {
     sequelize,
-    tableName: 'sessions',
+    tableName: 'game_sessions',
     underscored: true,
     timestamps: true,
     updatedAt: false,

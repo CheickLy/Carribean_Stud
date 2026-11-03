@@ -4,7 +4,8 @@ import { sequelize } from '../db/sequelize.js';
 export class GameHand extends Model {
   declare handId: number;
   declare sessionId: number;
-  declare userId: number;
+  declare userId: number | null;
+  declare playerLabel: string | null;
   declare playerCards: string | null;
   declare callBet: string | null;
   declare payout: string | null;
@@ -24,7 +25,11 @@ GameHand.init(
     },
     userId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
+    },
+    playerLabel: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     playerCards: {
       type: DataTypes.TEXT,

@@ -1,13 +1,12 @@
-import { Link } from "react-router-dom";
 
 import { useState, type FormEvent } from "react";
 import { login, startGuest } from "../services/auth";
 import "../styles/LoginSection.css";
-
+import { Link } from "react-router-dom";
 
 type LoginSectionProps = {
   onRegisterClick: () => void;
-  onAuthenticated: () => void;
+  onAuthenticated: (role?: string) => void;
 };
 
 export default function LoginSection({
@@ -19,18 +18,15 @@ export default function LoginSection({
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
     setLoading(true);
 
     try {
-    await login(email, password);
-
-setPassword("");
-onAuthenticated();
-
+    const result = await login(email, password);
+    setPassword("");
+    onAuthenticated(result.user?.role);
 } catch (error: unknown) {
   setMessage(
     error instanceof Error ? error.message : "Login failed"
@@ -42,7 +38,7 @@ onAuthenticated();
   }
 
   return (
-    <section className="login-section">
+    <section className="login-section" id="sign-in" aria-label="Sign in or play as a guest">
       <div className="login-intro">
         <span className="eyebrow">NO ACCOUNT REQUIRED</span>
 
