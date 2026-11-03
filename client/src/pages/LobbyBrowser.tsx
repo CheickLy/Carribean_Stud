@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "../styles/LobbyBrowser.css";
+import { Link } from "react-router-dom";
 
 type PublicLobby = {
   lobbyId: number;
@@ -55,9 +56,9 @@ export default function LobbyBrowser() {
       <main className="reef-browser-container">
         <header className="reef-browser-header">
           <div>
-            <a href="/" className="reef-browser-back">
+            <Link to="/" className="reef-browser-back">
               ← Back
-            </a>
+            </Link>
 
             <h1>Find your table.</h1>
             <p>
@@ -65,9 +66,9 @@ export default function LobbyBrowser() {
             </p>
           </div>
 
-          <a href="/create-lobby" className="reef-browser-create">
+          <Link to="/create-lobby" className="reef-browser-create">
             + Create Table
-          </a>
+          </Link>
         </header>
 
         <section className="reef-browser-section">
@@ -104,9 +105,9 @@ export default function LobbyBrowser() {
                 The room is quiet. Be the first to bring the game to life.
               </p>
 
-              <a href="/create-lobby" className="reef-browser-create">
+              <Link to="/create-lobby" className="reef-browser-create">
                 Create a Table
-              </a>
+              </Link>
             </div>
           )}
 

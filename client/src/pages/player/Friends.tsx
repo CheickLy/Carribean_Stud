@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from "react-router-dom";
 import {
   getFriends,
   getPendingRequests,
@@ -139,11 +139,15 @@ setInvitations(invitationsData);
   }
 
   return (
-    <main className="friends-page">
+    <div className="friends-page">
+    <main className="friends-container">
+      <Link className="friends-back" to="/lobbies">← Back to tables</Link>
       <header className="friends-header">
-        <p className="friends-eyebrow">REEF ROYALE</p>
-        <h1>Friends</h1>
-        <p>Connect with other players and build your crew.</p>
+        <div>
+          <h1>Find your crew.</h1>
+          <p>Connect with other players and bring your friends to the table.</p>
+        </div>
+        <Link className="friends-primary-link" to="/create-lobby">+ Create Table</Link>
       </header>
 
       <section className="friends-card">
@@ -293,5 +297,6 @@ setInvitations(invitationsData);
         )}
       </section>
     </main>
+    </div>
   );
 }

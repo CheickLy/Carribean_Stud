@@ -1,13 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import request from "supertest";
 import { app } from "../src/app.js";
-import { createLobby, getAllLobbies, getPublicLobbies } from "../src/modules/tables/tables.service.js";
+import { createLobby, getLobbies, getLobbyDetails } from "../src/modules/tables/tables.service.js";
 import express from "express";
 import { tablesRouter } from "../src/modules/tables/tables.routes.js";
 
 vi.mock("../src/modules/tables/tables.service.js", () => ({
   createLobby: vi.fn(),
-  getAllLobbies: vi.fn(),
   getPublicLobbies: vi.fn(),
 }));
 
@@ -74,8 +73,8 @@ describe("Create Table API", () => {
     expect(getAllLobbies).toHaveBeenCalledOnce();
   });
 
-  it("returns active public lobbies", async () => {
-    vi.mocked(getPublicLobbies).mockResolvedValue([
+  it("returns active lobbies", async () => {
+    vi.mocked(getLobbies).mockResolvedValue([
       { lobbyId: 1, name: "Friday Night Poker" },
     ] as any);
 
@@ -115,5 +114,22 @@ describe("Create Table API", () => {
 
     expect(response.status).toBe(400);
     expect(createLobby).not.toHaveBeenCalled();
+  });
+});
+describe("Lobby room API", () => {
+  const testApp = express();
+  testApp.use((req, _res, next) => { req.session = { userId: 42 } as typeof req.session; next(); });
+  testApp.use("/api/lobbies", tablesRouter);
+  it("returns the member's lobby", async () => {
+    vi.mocked(getLobbyDetails).mockResolvedValue({ lobbyId: 1, isHost: true } as any);
+    const response = await request(testApp).get("/api/lobbies/1");
+    expect(response.status).toBe(200);
+    expect(getLobbyDetails).toHaveBeenCalledWith(1, 42);
+  });
+  it("rejects nonmembers and invalid IDs", async () => {
+    vi.mocked(getLobbyDetails).mockResolvedValue(null);
+    expect((await request(testApp).get("/api/lobbies/1")).status).toBe(404);
+    expect((await request(testApp).get("/api/lobbies/nope")).status).toBe(400);
+    expect((await request(app).get("/api/lobbies/1")).status).toBe(401);
   });
 });

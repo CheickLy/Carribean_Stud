@@ -1,146 +1,160 @@
 .friends-page {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 48px 24px;
   min-height: 100vh;
-  box-sizing: border-box;
+  padding: 42px 24px 80px;
+  background: #f3fafc;
+  color: #133f50;
   font-family: Arial, sans-serif;
-  color: #214457;
+}
+
+.friends-page *,
+.friends-page *::before,
+.friends-page *::after { box-sizing: border-box; }
+
+.friends-page .friends-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.friends-back {
+  display: inline-flex;
+  margin-bottom: 32px;
+  color: #087f9b;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .friends-header {
-  margin-bottom: 32px;
-}
-
-.friends-eyebrow {
-  color: #087f9d;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 50px;
 }
 
 .friends-header h1 {
-  font-size: 42px;
-  margin: 8px 0;
-  color: #214457;
+  margin: 0 0 12px;
+  font-size: clamp(30px, 3.3vw, 44px);
+  font-weight: 750;
+  letter-spacing: -1.6px;
+  line-height: 1.15;
 }
 
-.friends-header p {
-  color: #718a97;
+.friends-header p,
+.friends-card p {
+  color: #65808a;
+  font-size: 15px;
+  line-height: 1.7;
 }
+
+.friends-header p { margin: 0; }
 
 .friends-card {
-  background: #ffffff;
-  border: 1px solid #d5e3e9;
-  border-radius: 14px;
-  padding: 24px;
+  background: #fff;
+  border: 1px solid #d9eaf0;
+  border-radius: 18px;
+  padding: 32px;
   margin-bottom: 24px;
 }
 
 .friends-card h2 {
-  margin-top: 0;
-  font-size: 22px;
-  color: #214457;
+  margin: 0 0 26px;
+  font-size: 20px;
+  line-height: 1.3;
+  letter-spacing: -.5px;
 }
+
+.friends-card > p:last-child { margin-bottom: 0; }
 
 .add-friend-form label {
   display: block;
-  margin-bottom: 10px;
-  font-weight: 600;
+  margin-bottom: 9px;
+  color: #214b5a;
+  font-size: 13px;
+  font-weight: 700;
 }
 
-.add-friend-controls {
-  display: flex;
-  gap: 12px;
-}
+.add-friend-controls { display: flex; gap: 12px; }
 
 .add-friend-controls input {
   flex: 1;
   min-width: 0;
-  padding: 12px;
-  border: 1px solid #d5e3e9;
-  border-radius: 8px;
-  font-family: Arial, sans-serif;
+  height: 48px;
+  padding: 0 15px;
+  border: 1px solid #d9e8ed;
+  border-radius: 10px;
+  background: #fff;
+  color: #133f50;
+  font: inherit;
+  font-size: 14px;
 }
 
-.add-friend-controls input:focus {
-  outline: 2px solid #0782a0;
-  outline-offset: 1px;
-}
+.add-friend-controls input::placeholder { color: #65808a; }
 
-.friends-page button {
-  padding: 11px 18px;
+.friends-page button,
+.friends-primary-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 22px;
   border: none;
-  border-radius: 8px;
-  background: #0782a0;
-  color: white;
-  font-weight: 600;
+  border-radius: 10px;
+  background: #087f9b;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
   cursor: pointer;
 }
 
-.friends-page button:hover:not(:disabled) {
-  background: #066b85;
-}
+.friends-page button:hover:not(:disabled),
+.friends-primary-link:hover { background: #066b83; }
 
-.friends-page button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+.friends-page button:disabled { opacity: .5; cursor: not-allowed; }
 
-.friends-page .secondary-button {
-  background: #e7f5f8;
-  color: #0782a0;
-}
+.friends-page .secondary-button { background: #ddf6fb; color: #087f9b; }
+.friends-page .secondary-button:hover:not(:disabled) { background: #c8edf4; }
 
-.friends-page .secondary-button:hover:not(:disabled) {
-  background: #d5e3e9;
-}
+.friends-page a:not(.friends-primary-link) { color: #087f9b; }
+.friends-back:hover { text-decoration: underline; }
+.friends-page :is(a, button, input):focus-visible { outline: 2px solid #087f9b; outline-offset: 3px; }
 
-.friends-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
+.friends-list { list-style: none; padding: 0; margin: 0; }
 .friend-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 16px 0;
-  border-bottom: 1px solid #d5e3e9;
+  gap: 20px;
+  padding: 20px 0;
+  border-bottom: 1px solid #e8f0f3;
+  font-size: 14px;
+  line-height: 1.6;
 }
-
-.friend-row:last-child {
-  border-bottom: none;
-}
-
-.friend-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.friend-player { display: flex; align-items: center; gap: 12px; }
-.friend-player-avatar { display: grid; place-items: center; width: 42px; height: 42px; flex: none; border-radius: 50%; background: #d8f2f7; color: #087f9d; font-weight: 800; }
-.friend-player strong, .friend-player small { display: block; }
-.friend-player small { margin-top: 3px; color: #718a97; }
-
+.friend-row > span { min-width: 0; overflow-wrap: anywhere; }
+.friend-row:first-child { padding-top: 0; }
+.friend-row:last-child { border-bottom: none; padding-bottom: 0; }
+.friend-actions { display: flex; flex-wrap: wrap; gap: 8px; flex-shrink: 0; }
 .friends-message {
-  padding: 14px;
-  margin-bottom: 24px;
-  border-radius: 8px;
-  background: #e7f5f8;
-  color: #214457;
+  padding: 16px 20px;
+  margin: 0 0 24px;
+  border: 1px solid #b8e5ed;
+  border-radius: 10px;
+  background: #ddf6fb;
+  color: #133f50;
+  line-height: 1.6;
 }
 
-@media (max-width: 600px) {
-  .add-friend-controls,
-  .friend-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .friend-actions {
-    flex-wrap: wrap;
-  }
+@media (max-width: 640px) {
+  .friends-header { flex-direction: column; align-items: flex-start; }
+  .friends-card { padding: 22px; }
+  .add-friend-controls, .friend-row { flex-direction: column; align-items: stretch; }
+  .friend-actions > button { flex: 1; }
 }
+
+.friend-player { display: flex; align-items: center; gap: 12px; min-width: 0; overflow-wrap: anywhere; }
+.friend-player-avatar { display: grid; place-items: center; width: 42px; height: 42px; flex: none; border-radius: 50%; background: #ddf6fb; color: #087f9b; font-weight: 800; }
+.friend-player strong, .friend-player small { display: block; }
+.friend-player small { margin-top: 3px; color: #65808a; }
