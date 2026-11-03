@@ -8,14 +8,15 @@ import Friends from "./pages/player/Friends";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import InviteFriends from "./pages/InviteFriends";
 import Avatar from "./pages/player/Avatar";
+import Profile, { ProfileComingSoon } from "./pages/player/Profile";
+import PlayerHome from "./pages/player/PlayerHome";
+import GameRules from "./pages/GameRules";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Messages from "./pages/player/Messages";
-import { AVATARS } from "./services/users";
 import Home from "./pages/guest/Home";
 import { getCurrentUser, logout } from "./services/auth";
 import "./styles/Navigation.css";
-import "./styles/Profile.css";
 
 type User = { username: string; balance: string; isGuest: boolean; role: string; avatar?: string };
 type Session = { user: User | null; loading: boolean; error: string };
@@ -43,8 +44,9 @@ function Layout() {
       setSession(previous => ({ ...previous, error: error instanceof Error ? error.message : "Could not log out" }));
     }
   }
+  const ownHeader = location.pathname === "/" || location.pathname === "/play" || location.pathname === "/rules" || location.pathname === "/admin" || location.pathname.startsWith("/profile");
   return <>
-    <header className="site-header">
+    {!ownHeader && <header className="site-header">
       <Link className="site-brand" to="/">♠ ReefRoyale</Link>
       <nav aria-label="Main navigation">
         <NavLink to="/" end>Home</NavLink>
@@ -56,7 +58,7 @@ function Layout() {
       <div className="site-account">
         {session.user ? <><Link className="site-profile-link" to="/play" title={session.user.isGuest ? "Guest" : session.user.username}><span className="site-username">{session.user.isGuest ? "Guest" : session.user.username}</span><span className="site-chips"> · {Number(session.user.balance).toLocaleString()} chips</span></Link>{session.user.isGuest && <Link to="/register">Save progress</Link>}<button onClick={() => void signOut()}>Log out</button></> : <Link to="/login">Log in / Play as guest</Link>}
       </div>
-    </header>
+    </header>}
     {session.error && <p className="site-error" role="alert">{session.error}</p>}
     <Outlet context={session} />
   </>;
@@ -76,44 +78,13 @@ function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const destination = location.state?.from;
-  return <LoginSection onRegisterClick={() => navigate("/register", { state: location.state })} onAuthenticated={() => navigate(typeof destination === "string" && destination.startsWith("/") && !destination.startsWith("//") ? destination : "/lobbies", { replace: true })} />;
+  return <LoginSection onRegisterClick={() => navigate("/register", { state: location.state })} onAuthenticated={(role) => navigate(role === "admin" ? "/admin" : typeof destination === "string" && destination.startsWith("/") && !destination.startsWith("//") ? destination : "/play", { replace: true })} />;
 }
 
 function RegistrationPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  return <RegistrationSection onBackToLogin={() => navigate("/login", { state: location.state })} onRegistered={() => navigate(location.state?.from || "/lobbies", { replace: true })} />;
-}
-
-function PlayPage() {
-  const { user } = useOutletContext<Session>();
-  const name = user?.isGuest ? "Guest" : user?.username || "Player";
-  return <div className="profile-page">
-    <main className="profile-container">
-      <Link className="profile-back" to="/lobbies">← Back to tables</Link>
-      <header className="profile-heading">
-        <div><h1>Your corner of the reef.</h1><p>Your chips, your crew, and your next table.</p></div>
-        <span className="profile-badge">{user?.isGuest ? "GUEST PLAYER" : "PLAYER PROFILE"}</span>
-      </header>
-      <section className="profile-summary" aria-label="Player profile">
-        <div className="profile-identity">
-          <span className="profile-avatar" aria-hidden="true">{AVATARS.find(avatar => avatar.id === user?.avatar)?.symbol || name.charAt(0).toUpperCase()}</span>
-          <div><p className="profile-eyebrow">WELCOME BACK</p><h2>{name}</h2><p>{user?.isGuest ? "Playing as a guest" : "Ready for your next table"}</p></div>
-        </div>
-        <div className="profile-balance"><span>Your chip balance</span><strong>{Number(user?.balance || 0).toLocaleString()}</strong><span>Free play chips · No cash value</span></div>
-      </section>
-      {user?.isGuest && <section className="profile-save"><div><h2>Keep your place at the table.</h2><p>Create a free account to save your chips and progress.</p></div><Link to="/register">Save my progress →</Link></section>}
-      {!user?.isGuest && <p><Link className="profile-back" to="/profile/avatar">Change avatar →</Link></p>}
-      <section aria-labelledby="profile-explore">
-        <h2 className="profile-section-title" id="profile-explore">Where to next?</h2>
-        <div className="profile-actions">
-          <Link className="profile-action" to="/lobbies"><span className="profile-action-icon" aria-hidden="true">♠</span><h3>Find a table</h3><p>Explore public lobbies and find your next crew.</p><span className="profile-action-label">Browse tables →</span></Link>
-          <Link className="profile-action" to="/create-lobby"><span className="profile-action-icon" aria-hidden="true">♣</span><h3>Host your own</h3><p>Set the stakes in free chips and make a table your own.</p><span className="profile-action-label">Create a table →</span></Link>
-          <Link className="profile-action" to="/friends"><span className="profile-action-icon" aria-hidden="true">♥</span><h3>Bring your friends</h3><p>Find players, manage requests, and check table invitations.</p><span className="profile-action-label">See your crew →</span></Link>
-        </div>
-      </section>
-    </main>
-  </div>;
+  return <RegistrationSection onBackToLogin={() => navigate("/login", { state: location.state })} onRegistered={() => navigate(location.state?.from || "/play", { replace: true })} />;
 }
 
 const router = createBrowserRouter([{
@@ -124,10 +95,14 @@ const router = createBrowserRouter([{
     { path: "/register", element: <RegistrationPage /> },
     { path: "/forgot-password", element: <ForgotPassword /> },
     { path: "/reset-password", element: <ResetPassword /> },
+    { path: "/rules", element: <GameRules /> },
     { path: "/lobbies", element: <LobbyBrowser /> },
     { element: <RequireSession />, children: [
-      { path: "/play", element: <PlayPage /> },
+      { path: "/play", element: <PlayerHome /> },
       { path: "/friends", element: <Friends /> },
+      { path: "/profile", element: <Profile /> },
+      { path: "/profile/statistics", element: <ProfileComingSoon title="Statistics" /> },
+      { path: "/profile/history", element: <ProfileComingSoon title="Game History" /> },
       { path: "/profile/avatar", element: <Avatar /> },
       { path: "/friends/:friendId/messages", element: <Messages /> },
       { path: "/create-lobby", element: <CreateLobby /> },

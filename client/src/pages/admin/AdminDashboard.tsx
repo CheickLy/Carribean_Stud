@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { listUsers, setUserBanned, type AdminUser } from "../../services/users";
 import "../../styles/AdminDashboard.css";
+import SupportReports from './SupportReports';
+import { getCurrentUser, logout } from '../../services/auth';
+import { useNavigate } from 'react-router-dom';
 
 const admin = {
   initials: "AN",
   name: "Alex North",
   role: "Administrator",
 };
-
-const openReportCount = 7;
 
 const metrics = [
   { label: "Lobbies created", value: "0" },
@@ -17,7 +18,7 @@ const metrics = [
   { label: "Open reports", value: "0" },
 ];
 
-type Section = "home" | "players";
+type Section = "home" | "players" | "reports";
 
 function formatBalance(balance: string) {
   const amount = Number(balance);
@@ -32,6 +33,10 @@ function formatCreatedAt(createdAt: string) {
 }
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
+  const [adminName, setAdminName] = useState('');
+  const [sessionError, setSessionError] = useState('');
+  const [signingOut, setSigningOut] = useState(false);
   const [section, setSection] = useState<Section>("home");
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [query, setQuery] = useState("");
@@ -40,6 +45,23 @@ export default function AdminDashboard() {
   const [actionError, setActionError] = useState("");
   const [pendingUserId, setPendingUserId] = useState<number | null>(null);
   const [lobbyCount, setLobbyCount] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    getCurrentUser().then((user) => {
+      if (!active) return;
+      if (!user || user.role !== 'admin') navigate('/', { replace: true });
+      else setAdminName(user.username);
+    }).catch(() => { if (active) navigate('/', { replace: true }); });
+    return () => { active = false; };
+  }, [navigate]);
+
+  async function handleLogout() {
+    setSigningOut(true);
+    setSessionError('');
+    try { await logout(); navigate('/', { replace: true }); }
+    catch { setSessionError('Could not log out. Please try again.'); setSigningOut(false); }
+  }
 
   useEffect(() => {
     if (section !== "home" && section !== "players") return;
@@ -128,6 +150,8 @@ export default function AdminDashboard() {
       )
     : users;
 
+  if (!adminName) return <main className="admin-dashboard"><p>Loading session...</p></main>;
+
   return (
     <div className="admin-dashboard">
       <aside className="admin-sidebar">
@@ -156,23 +180,24 @@ export default function AdminDashboard() {
           >
             Players
           </button>
-          <button type="button" className="admin-nav-item">
+          <button type="button" className={`admin-nav-item${section === "reports" ? " is-active" : ""}`} onClick={() => setSection("reports")}>
             Reports
-            <span className="admin-nav-badge">{openReportCount}</span>
           </button>
         </nav>
 
         <div className="admin-identity">
-          <span className="admin-avatar">{admin.initials}</span>
+          <span className="admin-avatar">{adminName.slice(0, 2).toUpperCase()}</span>
           <span>
-            <strong>{admin.name}</strong>
+            <strong>{adminName}</strong>
             <small>{admin.role}</small>
           </span>
         </div>
+        <button type="button" className="admin-nav-item" disabled={signingOut} onClick={handleLogout}>{signingOut ? 'Logging out...' : 'Log out'}</button>
+        {sessionError && <p role="alert">{sessionError}</p>}
       </aside>
 
       <main className="admin-main">
-        {section === "home" ? (
+        {section === "reports" ? <SupportReports /> : section === "home" ? (
           <>
             <header className="admin-header">
               <h1>Admin Dashboard</h1>

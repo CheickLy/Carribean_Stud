@@ -6,7 +6,8 @@ export class SupportTicket extends Model {
   declare userId: number;
   declare subject: string;
   declare message: string;
-  declare status: string;
+  declare status: 'open' | 'in_progress' | 'resolved';
+  declare resolutionNote: string | null;
   declare createdAt: Date;
 }
 
@@ -32,6 +33,10 @@ SupportTicket.init(
     status: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    resolutionNote: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
   },
   {

@@ -5,6 +5,7 @@ import {
   setUserAvatar,
   setUserBanned,
   supportedAvatars,
+  validAvatar,
 } from './users.service.js';
 
 export const usersRouter = Router();
@@ -22,9 +23,7 @@ usersRouter.patch('/me/avatar', async (req, res, next) => {
     return;
   }
 
-  if (typeof avatar !== 'string' || !supportedAvatars.includes(
-    avatar as (typeof supportedAvatars)[number]
-  )) {
+  if (typeof avatar !== 'string' || !validAvatar(avatar)) {
     res.status(400).json({ error: 'Choose a supported avatar' });
     return;
   }

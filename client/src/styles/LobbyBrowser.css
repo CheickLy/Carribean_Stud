@@ -221,3 +221,6 @@
     flex-direction: column;
   }
 }
+.reef-browser-controls { display:flex; flex-wrap:wrap; gap:12px; align-items:end; margin:18px 0; }
+.reef-browser-controls label { display:flex; gap:6px; align-items:center; font-size:13px; }
+.reef-browser-controls select { padding:7px; border:1px solid #a8cbd3; border-radius:6px; background:white; }
