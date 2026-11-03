@@ -65,4 +65,33 @@ describe('admin support tickets', () => {
     expect(saved.body.status).toBe('resolved');
     expect(saved.body.resolutionNote).toBe('Fixed the table');
   });
+
+  it('lists a ticket with no player and returns 404 when the update cannot be reread', async () => {
+    const agent = request.agent(app);
+    expect((await agent.post('/api/auth/login').send({ email: account.email, password: 'Password123!' })).status).toBe(200);
+    const ticket = {
+      ticketId: 8, subject: 'Missing player', message: 'Gone', status: 'open',
+      resolutionNote: null, createdAt: new Date('2026-10-30T12:00:00Z'),
+      get: () => null,
+      update: vi.fn().mockResolvedValue(undefined),
+    };
+    vi.spyOn(SupportTicket, 'findAll').mockResolvedValue([ticket] as unknown as SupportTicket[]);
+    const list = await agent.get('/api/support-tickets');
+    expect(list.status).toBe(200);
+    expect(list.body[0].player).toBeNull();
+
+    vi.spyOn(SupportTicket, 'findByPk')
+      .mockResolvedValueOnce(ticket as unknown as SupportTicket)
+      .mockResolvedValueOnce(null);
+    const saved = await agent.patch('/api/support-tickets/8').send({ status: 'open', resolutionNote: null });
+    expect(saved.status).toBe(404);
+  });
+
+  it('forwards a ticket list failure', async () => {
+    const agent = request.agent(app);
+    expect((await agent.post('/api/auth/login').send({ email: account.email, password: 'Password123!' })).status).toBe(200);
+    vi.spyOn(SupportTicket, 'findAll').mockRejectedValue(new Error('db down'));
+
+    expect((await agent.get('/api/support-tickets')).status).toBe(500);
+  });
 });

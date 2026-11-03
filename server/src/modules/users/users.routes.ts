@@ -1,10 +1,13 @@
 import { Router } from 'express';
 import { User } from '../../models/user.js';
 import {
+  deleteUserAccount,
   listUsers,
   setUserAvatar,
   setUserBanned,
   supportedAvatars,
+  updateUserAccount,
+  UserAccountError,
   validAvatar,
 } from './users.service.js';
 
@@ -78,6 +81,63 @@ usersRouter.get('/', async (_req, res, next) => {
     res.json(users);
   } catch (error) {
     next(error);
+  }
+});
+
+function accountError(error: unknown, res: { status: (code: number) => { json: (body: unknown) => void } }, next: (error: unknown) => void) {
+  if (error instanceof UserAccountError) {
+    res.status(error.status).json({ error: error.message });
+    return;
+  }
+  next(error);
+}
+
+usersRouter.patch('/:userId', async (req, res, next) => {
+  const actorId = req.session?.userId;
+  const userId = Number(req.params.userId);
+  const { username, email } = req.body ?? {};
+
+  if (
+    !actorId ||
+    !Number.isSafeInteger(userId) ||
+    userId <= 0 ||
+    typeof username !== 'string' ||
+    typeof email !== 'string'
+  ) {
+    res.status(400).json({ error: 'A user id, username, and email are required' });
+    return;
+  }
+
+  try {
+    const user = await updateUserAccount(actorId, userId, { username, email });
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+    res.json(user);
+  } catch (error) {
+    accountError(error, res, next);
+  }
+});
+
+usersRouter.delete('/:userId', async (req, res, next) => {
+  const actorId = req.session?.userId;
+  const userId = Number(req.params.userId);
+
+  if (!actorId || !Number.isSafeInteger(userId) || userId <= 0) {
+    res.status(400).json({ error: 'A user id is required' });
+    return;
+  }
+
+  try {
+    const removed = await deleteUserAccount(actorId, userId);
+    if (!removed) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+    res.status(204).end();
+  } catch (error) {
+    accountError(error, res, next);
   }
 });
 

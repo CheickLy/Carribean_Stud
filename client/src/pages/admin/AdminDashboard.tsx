@@ -425,41 +425,45 @@ export default function AdminDashboard() {
                             {formatCreatedAt(user.createdAt)}
                           </td>
                           <td className="is-action">
-                            <div className="admin-row-actions">
-                              {user.role !== "admin" && user.userId !== adminId && (
+                            {user.userId === adminId ? (
+                              <span className="admin-dash">—</span>
+                            ) : (
+                              <div className="admin-row-actions">
+                                {user.role !== "admin" && (
+                                  <button
+                                    type="button"
+                                    className="admin-ban-button"
+                                    onClick={() => openEdit(user)}
+                                  >
+                                    Edit
+                                  </button>
+                                )}
                                 <button
                                   type="button"
-                                  className="admin-ban-button"
-                                  onClick={() => openEdit(user)}
+                                  className={`admin-ban-button${user.isBanned ? " is-unban" : ""}`}
+                                  disabled={pendingUserId === user.userId}
+                                  onClick={() => handleBanToggle(user)}
                                 >
-                                  Edit
+                                  {pendingUserId === user.userId
+                                    ? "Saving"
+                                    : user.isBanned
+                                      ? "Unban"
+                                      : "Ban"}
                                 </button>
-                              )}
-                              <button
-                                type="button"
-                                className={`admin-ban-button${user.isBanned ? " is-unban" : ""}`}
-                                disabled={pendingUserId === user.userId}
-                                onClick={() => handleBanToggle(user)}
-                              >
-                                {pendingUserId === user.userId
-                                  ? "Saving"
-                                  : user.isBanned
-                                    ? "Unban"
-                                    : "Ban"}
-                              </button>
-                              {user.role !== "admin" && user.userId !== adminId && (
-                                <button
-                                  type="button"
-                                  className="admin-ban-button is-unban"
-                                  onClick={() => {
-                                    setDeleteError("");
-                                    setDeleteUser(user);
-                                  }}
-                                >
-                                  Delete
-                                </button>
-                              )}
-                            </div>
+                                {user.role !== "admin" && (
+                                  <button
+                                    type="button"
+                                    className="admin-ban-button is-unban"
+                                    onClick={() => {
+                                      setDeleteError("");
+                                      setDeleteUser(user);
+                                    }}
+                                  >
+                                    Delete
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </td>
                         </tr>
                       ))}

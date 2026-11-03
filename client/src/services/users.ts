@@ -48,6 +48,35 @@ export async function setUserBanned(
   return data;
 }
 
+export async function updateUserAccount(
+  userId: number,
+  username: string,
+  email: string
+): Promise<AdminUser> {
+  const response = await fetch(`${API_URL}/${userId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ username, email }),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Could not update account");
+  }
+  return data;
+}
+
+export async function deleteUserAccount(userId: number): Promise<void> {
+  const response = await fetch(`${API_URL}/${userId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || "Could not delete account");
+  }
+}
+
 export async function listUsers(): Promise<AdminUser[]> {
   const response = await fetch(API_URL, { credentials: "include" });
   const data = await response.json();

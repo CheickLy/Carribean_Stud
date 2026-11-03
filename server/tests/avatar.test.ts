@@ -4,6 +4,7 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { User } from '../src/models/user.js';
 import { usersRouter } from '../src/modules/users/users.routes.js';
+import { setUserAvatar } from '../src/modules/users/users.service.js';
 
 function makeApp(userId?: number) {
   const app = express();
@@ -97,5 +98,12 @@ describe('Change avatar (S18)', () => {
     expect(list.status).toBe(403);
     expect(list.body.error).toBe('Admin access required.');
     expect(findAll).not.toHaveBeenCalled();
+  });
+
+  it('returns null for an invalid avatar and undefined when the user is gone', async () => {
+    expect(await setUserAvatar(7, 'custom-picture')).toBeNull();
+    vi.spyOn(User, 'findByPk').mockResolvedValueOnce(null);
+
+    expect(await setUserAvatar(7, 'wave')).toBeUndefined();
   });
 });
