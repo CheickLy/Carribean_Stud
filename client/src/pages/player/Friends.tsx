@@ -121,12 +121,14 @@ setInvitations(invitationsData);
   }
 }
 
-  async function handleRemove(friendshipId: number) {
+  async function handleRemove(friend: Friend) {
+    if (busy || !window.confirm(`Remove ${friend.username} from your friends? You will be removed from each other's friends lists. Your table memberships will stay the same.`)) return;
     setMessage("");
     setBusy(true);
 
     try {
-      await removeFriendship(friendshipId);
+      await removeFriendship(friend.friendshipId);
+      setFriends(previous => previous.filter(item => item.friendshipId !== friend.friendshipId));
       setMessage("Friend removed successfully.");
       await loadFriends();
     } catch (error) {
@@ -286,7 +288,7 @@ setInvitations(invitationsData);
                   type="button"
                   className="secondary-button"
                   disabled={busy}
-                  onClick={() => handleRemove(friend.friendshipId)}
+                  onClick={() => handleRemove(friend)}
                 >
                   Remove Friend
                 </button>

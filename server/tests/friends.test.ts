@@ -13,6 +13,7 @@ vi.mock('../src/models/friendship.js', () => ({
     findOne: vi.fn(),
     findAll: vi.fn(),
     create: vi.fn(),
+    destroy: vi.fn(),
   },
 }));
 
@@ -151,27 +152,18 @@ describe('Friends CRUD', () => {
     });
   });
 
-  it('should successfully remove a friend', async () => {
-    const friendship = {
-      friendshipId: 1,
-      userId: 1,
-      friendId: 2,
-      status: 'accepted',
-      destroy: vi.fn().mockResolvedValue(undefined),
-    };
+  it('removes only an accepted friendship belonging to the signed-in player', async () => {
+    vi.mocked(Friendship.destroy).mockResolvedValue(1);
+    expect(await removeFriendship(1, 7)).toEqual({ message: 'Friendship removed successfully.' });
+    expect(Friendship.destroy).toHaveBeenCalledWith({ where: {
+      friendshipId: 7, status: 'accepted', [Op.or]: [{ userId: 1 }, { friendId: 1 }],
+    } });
+  });
 
-    vi.mocked(Friendship.findOne).mockResolvedValue(
-      friendship as unknown as Friendship
-    );
-
-    const result = await removeFriendship(1, 1);
-
-    expect(Friendship.findOne).toHaveBeenCalledOnce();
-    expect(friendship.destroy).toHaveBeenCalledOnce();
-
-    expect(result).toEqual({
-      message: 'Friendship removed successfully.',
-    });
+  it('makes repeated or concurrent removals harmless', async () => {
+    vi.mocked(Friendship.destroy).mockResolvedValueOnce(1).mockResolvedValue(0);
+    const results = await Promise.all([removeFriendship(1, 7), removeFriendship(2, 7), removeFriendship(1, 7)]);
+    expect(results).toEqual(Array(3).fill({ message: 'Friendship removed successfully.' }));
   });
 
   it('should retrieve a users accepted friends', async () => {
@@ -256,21 +248,11 @@ expect(result).toEqual([
     },
   });
 });
-it('should prevent users from deleting another users friendship', async () => {
-  vi.mocked(Friendship.findOne).mockResolvedValue(null);
-
-  await expect(
-    removeFriendship(3, 1)
-  ).rejects.toThrow('Friendship not found.');
-
-  expect(Friendship.findOne).toHaveBeenCalledWith({
-    where: {
-      friendshipId: 1,
-      [Op.or]: [
-        { userId: 3 },
-        { friendId: 3 },
-      ],
-    },
-  });
+it('scopes removal to the caller even when the ID belongs to someone else', async () => {
+  vi.mocked(Friendship.destroy).mockResolvedValue(0);
+  await expect(removeFriendship(3, 1)).resolves.toEqual({ message: 'Friendship removed successfully.' });
+  expect(Friendship.destroy).toHaveBeenCalledWith({ where: {
+    friendshipId: 1, status: 'accepted', [Op.or]: [{ userId: 3 }, { friendId: 3 }],
+  } });
 });
 });
