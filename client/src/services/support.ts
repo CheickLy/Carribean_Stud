@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3001/api/support-tickets';
+const API_URL = '/api/support-tickets';
 
 export type TicketStatus = 'open' | 'in_progress' | 'resolved';
 

@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3001/api/friends";
+const API_URL = "/api/friends";
 
 export interface Friend {
     friendshipId: number;

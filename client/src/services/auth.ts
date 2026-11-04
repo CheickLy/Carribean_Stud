@@ -1,5 +1,5 @@
 export async function login(email: string, password: string) {
-  const response = await fetch("http://localhost:3001/api/auth/login", {
+  const response = await fetch("/api/auth/login", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -24,7 +24,7 @@ export async function register(
   password: string
 ) {
   const response = await fetch(
-    'http://localhost:3001/api/auth/register',
+    '/api/auth/register',
     {
       method: 'POST',
       headers: {
@@ -50,7 +50,7 @@ export async function register(
 
 
 export async function startGuest() {
-  const response = await fetch("http://localhost:3001/api/auth/guest", {
+  const response = await fetch("/api/auth/guest", {
     method: "POST", credentials: "include"
   });
   const data = await response.json();
@@ -59,7 +59,7 @@ export async function startGuest() {
 }
 
 export async function getCurrentUser() {
-  const response = await fetch("http://localhost:3001/api/auth/me", {
+  const response = await fetch("/api/auth/me", {
     credentials: "include"
   });
   if (response.status === 401) return null;
@@ -69,7 +69,7 @@ export async function getCurrentUser() {
 }
 
 export async function logout() {
-  const response = await fetch("http://localhost:3001/api/auth/logout", {
+  const response = await fetch("/api/auth/logout", {
     method: "POST", credentials: "include"
   });
   if (!response.ok) throw new Error("Could not log out");

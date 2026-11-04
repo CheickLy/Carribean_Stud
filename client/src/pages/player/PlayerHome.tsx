@@ -23,7 +23,7 @@ export default function PlayerHome() {
       if (!current) navigate("/", { replace: true });
       else setUser(current);
     }).catch((problem) => { if (active) setError(problem instanceof Error ? problem.message : "Could not load your account."); });
-    fetch("http://localhost:3001/api/lobbies").then(async (response) => {
+    fetch("/api/lobbies").then(async (response) => {
       if (!response.ok) throw new Error("Could not load tables.");
       return response.json() as Promise<Table[]>;
     }).then((list) => { if (active) setTables(list); })

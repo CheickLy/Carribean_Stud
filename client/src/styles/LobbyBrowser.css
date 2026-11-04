@@ -221,6 +221,52 @@
     flex-direction: column;
   }
 }
-.reef-browser-controls { display:flex; flex-wrap:wrap; gap:12px; align-items:end; margin:18px 0; }
-.reef-browser-controls label { display:flex; gap:6px; align-items:center; font-size:13px; }
-.reef-browser-controls select { padding:7px; border:1px solid #a8cbd3; border-radius:6px; background:white; }
+.reef-browser-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.reef-browser-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.reef-browser-controls select,
+.reef-browser-controls button {
+  padding: 10px 12px;
+  border: 1px solid #b6d3dd;
+  border-radius: 8px;
+  background: white;
+  color: #133f50;
+  font: inherit;
+}
+
+.reef-browser-controls button { cursor: pointer; }
+.reef-browser-controls .reef-browser-checkbox {
+  flex-direction: row;
+  align-items: center;
+  padding: 10px 0;
+}
+.reef-browser-meta {
+  color: #65808a;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.reef-browser-card-footer button:not(:disabled) { background: #087f9b; color: white; cursor: pointer; }
+.reef-join-dialog::backdrop { background: #133f5080; }
+.reef-join-dialog { border: 1px solid #b6d3dd; color: #133f50; background: white; border-radius: 18px; padding: 28px; max-width: 460px; width: 100%; box-shadow: 0 16px 60px #133f5030; }
+.reef-join-dialog p { line-height: 1.6; }
+.reef-join-dialog label { display: grid; gap: 8px; }
+.reef-join-dialog input { width: 100%; padding: 12px; border: 1px solid #b6d3dd; border-radius: 8px; font: inherit; }
+.reef-join-actions { display: flex; justify-content: end; gap: 12px; margin-top: 24px; }
+.reef-join-actions button { padding: 12px 18px; border: 1px solid #087f9b; border-radius: 8px; background: white; color: #087f9b; cursor: pointer; }
+.reef-join-actions button[type=submit] { background: #087f9b; color: white; }
+.reef-join-dialog [role=alert] { color: #b42318; }

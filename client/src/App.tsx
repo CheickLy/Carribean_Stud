@@ -6,7 +6,7 @@ import CreateLobby from "./pages/CreateLobby";
 import LobbyBrowser from "./pages/LobbyBrowser";
 import Friends from "./pages/player/Friends";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import InviteFriends from "./pages/InviteFriends";
+import LobbyRoom from "./pages/LobbyRoom";
 import Avatar from "./pages/player/Avatar";
 import Profile, { ProfileComingSoon } from "./pages/player/Profile";
 import PlayerHome from "./pages/player/PlayerHome";
@@ -106,7 +106,8 @@ const router = createBrowserRouter([{
       { path: "/profile/avatar", element: <Avatar /> },
       { path: "/friends/:friendId/messages", element: <Messages /> },
       { path: "/create-lobby", element: <CreateLobby /> },
-      { path: "/lobbies/:lobbyId/invite", element: <InviteFriends /> },
+      { path: "/lobbies/:lobbyId", element: <LobbyRoom /> },
+      { path: "/lobbies/:lobbyId/invite", element: <LobbyRoom /> },
     ] },
     { element: <RequireSession admin />, children: [{ path: "/admin", element: <AdminDashboard /> }] },
     { path: "*", element: <main><h1>Page not found</h1><Link to="/">Back to home</Link></main> },

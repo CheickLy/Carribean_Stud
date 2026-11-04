@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3001/api/users";
+const API_URL = "/api/users";
 
 export const AVATARS = [
   { id: "wave", label: "Ocean Wave", symbol: "🌊" },

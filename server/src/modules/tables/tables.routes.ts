@@ -1,3 +1,4 @@
+import { joinLobby, JoinError } from "./join.service.js";
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { User } from "../../models/user.js";
@@ -92,6 +93,22 @@ tablesRouter.post("/", async (req, res, next) => {
 
     res.status(201).json(lobby);
   } catch (error) {
+    next(error);
+  }
+});
+
+// Session identity is authoritative; client-supplied user IDs and buy-in amounts are ignored.
+tablesRouter.post("/:lobbyId/join", async (req, res, next) => {
+  const userId = req.session?.userId;
+  if (!Number.isSafeInteger(userId) || !userId || userId <= 0) { res.status(401).json({ error: "Please sign in to join a table." }); return; }
+  const lobbyId = Number(req.params.lobbyId);
+  const { passcode } = req.body ?? {};
+  if (!Number.isSafeInteger(lobbyId) || lobbyId <= 0 || (passcode !== undefined && (typeof passcode !== "string" || passcode.length > 72))) {
+    res.status(400).json({ error: "A valid table ID and password are required." }); return;
+  }
+  try { res.json(await joinLobby(lobbyId, userId, passcode)); }
+  catch (error) {
+    if (error instanceof JoinError) { res.status(error.status).json({ error: error.message }); return; }
     next(error);
   }
 });

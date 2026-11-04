@@ -10,7 +10,7 @@ export default function ForgotPassword() {
   async function submit(event: FormEvent) {
     event.preventDefault();
     // ask the server to create a short-lived reset link
-    const response = await fetch('http://localhost:3001/api/auth/forgot-password', {
+    const response = await fetch('/api/auth/forgot-password', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }),
     });
     const data = await response.json();
