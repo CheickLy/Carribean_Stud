@@ -1,14 +1,17 @@
+import { getCurrentUser } from "../src/services/auth";
 import { beforeEach, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import LobbyRoom from '../src/pages/LobbyRoom';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import LobbyBrowser from '../src/pages/LobbyBrowser';
+vi.mock('../src/services/auth', () => ({ getCurrentUser: vi.fn() }));
 const navigate = vi.fn();
 vi.mock('react-router-dom', async original => ({ ...await original<typeof import('react-router-dom')>(), useNavigate: () => navigate }));
 const lobby = { lobbyId: 1, hostId: 10, name: 'Reef table', creator: 'Marina', createdAt: new Date().toISOString(), startingMoney: '200', minBet: 10, maxBet: 100, maxPlayers: 2, seatsAvailable: 1, isPrivate: false, botsEnabled: false };
 const response = (data: unknown, status = 200) => ({ ok: status < 400, status, json: async () => data });
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(getCurrentUser).mockResolvedValue(null);
   HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', ''); };
   HTMLDialogElement.prototype.close = function () { this.removeAttribute('open'); };
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response([lobby])));
@@ -49,4 +52,15 @@ it('shows a reserved seat while waiting for the next hand', async () => {
   expect(await screen.findByText('Your seat is reserved. You will join the next hand.')).toBeTruthy();
   expect(screen.getByText('Hand in progress')).toBeTruthy();
   expect(screen.getByText('Waiting for next hand')).toBeTruthy();
+});
+
+it.each([
+  [null, '/'],
+  [{ role: 'player', isGuest: false }, '/play'],
+  [{ role: 'player', isGuest: true }, '/play'],
+  [{ role: 'admin' }, '/admin'],
+])('takes Back to the appropriate home for %j', async (user, destination) => {
+  vi.mocked(getCurrentUser).mockResolvedValue(user);
+  show();
+  await waitFor(() => expect(screen.getByRole('link', { name: '← Back' }).getAttribute('href')).toBe(destination));
 });

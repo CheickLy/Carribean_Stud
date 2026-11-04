@@ -90,7 +90,7 @@ export default function LobbyRoom() {
         </section>
         <aside className="room-card room-settings"><span className="room-eyebrow">THE GAME PLAN</span><h2>Table settings</h2>
           <dl><div><dt>Starting chips</dt><dd>{Number(room.startingMoney).toLocaleString()}</dd></div><div><dt>Bet range</dt><dd>{Number(room.minBet).toLocaleString()}–{Number(room.maxBet).toLocaleString()} chips</dd></div><div><dt>Available seats</dt><dd>{room.seatsAvailable}</dd></div><div><dt>Bots</dt><dd>{room.botsEnabled ? "Allowed" : "Off"}</dd></div></dl>
-          <button className="room-primary room-start" disabled>Start game</button><p className="room-note">Gameplay is coming soon. You can invite your crew and gather at the table.</p>
+          <Link className="room-primary room-start room-preview-link" to={`/lobbies/${lobbyId}/game-preview`} state={{ tableName: room.name }}>Preview game table →</Link><p className="room-note">Explore the interactive game mock with sample hands and players. Live gameplay is coming next.</p>
         </aside>
       </div>
     </>}

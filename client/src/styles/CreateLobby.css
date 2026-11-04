@@ -2,9 +2,9 @@
 .reef-create-page {
   min-height: 100vh;
   padding: 42px 24px 80px;
-  background: #f3fafc;
-  color: #133f50;
-  font-family: Arial, sans-serif;
+  background: var(--color-page);
+  color: var(--color-text);
+  font-family: var(--font-family);
 }
 
 .reef-create-page *,
@@ -14,7 +14,7 @@
 }
 
 .reef-create-container {
-  max-width: 1200px;
+  max-width: var(--content-width);
   margin: 0 auto;
 }
 
@@ -22,7 +22,7 @@
   display: inline-flex;
   gap: 9px;
   align-items: center;
-  color: #087f9b;
+  color: var(--color-primary);
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
@@ -52,7 +52,7 @@
 
 .reef-page-intro p {
   margin: 0;
-  color: #65808a;
+  color: var(--color-muted);
   font-size: 15px;
   line-height: 1.7;
 }
@@ -62,8 +62,8 @@
   padding: 10px 15px;
   border: 1px solid #b8e5ed;
   border-radius: 100px;
-  background: #ddf6fb;
-  color: #087f9b;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 1.1px;
@@ -77,7 +77,7 @@
 }
 
 .reef-settings-card {
-  background: #fff;
+  background: var(--color-surface);
   border: 1px solid #e0edf0;
   border-radius: 24px;
   box-shadow: 0 12px 35px rgba(19, 63, 80, 0.035);
@@ -106,16 +106,16 @@
   align-items: center;
   width: 38px;
   height: 38px;
-  border-radius: 12px;
-  background: #ddf6fb;
-  color: #087f9b;
+  border-radius: var(--radius-small);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
   font-size: 13px;
   font-weight: 800;
 }
 
 .reef-section-heading h2 {
   margin: 0 0 6px;
-  color: #133f50;
+  color: var(--color-text);
   font-size: 20px;
   line-height: 1.3;
   letter-spacing: -0.5px;
@@ -123,7 +123,7 @@
 
 .reef-section-heading p {
   margin: 0;
-  color: #65808a;
+  color: var(--color-muted);
   font-size: 13px;
   line-height: 1.6;
 }
@@ -136,7 +136,7 @@
 
 .reef-field label,
 .reef-seats-block > label {
-  color: #214b5a;
+  color: var(--color-text);
   font-size: 13px;
   font-weight: 700;
 }
@@ -145,10 +145,10 @@
   width: 100%;
   height: 48px;
   padding: 0 15px;
-  border: 1px solid #d9e8ed;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
-  background: #fff;
-  color: #133f50;
+  background: var(--color-surface);
+  color: var(--color-text);
   font: inherit;
   font-size: 14px;
   outline: none;
@@ -160,12 +160,12 @@
 }
 
 .reef-field input:focus {
-  border-color: #087f9b;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(8, 127, 155, 0.1);
 }
 
 .reef-help {
-  color: #78919a;
+  color: var(--color-muted);
   font-size: 12px;
   line-height: 1.5;
 }
@@ -182,12 +182,12 @@
   gap: 12px;
   min-width: 0;
   padding: 17px 14px;
-  border: 1px solid #d9e8ed;
+  border: 1px solid var(--color-border);
   border-radius: 13px;
-  background: #fff;
+  background: var(--color-surface);
   text-align: left;
   cursor: pointer;
-  color: #133f50;
+  color: var(--color-text);
   font: inherit;
   transition: background 0.15s, border-color 0.15s;
 }
@@ -197,8 +197,8 @@
 }
 
 .reef-visibility-option.is-selected {
-  background: #ddf6fb;
-  border-color: #087f9b;
+  background: var(--color-primary-soft);
+  border-color: var(--color-primary);
 }
 
 .reef-visibility-symbol {
@@ -209,7 +209,7 @@
   height: 32px;
   border-radius: 9px;
   background: #eaf5f7;
-  color: #087f9b;
+  color: var(--color-primary);
   font-size: 21px;
 }
 
@@ -226,7 +226,7 @@
 }
 
 .reef-option-content small {
-  color: #65808a;
+  color: var(--color-muted);
   font-size: 11px;
   line-height: 1.4;
 }
@@ -240,8 +240,8 @@
 }
 
 .reef-visibility-option.is-selected .reef-radio-dot {
-  border: 5px solid #087f9b;
-  background: #fff;
+  border: 5px solid var(--color-primary);
+  background: var(--color-surface);
 }
 
 .reef-password-field {
@@ -265,19 +265,19 @@
 .reef-seat-buttons button {
   width: 42px;
   height: 42px;
-  border: 1px solid #d9e8ed;
+  border: 1px solid var(--color-border);
   border-radius: 9px;
-  background: #fff;
-  color: #214b5a;
+  background: var(--color-surface);
+  color: var(--color-text);
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
 }
 
 .reef-seat-buttons button.is-selected {
-  background: #087f9b;
-  color: #fff;
-  border-color: #087f9b;
+  background: var(--color-primary);
+  color: var(--color-surface);
+  border-color: var(--color-primary);
 }
 
 .reef-bots-block {
@@ -299,12 +299,12 @@
 }
 
 .reef-switch-text strong {
-  color: #214b5a;
+  color: var(--color-text);
   font-size: 13px;
 }
 
 .reef-switch-text small {
-  color: #65808a;
+  color: var(--color-muted);
   font-size: 12px;
   line-height: 1.5;
 }
@@ -333,14 +333,14 @@
   left: 3px;
   width: 18px;
   height: 18px;
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 50%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   transition: transform 0.2s;
 }
 
 .reef-switch-input:checked + .reef-switch-track {
-  background: #087f9b;
+  background: var(--color-primary);
 }
 
 .reef-switch-input:checked + .reef-switch-track::after {
@@ -379,7 +379,7 @@
 .reef-increase-panel {
   margin-top: 24px;
   padding: 20px;
-  border: 1px solid #d9e8ed;
+  border: 1px solid var(--color-border);
   border-radius: 13px;
   background: #f8fcfd;
 }
@@ -393,7 +393,7 @@
 
 .reef-increase-note {
   margin: 13px 0 0;
-  color: #65808a;
+  color: var(--color-muted);
   font-size: 12px;
   line-height: 1.6;
 }
@@ -406,15 +406,15 @@
 
 .reef-preview-card {
   overflow: hidden;
-  border: 1px solid #d9e8ed;
-  border-radius: 20px;
-  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
   box-shadow: 0 12px 35px rgba(19, 63, 80, 0.045);
 }
 
 .reef-preview-top {
   padding: 25px 26px;
-  background: #ddf6fb;
+  background: var(--color-primary-soft);
   border-bottom: 1px solid #c7e8ef;
 }
 
@@ -427,7 +427,7 @@
 }
 
 .reef-preview-label {
-  color: #087f9b;
+  color: var(--color-primary);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 1.1px;
@@ -435,9 +435,9 @@
 
 .reef-preview-status {
   padding: 6px 10px;
-  border-radius: 20px;
-  background: #fff;
-  color: #087f9b;
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  color: var(--color-primary);
   font-size: 11px;
   font-weight: 700;
 }
@@ -452,7 +452,7 @@
 
 .reef-preview-top p {
   margin: 0;
-  color: #65808a;
+  color: var(--color-muted);
   font-size: 13px;
 }
 
@@ -473,12 +473,12 @@
 }
 
 .reef-preview-detail > span {
-  color: #78919a;
+  color: var(--color-muted);
   font-size: 12px;
 }
 
 .reef-preview-detail strong {
-  color: #133f50;
+  color: var(--color-text);
   font-size: 14px;
   font-weight: 700;
   overflow-wrap: anywhere;
@@ -495,8 +495,8 @@
   padding: 13px 17px;
   border: 0;
   border-radius: 11px;
-  background: #087f9b;
-  color: #fff;
+  background: var(--color-primary);
+  color: var(--color-surface);
   font: inherit;
   font-size: 14px;
   font-weight: 700;
@@ -505,7 +505,7 @@
 }
 
 .reef-create-button:hover {
-  background: #066b83;
+  background: var(--color-primary-hover);
 }
 
 .reef-create-button span {
@@ -514,7 +514,7 @@
 
 .reef-preview-footnote {
   margin: 13px 0 0;
-  color: #78919a;
+  color: var(--color-muted);
   font-size: 11px;
   line-height: 1.6;
   text-align: center;
@@ -526,8 +526,8 @@
   gap: 14px;
   padding: 23px;
   border: 1px solid #efe5d0;
-  border-radius: 16px;
-  background: #fff9ec;
+  border-radius: var(--radius-card);
+  background: var(--color-cream);
 }
 
 .reef-tip-icon {
@@ -551,7 +551,7 @@
 .reef-cancel-link {
   align-self: center;
   padding: 10px;
-  color: #65808a;
+  color: var(--color-muted);
   text-decoration: none;
   font-size: 13px;
   font-weight: 600;

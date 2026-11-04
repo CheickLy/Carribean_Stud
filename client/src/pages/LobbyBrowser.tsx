@@ -1,3 +1,4 @@
+import { getCurrentUser } from "../services/auth";
 import { useEffect, useRef, useState } from "react";
 import "../styles/LobbyBrowser.css";
 import { Link, useNavigate } from "react-router-dom";
@@ -6,6 +7,14 @@ import { selectLobbies, type BrowserLobby } from "./lobbyBrowserControls";
 
 export default function LobbyBrowser() {
   const navigate = useNavigate();
+  const [backPath, setBackPath] = useState("/");
+  useEffect(() => {
+    let active = true;
+    getCurrentUser().then(user => {
+      if (active && user) setBackPath(user.role === "admin" ? "/admin" : "/play");
+    }).catch(() => {});
+    return () => { active = false; };
+  }, []);
   const joinDialog = useRef<HTMLDialogElement>(null);
   const [joining, setJoining] = useState<number | null>(null);
   const [selected, setSelected] = useState<BrowserLobby | null>(null);
@@ -94,7 +103,7 @@ export default function LobbyBrowser() {
       <main className="reef-browser-container">
         <header className="reef-browser-header">
           <div>
-            <Link to="/" className="reef-browser-back">
+            <Link to={backPath} className="reef-browser-back">
               ← Back
             </Link>
 
