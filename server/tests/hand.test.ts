@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { Card } from "../src/game/card.js";
-import { compareHands, Hand } from "../src/game/hand.js";
+import { Card } from "../src/modules/game/card.js";
+import { compareHands, Hand } from "../src/modules/game/hand.js";
 
 const categories = [
   { name: "high card", strength: 0, cards: ["2C", "5D", "7H", "9S", "JC"] },

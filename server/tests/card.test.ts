@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Card } from "../src/game/card.js";
+import { Card } from "../src/modules/game/card.js";
 
 describe("Card text", () => {
   it.each([

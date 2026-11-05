@@ -12,6 +12,7 @@ import {authRouter} from './modules/auth/auth.routes.js';
 import { invitationsRouter } from "./modules/invitations/invitations.routes.js";
 import { messagesRouter } from './modules/messages/messages.routes.js';
 import { supportRouter } from './modules/support/support.routes.js';
+import { gameRouter } from './modules/game/game.routes.js';
 
 const SequelizeStore = connectionSessionSequelize(session.Store);
 
@@ -56,4 +57,5 @@ app.use('/api/lobbies', tablesRouter);
 app.use("/api/invitations", invitationsRouter);
 app.use('/api/messages', messagesRouter);
 app.use('/api/support-tickets', supportRouter);
+app.use('/api/game', gameRouter);
 void sessionStore.sync();
