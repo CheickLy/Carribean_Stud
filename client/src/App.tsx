@@ -6,7 +6,7 @@ import CreateLobby from "./pages/CreateLobby";
 import LobbyBrowser from "./pages/LobbyBrowser";
 import Gameplay from "./pages/Gameplay";
 import Friends from "./pages/player/Friends";
-import AdminDashboard from "./pages/Admin/AdminDashboard";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import LobbyRoom from "./pages/LobbyRoom";
 import Avatar from "./pages/player/Avatar";
 import Profile, { ProfileComingSoon } from "./pages/player/Profile";

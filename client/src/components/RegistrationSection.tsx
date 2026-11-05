@@ -5,7 +5,7 @@ import "../styles/LoginSection.css";
 
 type RegistrationSectionProps = {
   onBackToLogin: () => void;
-  onRegistered?: () => void;
+  onRegistered: () => void;
 };
 
 export default function RegistrationSection({
@@ -18,7 +18,6 @@ export default function RegistrationSection({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [registered, setRegistered] = useState(false);
 
   async function handleRegister(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -32,13 +31,10 @@ export default function RegistrationSection({
     setLoading(true);
 
     try {
-      const data = await register(username, email, password);
-
-      setMessage(`Account created successfully for ${data.user.username}!`);
-
-      setRegistered(true);
+      await register(username, email, password);
       setPassword("");
       setConfirmPassword("");
+      onRegistered();
     } catch (error: unknown) {
       setMessage(
         error instanceof Error ? error.message : "Registration failed"
@@ -64,7 +60,6 @@ export default function RegistrationSection({
       <div className="login-card">
         <h2>Create your account.</h2>
 
-        {!registered ? (
           <form onSubmit={handleRegister}>
             <label htmlFor="register-username">Username</label>
             <input
@@ -126,22 +121,10 @@ export default function RegistrationSection({
               </button>
             </div>
           </form>
-        ) : (
-          <div className="registration-success">
-            <h3>Registration successful!</h3>
-            <p>Your account is ready. Continue to your new account or log in later.</p>
-
-            {onRegistered && <button type="button" onClick={onRegistered}>Continue to my account</button>}
-
-            <button type="button" onClick={onBackToLogin}>
-              Continue to login
-            </button>
-          </div>
-        )}
 
         {message && <p role="status">{message}</p>}
 
-        {!registered && <p className="register-link">
+        <p className="register-link">
           Already have an account?{" "}
           <button
             type="button"
@@ -150,7 +133,7 @@ export default function RegistrationSection({
           >
             Log in →
           </button>
-        </p>}
+        </p>
       </div>
     </section>
   );
