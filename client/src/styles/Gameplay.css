@@ -1,0 +1,394 @@
+.gameplay {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  background: #103e50;
+  color: #133f50;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.gameplay-fit {
+  width: min(1440px, 100vw, calc(100dvh * 1440 / 870));
+  height: min(870px, 100dvh, calc(100vw * 870 / 1440));
+  overflow: hidden;
+}
+
+.gameplay-board {
+  position: relative;
+  width: 1440px;
+  height: 870px;
+  transform: scale(min(1, 100vw / 1440px, 100dvh / 870px));
+  transform-origin: top left;
+}
+
+.gameplay-lobbies {
+  position: absolute;
+  top: 18px;
+  left: 31px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid #d9e8ed;
+  border-radius: 8px;
+  background: #103e50;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+  text-decoration: none;
+}
+
+.gameplay-lobbies img {
+  display: block;
+}
+
+.gameplay-tools {
+  position: absolute;
+  top: 18px;
+  right: 31px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gameplay-tools button {
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 6px;
+  border: 1px solid #d9e8ed;
+  border-radius: 8px;
+  background: #103e50;
+  color: white;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.game-chat {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 10;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  overflow: hidden;
+  border: 1px solid #d9e8ed;
+  border-radius: 16px;
+  background: white;
+  color: #133f50;
+  box-shadow: 0 16px 60px rgba(6, 45, 60, 0.5);
+}
+
+.game-chat-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px;
+  background: #f4f8f9;
+}
+
+.game-chat-heading small {
+  display: block;
+  margin-top: 5px;
+  color: #65808a;
+  font-size: 10px;
+}
+
+.game-chat-heading button {
+  border: 0;
+  background: none;
+  color: #133f50;
+  font-size: 26px;
+  cursor: pointer;
+}
+
+.game-chat-messages {
+  max-height: 270px;
+  min-height: 160px;
+  overflow-y: auto;
+  padding: 0 18px;
+}
+
+.game-chat-messages p {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #e7f6f8;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.game-chat-messages p > strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 10px;
+}
+
+.game-chat form {
+  display: flex;
+  gap: 8px;
+  padding: 14px;
+  border-top: 1px solid #d9e8ed;
+}
+
+.game-chat input {
+  width: 100%;
+  min-width: 0;
+  font-size: 12px;
+}
+
+.game-chat form button {
+  min-width: 42px;
+  border: 0;
+  border-radius: 8px;
+  background: #087f9b;
+  color: white;
+  cursor: pointer;
+}
+
+.game-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.gameplay-dealer,
+.gameplay-player-hand {
+  position: absolute;
+  left: 50%;
+  display: flex;
+  transform: translateX(-50%);
+}
+
+.gameplay-dealer {
+  top: 97px;
+  gap: 7px;
+}
+
+.gameplay-player-hand {
+  top: 474px;
+  gap: 9px;
+}
+
+.gameplay-hand-rank {
+  position: absolute;
+  margin: 0;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.gameplay-dealer-rank {
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.gameplay-player-rank {
+  right: 0;
+  bottom: calc(100% + 8px);
+}
+
+.gameplay-deal-status,
+.gameplay-deal-error {
+  position: absolute;
+  top: 64px;
+  left: 50%;
+  margin: 0;
+  transform: translateX(-50%);
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.gameplay-card {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 70px;
+  height: 98px;
+  padding: 8px;
+  border: 1px solid #d9dfde;
+  border-radius: 7px;
+  background: white;
+  box-shadow: 0 8px 24px rgba(20, 62, 80, 0.06);
+}
+
+.gameplay-rank {
+  color: #133f50;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.gameplay-rank-red {
+  color: #ed785d;
+}
+
+.gameplay-card > img {
+  display: block;
+  margin: 0 auto 7px;
+}
+
+.gameplay-card-back {
+  border-color: #54d4eb;
+  background: #087f9b;
+}
+
+.gameplay-card-pattern {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.44);
+  border-radius: 4px;
+}
+
+.gameplay-card-pattern img {
+  display: block;
+}
+
+.gameplay-rail {
+  position: absolute;
+  top: 231px;
+  left: 72px;
+  display: block;
+}
+
+.gameplay-inset {
+  position: absolute;
+  top: 256px;
+  left: 104px;
+  display: block;
+}
+
+.gameplay-wordmark {
+  position: absolute;
+  top: 346px;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  transform: translateX(-50%);
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.gameplay-wordmark img {
+  display: block;
+}
+
+.gameplay-ante {
+  position: absolute;
+  top: 413px;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 47px;
+  height: 47px;
+  margin: 0;
+  border: 3px solid #f8d579;
+  border-radius: 50%;
+  background: #ed785d;
+  transform: translateX(-50%);
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.gameplay-seat {
+  position: absolute;
+  top: 618px;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+  min-width: 220px;
+  padding: 10px 16px;
+  border-radius: 16px;
+  background: white;
+  transform: translateX(-50%);
+}
+
+.gameplay-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #fff0e7;
+  color: #133f50;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.gameplay-identity {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.45;
+}
+
+.gameplay-identity strong {
+  color: #133f50;
+  font-size: 13px;
+}
+
+.gameplay-identity small {
+  color: #65808a;
+  font-size: 11px;
+}
+
+.gameplay-bets {
+  position: absolute;
+  top: 785px;
+  right: 38px;
+  display: flex;
+  gap: 10px;
+}
+
+.gameplay-bets button {
+  height: 46px;
+  padding: 0 22px;
+  border: 1px solid #d9e8ed;
+  border-radius: 8px;
+  background: white;
+  color: #133f50;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.gameplay-bets .gameplay-raise {
+  border-color: transparent;
+  background: #ed785d;
+}
+
+.gameplay-lobbies:focus-visible,
+.gameplay-bets button:focus-visible {
+  outline: 2px solid #f8d579;
+  outline-offset: 3px;
+}
