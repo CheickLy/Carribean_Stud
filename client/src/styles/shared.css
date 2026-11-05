@@ -1,0 +1,65 @@
+/* Common component treatment, loaded after the page styles. */
+:is(.reef-browser-header, .friends-header, .reef-page-intro, .room-heading, .rules-header) h1,
+.player-welcome h1, .profile-page h1 {
+  font-size: var(--title-size);
+  font-weight: 750;
+  letter-spacing: -1.6px;
+  line-height: 1.15;
+}
+:is(.reef-browser-container, .reef-create-container, .friends-container, .room-container) {
+  max-width: var(--content-width);
+}
+:is(.reef-browser-page, .reef-create-page, .friends-page, .room-page) {
+  padding: 42px 24px 80px;
+}
+:is(.reef-browser-back, .reef-back-link, .friends-back, .room-back, .account-back) {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+:is(.reef-browser-back, .reef-back-link, .friends-back, .room-back, .account-back):hover { text-decoration: underline; }
+:is(.reef-browser-section, .friends-card, .reef-settings-card, .room-card, .account-card, .messages-panel, .login-card) {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-card);
+}
+:is(.reef-browser-create, .friends-primary-link, .room-primary, .reef-create-button, .guest-button, .login-actions button, .account-card button, .message-compose button) {
+  min-height: 44px;
+  border-radius: var(--radius-control);
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: 700;
+}
+:is(.reef-browser-create, .friends-primary-link, .room-primary, .reef-create-button, .guest-button, .login-actions button, .account-card button, .message-compose button):hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+.reef-browser-controls select, .reef-browser-controls button { min-height: 44px; }
+.account-page { background: var(--color-page); color: var(--color-text); }
+.messages-page { padding-top: 42px; padding-bottom: 80px; }
+:is(.home-nav, .player-home-nav) {
+  background: var(--color-nav);
+  color: var(--color-surface);
+  border-bottom: 0;
+}
+:is(.home-nav, .player-home-nav) :is(a, button) { color: inherit; }
+.home-nav .home-nav-register { color: var(--color-text); }
+.player-home-nav button:hover { background: rgb(255 255 255 / 12%); }
+:is(.home-nav, .player-home-nav, .site-header) :is(a, button):focus-visible { outline-color: var(--color-gold); }
+@media (max-width: 640px) {
+  :is(.reef-browser-page, .reef-create-page, .friends-page, .room-page) { padding: 28px 18px 56px; }
+  :is(.reef-browser-section, .friends-card, .reef-settings-card, .room-card) { padding: 22px; }
+  :is(.reef-browser-header, .friends-header, .reef-page-intro, .room-heading, .rules-header) h1,
+  .player-welcome h1, .profile-page h1 { letter-spacing: -1px; }
+}
+
+.avatar-header h1 { font-size: var(--title-size); letter-spacing: -1.6px; }
+:is(.avatar-card, .avatar-preview, .profile-card, .profile-data-panel, .profile-stat) {
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-card);
+}
+.avatar-actions button { min-height: 44px; border-radius: var(--radius-control); }

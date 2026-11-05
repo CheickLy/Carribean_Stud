@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3001/api/invitations";
+const API_URL = "/api/invitations";
 
 export interface LobbyInvitation {
   invitationId: number;

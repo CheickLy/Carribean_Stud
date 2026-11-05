@@ -7,11 +7,12 @@ import LobbyBrowser from "./pages/LobbyBrowser";
 import Gameplay from "./pages/Gameplay";
 import Friends from "./pages/player/Friends";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import InviteFriends from "./pages/InviteFriends";
+import LobbyRoom from "./pages/LobbyRoom";
 import Avatar from "./pages/player/Avatar";
 import Profile, { ProfileComingSoon } from "./pages/player/Profile";
 import PlayerHome from "./pages/player/PlayerHome";
 import GameRules from "./pages/GameRules";
+import GamePreview from "./pages/GamePreview";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Messages from "./pages/player/Messages";
@@ -45,7 +46,7 @@ function Layout() {
       setSession(previous => ({ ...previous, error: error instanceof Error ? error.message : "Could not log out" }));
     }
   }
-  const ownHeader = location.pathname === "/" || location.pathname === "/play" || location.pathname === "/rules" || location.pathname === "/admin" || location.pathname.startsWith("/profile") || /^\/lobbies\/[^/]+\/game$/.test(location.pathname);
+  const ownHeader = location.pathname.endsWith("/game-preview") || location.pathname === "/" || location.pathname === "/play" || location.pathname === "/rules" || location.pathname === "/admin" || location.pathname.startsWith("/profile") || /^\/lobbies\/[^/]+\/game$/.test(location.pathname);
   return <>
     {!ownHeader && <header className="site-header">
       <Link className="site-brand" to="/">♠ ReefRoyale</Link>
@@ -79,7 +80,7 @@ function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const destination = location.state?.from;
-  return <LoginSection onRegisterClick={() => navigate("/register", { state: location.state })} onAuthenticated={(role) => navigate(role === "admin" ? "/admin" : typeof destination === "string" && destination.startsWith("/") && !destination.startsWith("//") ? destination : "/play", { replace: true })} />;
+  return <LoginSection onRegisterClick={() => navigate("/register", { state: location.state })} onAuthenticated={(role) => navigate(role === "admin" ? "/admin" : typeof destination === "string" && destination.startsWith("/") && !destination.startsWith("//") ? destination : "/lobbies", { replace: true })} />;
 }
 
 function RegistrationPage() {
@@ -97,6 +98,7 @@ const router = createBrowserRouter([{
     { path: "/forgot-password", element: <ForgotPassword /> },
     { path: "/reset-password", element: <ResetPassword /> },
     { path: "/rules", element: <GameRules /> },
+    { path: "/game-preview", element: <GamePreview /> },
     { path: "/lobbies", element: <LobbyBrowser /> },
     { element: <RequireSession />, children: [
       { path: "/play", element: <PlayerHome /> },
@@ -108,7 +110,9 @@ const router = createBrowserRouter([{
       { path: "/friends/:friendId/messages", element: <Messages /> },
       { path: "/create-lobby", element: <CreateLobby /> },
       { path: "/lobbies/:lobbyId/game", element: <Gameplay /> },
-      { path: "/lobbies/:lobbyId/invite", element: <InviteFriends /> },
+      { path: "/lobbies/:lobbyId/game-preview", element: <GamePreview /> },
+      { path: "/lobbies/:lobbyId/invite", element: <LobbyRoom /> },
+      { path: "/lobbies/:lobbyId", element: <LobbyRoom /> },
     ] },
     { element: <RequireSession admin />, children: [{ path: "/admin", element: <AdminDashboard /> }] },
     { path: "*", element: <main><h1>Page not found</h1><Link to="/">Back to home</Link></main> },

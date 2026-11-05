@@ -1,0 +1,53 @@
+/* Shared ReefRoyale foundations. Page styles use these tokens for consistency. */
+:root {
+  color-scheme: light;
+  --font-family: Arial, Helvetica, sans-serif;
+  --color-page: #f3fafc;
+  --color-surface: #ffffff;
+  --color-text: #133f50;
+  --color-muted: #526f7a;
+  --color-primary: #087f9b;
+  --color-primary-hover: #066b83;
+  --color-primary-soft: #ddf6fb;
+  --color-nav: #163d4d;
+  --color-border: #d9eaf0;
+  --color-input-border: #a8c5d0;
+  --color-warm: #fff0e6;
+  --color-cream: #fbf6e9;
+  --color-gold: #f6c577;
+  --color-danger: #b42318;
+  --color-success: #22694c;
+  --radius-control: 8px;
+  --radius-small: 12px;
+  --radius-card: 16px;
+  --radius-panel: 18px;
+  --content-width: 1200px;
+  --title-size: clamp(30px, 3.3vw, 44px);
+  --shadow-card: 0 8px 24px rgb(19 63 80 / 6%);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { font-family: var(--font-family); color: var(--color-text); background: var(--color-page); }
+body { margin: 0; min-width: 320px; }
+button, input, select, textarea { font: inherit; }
+button, select, input[type="checkbox"], input[type="radio"] { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .55; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary); }
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea) {
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius-control);
+  padding: 10px 12px;
+  min-height: 44px;
+}
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+:where(h1, h2, h3) { line-height: 1.2; }
+:where(p) { line-height: 1.6; }
+:where(img) { max-width: 100%; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}

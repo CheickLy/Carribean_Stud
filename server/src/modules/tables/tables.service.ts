@@ -1,3 +1,5 @@
+import { isHandInProgress } from "./handState.js";
+import { Session } from "../../models/session.js";
 import { Op } from "sequelize";
 import { User } from "../../models/user.js";
 import { LobbyMember } from "../../models/lobbyMember.js";
@@ -86,20 +88,25 @@ export async function getLobbies() {
 export async function getLobbyDetails(lobbyId: number, userId: number) {
   const lobby = await Lobby.findByPk(lobbyId, { attributes: { exclude: ["passcode"] } });
   if (!lobby || !lobby.isActive) return null;
-  const members = await LobbyMember.findAll({ where: { lobbyId }, attributes: ["userId"] });
+  const members = await LobbyMember.findAll({ where: { lobbyId }, attributes: ["userId", "waitingForSessionId"] });
   const playerIds = [...new Set([lobby.hostId, ...members.map(member => member.userId)])];
   if (!playerIds.includes(userId)) return null;
   const players = await User.findAll({
     where: { userId: { [Op.in]: playerIds } },
     attributes: ["userId", "username", "isGuest"],
   });
+  const hand = await Session.findOne({ where: { lobbyId }, order: [["sessionId", "DESC"]] });
+  const handInProgress = isHandInProgress(hand);
   return {
     ...lobby.toJSON(),
+    handInProgress,
+    waitingForNextHand: handInProgress && members.some(member => member.userId === userId && member.waitingForSessionId === hand?.sessionId),
     isHost: lobby.hostId === userId,
     players: players.map(player => ({
       userId: player.userId,
       username: player.isGuest ? "Guest" : player.username,
       isHost: player.userId === lobby.hostId,
+      waitingForNextHand: handInProgress && members.some(member => member.userId === player.userId && member.waitingForSessionId === hand?.sessionId),
     })),
     seatsAvailable: Math.max(0, lobby.maxPlayers - playerIds.length),
   };

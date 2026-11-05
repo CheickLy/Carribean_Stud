@@ -37,6 +37,7 @@ export default function CreateLobby() {
  const navigate = useNavigate();
   const [settings, setSettings] =
     useState<LobbySettings>(initialSettings);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -54,6 +55,7 @@ export default function CreateLobby() {
 
  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitting) return;
 
     const name = settings.name.trim();
 
@@ -102,8 +104,10 @@ export default function CreateLobby() {
       return;
     }
 
+   setSubmitting(true);
+   setError("");
    try {
-  const response = await fetch("http://localhost:3001/api/lobbies", {
+  const response = await fetch("/api/lobbies", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -138,13 +142,15 @@ export default function CreateLobby() {
   throw new Error("Table created, but the server did not return a valid lobby ID.");
 }
 
-navigate(`/lobbies/${data.lobbyId}/invite`);
+navigate(`/lobbies/${data.lobbyId}`, { state: { created: true } });
 } catch (error) {
   setError(
     error instanceof Error
       ? error.message
       : "Something went wrong while creating your table."
   );
+} finally {
+  setSubmitting(false);
 }
     
   }
@@ -536,8 +542,9 @@ navigate(`/lobbies/${data.lobbyId}/invite`);
                   className="reef-create-button"
                   type="submit"
                   form="reef-create-form"
+                  disabled={submitting}
                 >
-                  Create lobby &amp; take a seat
+                  {submitting ? "Creating your table…" : "Create lobby & take a seat"}
                   <span aria-hidden="true">→</span>
                 </button>
 

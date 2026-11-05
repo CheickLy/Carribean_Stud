@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3001/api/messages';
+const API_URL = '/api/messages';
 
 export type FriendMessage = { messageId: number; senderId: number; recipientId: number; message: string; readAt: string | null; createdAt: string };
 

@@ -1,3 +1,4 @@
+vi.mock("../src/models/session.js", () => ({ Session: { findOne: vi.fn().mockResolvedValue(null) } }));
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Friendship } from "../src/models/friendship.js";
 import { Lobby } from "../src/models/lobby.js";
@@ -58,13 +59,14 @@ const lobby = {
   hostId: 42,
   isActive: true,
   maxPlayers: 6,
+  startingMoney: "200",
 };
 
 describe("Lobby Invitation Service", () => {
   beforeEach(() => {
     vi.resetAllMocks();
 
-    vi.mocked(User.findByPk).mockResolvedValue({ userId: 7 } as User);
+    vi.mocked(User.findByPk).mockResolvedValue({ userId: 7, balance: "500" } as User);
 
     vi.mocked(Friendship.findOne).mockResolvedValue({
       status: "accepted",
@@ -212,6 +214,7 @@ describe("Lobby Invitation Service", () => {
         {
           lobbyId: 10,
           userId: 7,
+          waitingForSessionId: null,
         },
         expect.objectContaining({
           transaction: expect.anything(),
@@ -257,18 +260,13 @@ describe("Lobby Invitation Service", () => {
 
       await expect(
         respondToLobbyInvitation(7, 1, "accept")
-      ).rejects.toThrow("This lobby is full.");
+      ).rejects.toThrow("This table is full.");
     });
 
-    it("prevents joining a lobby twice", async () => {
-      vi.mocked(LobbyMember.findOne).mockResolvedValue({
-        lobbyId: 10,
-        userId: 7,
-      } as LobbyMember);
-
-      await expect(
-        respondToLobbyInvitation(7, 1, "accept")
-      ).rejects.toThrow("You are already in this lobby.");
+    it("accepts an invitation for an existing member without another seat", async () => {
+      vi.mocked(LobbyMember.findOne).mockResolvedValue({ lobbyId: 10, userId: 7 } as LobbyMember);
+      expect((await respondToLobbyInvitation(7, 1, "accept")).status).toBe("accepted");
+      expect(LobbyMember.create).not.toHaveBeenCalled();
     });
   });
 });

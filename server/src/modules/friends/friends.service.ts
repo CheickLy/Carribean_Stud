@@ -167,20 +167,15 @@ export async function removeFriendship(
   userId: number,
   friendshipId: number
 ) {
-  const friendship = await Friendship.findOne({
+  // The shared row is both players' connection. Scope the atomic delete to
+  // the authenticated participant; missing rows and concurrent retries succeed.
+  await Friendship.destroy({
     where: {
       friendshipId,
+      status: 'accepted',
       [Op.or]: [{ userId }, { friendId: userId }],
     },
   });
 
-  if (!friendship) {
-    throw new Error('Friendship not found.');
-  }
-
-  await friendship.destroy();
-
-  return {
-    message: 'Friendship removed successfully.',
-  };
+  return { message: 'Friendship removed successfully.' };
 }

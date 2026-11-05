@@ -1,9 +1,9 @@
 .reef-browser-page {
   min-height: 100vh;
   padding: 42px 24px 80px;
-  background: #f3fafc;
-  color: #133f50;
-  font-family: Arial, sans-serif;
+  background: var(--color-page);
+  color: var(--color-text);
+  font-family: var(--font-family);
 }
 
 .reef-browser-page * {
@@ -11,14 +11,14 @@
 }
 
 .reef-browser-container {
-  max-width: 1200px;
+  max-width: var(--content-width);
   margin: 0 auto;
 }
 
 .reef-browser-back {
   display: inline-block;
   margin-bottom: 32px;
-  color: #087f9b;
+  color: var(--color-primary);
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
@@ -42,7 +42,7 @@
 .reef-browser-header p,
 .reef-browser-section-heading p {
   margin: 0;
-  color: #65808a;
+  color: var(--color-muted);
   font-size: 15px;
   line-height: 1.7;
 }
@@ -53,7 +53,7 @@
   justify-content: center;
   padding: 14px 22px;
   border-radius: 10px;
-  background: #087f9b;
+  background: var(--color-primary);
   color: white;
   text-decoration: none;
   font-size: 14px;
@@ -62,13 +62,13 @@
 }
 
 .reef-browser-create:hover {
-  background: #066b83;
+  background: var(--color-primary-hover);
 }
 
 .reef-browser-section {
   background: white;
-  border: 1px solid #d9eaf0;
-  border-radius: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
   padding: 32px;
 }
 
@@ -88,8 +88,8 @@
 .reef-browser-count {
   padding: 9px 14px;
   border-radius: 100px;
-  background: #ddf6fb;
-  color: #087f9b;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
   font-size: 12px;
   font-weight: 700;
 }
@@ -97,11 +97,11 @@
 .reef-browser-message {
   padding: 50px 20px;
   text-align: center;
-  color: #65808a;
+  color: var(--color-muted);
 }
 
 .reef-browser-error {
-  color: #b42318;
+  color: var(--color-danger);
 }
 
 .reef-browser-empty {
@@ -111,7 +111,7 @@
 
 .reef-browser-empty-icon {
   margin-bottom: 16px;
-  color: #087f9b;
+  color: var(--color-primary);
   font-size: 48px;
 }
 
@@ -122,7 +122,7 @@
 
 .reef-browser-empty p {
   margin: 0 0 26px;
-  color: #65808a;
+  color: var(--color-muted);
   font-size: 15px;
 }
 
@@ -134,9 +134,9 @@
 
 .reef-browser-card {
   padding: 24px;
-  border: 1px solid #d9eaf0;
-  border-radius: 14px;
-  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
 }
 
 .reef-browser-card-top,
@@ -148,12 +148,12 @@
 }
 
 .reef-browser-card-icon {
-  color: #087f9b;
+  color: var(--color-primary);
   font-size: 27px;
 }
 
 .reef-browser-status {
-  color: #087f9b;
+  color: var(--color-primary);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 1px;
@@ -178,7 +178,7 @@
 }
 
 .reef-browser-details span {
-  color: #65808a;
+  color: var(--color-muted);
   font-size: 12px;
 }
 
@@ -188,20 +188,20 @@
 
 .reef-browser-card-footer {
   padding-top: 20px;
-  border-top: 1px solid #e8f0f3;
+  border-top: 1px solid var(--color-border);
 }
 
 .reef-browser-card-footer span {
-  color: #65808a;
+  color: var(--color-muted);
   font-size: 12px;
 }
 
 .reef-browser-card-footer a {
   padding: 11px 16px;
-  border-radius: 8px;
-  background: #087f9b;
-  color: white;
-  font-size: 14px;
+  border: none;
+  border-radius: var(--radius-control);
+  background: #e6edf0;
+  color: #82959d;
   font-weight: 700;
   text-decoration: none;
 }
@@ -225,6 +225,52 @@
     flex-direction: column;
   }
 }
-.reef-browser-controls { display:flex; flex-wrap:wrap; gap:12px; align-items:end; margin:18px 0; }
-.reef-browser-controls label { display:flex; gap:6px; align-items:center; font-size:13px; }
-.reef-browser-controls select { padding:7px; border:1px solid #a8cbd3; border-radius:6px; background:white; }
+.reef-browser-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.reef-browser-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.reef-browser-controls select,
+.reef-browser-controls button {
+  padding: 10px 12px;
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius-control);
+  background: white;
+  color: var(--color-text);
+  font: inherit;
+}
+
+.reef-browser-controls button { cursor: pointer; }
+.reef-browser-controls .reef-browser-checkbox {
+  flex-direction: row;
+  align-items: center;
+  padding: 10px 0;
+}
+.reef-browser-meta {
+  color: var(--color-muted);
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.reef-browser-card-footer button:not(:disabled) { background: var(--color-primary); color: white; cursor: pointer; }
+.reef-join-dialog::backdrop { background: #133f5080; }
+.reef-join-dialog { border: 1px solid var(--color-input-border); color: var(--color-text); background: white; border-radius: var(--radius-panel); padding: 28px; max-width: 460px; width: 100%; box-shadow: 0 16px 60px #133f5030; }
+.reef-join-dialog p { line-height: 1.6; }
+.reef-join-dialog label { display: grid; gap: 8px; }
+.reef-join-dialog input { width: 100%; padding: 12px; border: 1px solid var(--color-input-border); border-radius: var(--radius-control); font: inherit; }
+.reef-join-actions { display: flex; justify-content: end; gap: 12px; margin-top: 24px; }
+.reef-join-actions button { padding: 12px 18px; border: 1px solid var(--color-primary); border-radius: var(--radius-control); background: white; color: var(--color-primary); cursor: pointer; }
+.reef-join-actions button[type=submit] { background: var(--color-primary); color: white; }
+.reef-join-dialog [role=alert] { color: var(--color-danger); }

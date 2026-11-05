@@ -1,13 +1,9 @@
-body {
-  margin: 0;
-}
-
 .admin-dashboard {
   display: flex;
   min-height: 100vh;
-  background: #f3fafc;
-  color: #133f50;
-  font-family: Arial, sans-serif;
+  background: var(--color-page);
+  color: var(--color-text);
+  font-family: var(--font-family);
 }
 
 .admin-sidebar {
@@ -24,7 +20,7 @@ body {
   box-sizing: border-box;
   padding: 20px 12px 16px;
   overflow: auto;
-  background: #103e50;
+  background: var(--color-nav);
   color: white;
 }
 
@@ -59,7 +55,7 @@ body {
   width: 100%;
   padding: 8px 10px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   background: transparent;
   color: #b9dae3;
   font: inherit;
@@ -80,7 +76,7 @@ body {
 }
 
 .admin-nav-item:focus-visible {
-  outline: 2px solid #f8d579;
+  outline: 2px solid var(--color-gold);
   outline-offset: 2px;
 }
 
@@ -89,7 +85,7 @@ body {
 }
 
 .admin-nav-badge {
-  color: #f8d579;
+  color: var(--color-gold);
   font-size: 11px;
   font-weight: 400;
 }
@@ -141,8 +137,8 @@ body {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #f8d579;
-  color: #133f50;
+  background: var(--color-gold);
+  color: var(--color-text);
   font-size: 11px;
   font-weight: 700;
 }
@@ -159,7 +155,7 @@ body {
   height: 32px;
   padding: 0 10px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   background: transparent;
   color: #b9dae3;
   font: inherit;
@@ -174,7 +170,7 @@ body {
 }
 
 .admin-logout:focus-visible {
-  outline: 2px solid #f8d579;
+  outline: 2px solid var(--color-gold);
   outline-offset: 2px;
 }
 
@@ -210,10 +206,10 @@ body {
 .admin-range {
   height: 36px;
   padding: 0 14px;
-  border: 1px solid #d9e8ed;
-  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
   background: white;
-  color: #133f50;
+  color: var(--color-text);
   font: inherit;
   font-size: 12px;
   font-weight: 700;
@@ -228,14 +224,14 @@ body {
 
 .admin-metric {
   padding: 20px;
-  border: 1px solid #d9e8ed;
-  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
   background: white;
 }
 
 .admin-metric p {
   margin: 0 0 12px;
-  color: #65808a;
+  color: var(--color-muted);
   font-size: 12px;
 }
 
@@ -244,7 +240,7 @@ body {
 }
 
 .admin-players-heading h1 {
-  color: #1f1f1f;
+  color: var(--color-text);
   font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 20px;
   font-weight: 600;
@@ -256,7 +252,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  color: #1f1f1f;
+  color: var(--color-text);
   font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
@@ -275,7 +271,7 @@ body {
   border: 1px solid transparent;
   border-radius: 4px;
   background: transparent;
-  color: #1f1f1f;
+  color: var(--color-text);
   font: inherit;
   font-size: 13px;
   font-weight: 400;
@@ -287,7 +283,7 @@ body {
 
 .admin-search:focus {
   border-color: #e3e2de;
-  background: #fff;
+  background: var(--color-surface);
   outline: none;
   box-shadow: 0 0 0 2px rgba(35, 131, 226, 0.2);
 }
@@ -300,7 +296,7 @@ body {
 
 .admin-players-alert {
   margin: 0;
-  color: #9f2f2d;
+  color: var(--color-danger);
   font-size: 13px;
 }
 
@@ -308,8 +304,8 @@ body {
   max-height: calc(100vh - 168px);
   overflow: auto;
   border: 1px solid #e9e9e7;
-  border-radius: 6px;
-  background: #fff;
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
 }
 
 .admin-table {
@@ -364,7 +360,7 @@ body {
 }
 
 .admin-cell-name {
-  color: #1f1f1f;
+  color: var(--color-text);
   font-weight: 500;
 }
 
@@ -392,7 +388,7 @@ body {
 
 .admin-tag.is-banned {
   background: #ffe2dd;
-  color: #9f2f2d;
+  color: var(--color-danger);
 }
 
 .admin-dash {
@@ -406,7 +402,7 @@ body {
 }
 
 .admin-table-status[role="alert"] {
-  color: #9f2f2d;
+  color: var(--color-danger);
 }
 
 .admin-ban-button {
@@ -424,20 +420,20 @@ body {
 }
 
 .admin-ban-button.is-unban {
-  color: #9f2f2d;
+  color: var(--color-danger);
 }
 
 .admin-ban-button.is-save {
-  color: #1f1f1f;
+  color: var(--color-text);
 }
 
 .admin-dialog {
   width: min(400px, calc(100vw - 32px));
   padding: 20px 20px 16px;
   border: 1px solid #e9e9e7;
-  border-radius: 8px;
-  background: #fff;
-  color: #1f1f1f;
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-text);
   box-shadow: 0 16px 40px rgba(15, 15, 15, 0.12);
   transform-origin: center;
 }
@@ -478,8 +474,8 @@ body {
   padding: 0 8px;
   border: 1px solid #e9e9e7;
   border-radius: 4px;
-  background: #fff;
-  color: #1f1f1f;
+  background: var(--color-surface);
+  color: var(--color-text);
   font: inherit;
   font-size: 13px;
 }
@@ -549,7 +545,7 @@ body {
   }
 
   .admin-search:focus:hover {
-    background: #fff;
+    background: var(--color-surface);
   }
 
   .admin-table tbody tr:hover td {
@@ -558,17 +554,17 @@ body {
 
   .admin-ban-button:hover {
     background: #efefed;
-    color: #1f1f1f;
+    color: var(--color-text);
   }
 
   .admin-ban-button.is-unban:hover {
     background: #ffe2dd;
-    color: #9f2f2d;
+    color: var(--color-danger);
   }
 
   .admin-ban-button.is-save:hover {
     background: #efefed;
-    color: #1f1f1f;
+    color: var(--color-text);
   }
 }
 
@@ -624,4 +620,4 @@ body {
     grid-template-columns: 1fr;
   }
 }
-.admin-reports{max-width:1150px}.admin-reports .admin-header p{color:#65808a}.admin-report-count{background:#e1f6fb;color:#087f9b;border-radius:20px;padding:8px 12px;font-size:12px;font-weight:700}.admin-report-layout{display:grid;grid-template-columns:minmax(250px,360px) minmax(0,1fr);gap:18px;align-items:start}.admin-report-list,.admin-report-detail,.admin-report-empty{background:#fff;border:1px solid #d9e8ed;border-radius:15px;box-shadow:0 8px 22px #12384a0d}.admin-report-list{overflow:hidden}.admin-report-list button{display:flex;align-items:flex-start;flex-direction:column;gap:7px;width:100%;border:0;border-bottom:1px solid #e7eff2;background:#fff;padding:18px;text-align:left;color:#133f50;cursor:pointer}.admin-report-list button:hover,.admin-report-list button.is-selected{background:#eaf7fa}.admin-report-list small,.admin-report-detail small{color:#65808a}.admin-ticket-status{display:inline-block;border-radius:20px;padding:5px 10px;font-size:11px;font-weight:800;text-transform:capitalize}.admin-ticket-status.open{background:#fff1d6;color:#8a641c}.admin-ticket-status.in_progress{background:#e1f6fb;color:#087f9b}.admin-ticket-status.resolved{background:#dcf5e9;color:#207b5b}.admin-report-detail{padding:26px}.admin-report-detail-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.admin-report-detail h2{margin:18px 0 7px}.admin-report-contact{color:#65808a;font-size:13px}.admin-report-body{white-space:pre-wrap;line-height:1.6;background:#f3fafc;border-radius:10px;padding:18px;margin:22px 0}.admin-report-form{display:flex;flex-direction:column;gap:9px}.admin-report-form label{font-size:12px;font-weight:700;color:#385d6b}.admin-report-form select,.admin-report-form textarea{font:inherit;border:1px solid #cadce2;border-radius:8px;padding:11px;color:#133f50;background:#fff}.admin-report-form button{align-self:flex-start;background:#087f9b;color:#fff;border:0;border-radius:8px;padding:11px 20px;font-weight:700;cursor:pointer}.admin-report-form button:disabled{opacity:.5}.admin-report-empty{padding:35px;text-align:center}.admin-report-error{color:#a84f3b}.admin-report-success{color:#207b5b}@media(max-width:800px){.admin-report-layout{grid-template-columns:1fr}}
+.admin-reports{max-width:1150px}.admin-reports .admin-header p{color:var(--color-muted)}.admin-report-count{background:var(--color-primary-soft);color:var(--color-primary);border-radius:var(--radius-panel);padding:8px 12px;font-size:12px;font-weight:700}.admin-report-layout{display:grid;grid-template-columns:minmax(250px,360px) minmax(0,1fr);gap:18px;align-items:start}.admin-report-list,.admin-report-detail,.admin-report-empty{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-card);box-shadow:0 8px 22px #12384a0d}.admin-report-list{overflow:hidden}.admin-report-list button{display:flex;align-items:flex-start;flex-direction:column;gap:7px;width:100%;border:0;border-bottom:1px solid #e7eff2;background:var(--color-surface);padding:18px;text-align:left;color:var(--color-text);cursor:pointer}.admin-report-list button:hover,.admin-report-list button.is-selected{background:#eaf7fa}.admin-report-list small,.admin-report-detail small{color:var(--color-muted)}.admin-ticket-status{display:inline-block;border-radius:var(--radius-panel);padding:5px 10px;font-size:11px;font-weight:800;text-transform:capitalize}.admin-ticket-status.open{background:#fff1d6;color:#8a641c}.admin-ticket-status.in_progress{background:var(--color-primary-soft);color:var(--color-primary)}.admin-ticket-status.resolved{background:#dcf5e9;color:#207b5b}.admin-report-detail{padding:26px}.admin-report-detail-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.admin-report-detail h2{margin:18px 0 7px}.admin-report-contact{color:var(--color-muted);font-size:13px}.admin-report-body{white-space:pre-wrap;line-height:1.6;background:var(--color-page);border-radius:10px;padding:18px;margin:22px 0}.admin-report-form{display:flex;flex-direction:column;gap:9px}.admin-report-form label{font-size:12px;font-weight:700;color:#385d6b}.admin-report-form select,.admin-report-form textarea{font:inherit;border:1px solid #cadce2;border-radius:var(--radius-control);padding:11px;color:var(--color-text);background:var(--color-surface)}.admin-report-form button{align-self:flex-start;background:var(--color-primary);color:var(--color-surface);border:0;border-radius:var(--radius-control);padding:11px 20px;font-weight:700;cursor:pointer}.admin-report-form button:disabled{opacity:.5}.admin-report-empty{padding:35px;text-align:center}.admin-report-error{color:#a84f3b}.admin-report-success{color:#207b5b}@media(max-width:800px){.admin-report-layout{grid-template-columns:1fr}}

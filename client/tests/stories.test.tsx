@@ -81,3 +81,21 @@ describe('iteration two screens', () => {
     expect(await screen.findByText('Ticket saved.')).toBeTruthy();
   });
 });
+
+it('takes a player directly to available tables after login', async () => {
+  auth.login.mockResolvedValue({ user: { role: 'player' } });
+  render(<MemoryRouter><Home /></MemoryRouter>);
+  fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+  fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'player@example.com' } });
+  fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'Password123!' } });
+  fireEvent.click(screen.getAllByRole('button', { name: 'Log in' }).at(-1)!);
+  await waitFor(() => expect(navigate).toHaveBeenCalledWith('/lobbies'));
+});
+
+it('takes a guest directly to available tables', async () => {
+  auth.startGuest.mockResolvedValue({ user: { role: 'player', isGuest: true } });
+  render(<MemoryRouter><Home /></MemoryRouter>);
+  fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Play as Guest' }));
+  await waitFor(() => expect(navigate).toHaveBeenCalledWith('/lobbies'));
+});

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link, useOutletContext } from "react-router-dom";
 import arrowLeft from "../assets/gameplay/arrow-left.svg";
 import feltInset from "../assets/gameplay/felt-inset.svg";
 import suitClub from "../assets/gameplay/suit-club.svg";
@@ -61,8 +61,20 @@ function PlayingCard({ rank, suit, red, name }: FaceCard) {
 }
 
 export default function Gameplay() {
+  const context = useOutletContext<{ user?: { username: string; isGuest: boolean } } | null>();
+  const username = context?.user ? (context.user.isGuest ? "Guest" : context.user.username) : "You";
   const [deal, setDeal] = useState<TableDeal | null>(null);
   const [error, setError] = useState("");
+  const [chatOpen, setChatOpen] = useState(false);
+  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState([{ name: "CocoKai", text: "Good luck, everyone! ♣" }]);
+
+  function sendMessage(event: FormEvent) {
+    event.preventDefault();
+    if (!message.trim()) return;
+    setMessages((previous) => [...previous, { name: username, text: message.trim() }]);
+    setMessage("");
+  }
 
   useEffect(() => {
     let active = true;
@@ -86,6 +98,12 @@ export default function Gameplay() {
             <img src={arrowLeft} alt="" width={17} height={17} />
             Lobbies
           </Link>
+          <div className="gameplay-tools">
+            <button type="button" aria-label="Toggle table chat" aria-expanded={chatOpen} aria-controls="game-chat" onClick={() => setChatOpen((value) => !value)}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M21 11.5a9 9 0 0 1-9 9 9.6 9.6 0 0 1-4-.9L3 21l1.4-4.5a9 9 0 1 1 16.6-5Z" /></svg>
+            </button>
+            <button type="button" aria-label="Lightning">ϟ</button>
+          </div>
 
           {error && <p className="gameplay-deal-error" role="alert">{error}</p>}
           {!deal && !error && <p className="gameplay-deal-status" role="status">Dealing...</p>}
@@ -130,6 +148,7 @@ export default function Gameplay() {
           </div>
         </div>
       </div>
+      {chatOpen && <aside className="game-chat" id="game-chat" aria-label="Table chat"><div className="game-chat-heading"><div><strong>Table chat</strong><small>Local preview · Messages are not sent</small></div><button type="button" aria-label="Close table chat" onClick={() => setChatOpen(false)}>×</button></div><div className="game-chat-messages" role="log" aria-live="polite">{messages.map((item, index) => <p key={index}><strong>{item.name}</strong><span>{item.text}</span></p>)}</div><form onSubmit={sendMessage}><label className="game-sr-only" htmlFor="game-message">Message</label><input id="game-message" value={message} maxLength={300} onChange={(event) => setMessage(event.target.value)} placeholder="Say something friendly…" autoComplete="off" /><button type="submit" disabled={!message.trim()} aria-label="Send preview message">↑</button></form></aside>}
     </main>
   );
 }

@@ -1,3 +1,4 @@
+import { admitPlayer } from "../tables/join.service.js";
 import { Op } from "sequelize";
 import { Friendship } from "../../models/friendship.js";
 import { Lobby } from "../../models/lobby.js";
@@ -133,44 +134,9 @@ export async function respondToLobbyInvitation(
       throw new Error("Lobby not found or inactive.");
     }
 
-    const existingMember = await LobbyMember.findOne({
-      where: {
-        lobbyId: lobby.lobbyId,
-        userId,
-      },
-      transaction,
-    });
-
-    if (existingMember) {
-      throw new Error("You are already in this lobby.");
-    }
-
-    const memberCount = await LobbyMember.count({
-      where: { lobbyId: lobby.lobbyId },
-      transaction,
-    });
-
-    const hostIsMember = await LobbyMember.findOne({
-      where: {
-        lobbyId: lobby.lobbyId,
-        userId: lobby.hostId,
-      },
-      transaction,
-    });
-
-    const occupiedSeats = memberCount + (hostIsMember ? 0 : 1);
-
-    if (occupiedSeats >= lobby.maxPlayers) {
-      throw new Error("This lobby is full.");
-    }
-
-    await LobbyMember.create(
-      {
-        lobbyId: lobby.lobbyId,
-        userId,
-      },
-      { transaction }
-    );
+    // A host-issued invitation grants private-table access, but never bypasses
+    // capacity, account, buy-in, or current-hand admission rules.
+    await admitPlayer(lobby, userId, transaction);
 
     invitation.status = "accepted";
     await invitation.save({ transaction });

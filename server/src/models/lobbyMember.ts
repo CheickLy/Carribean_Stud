@@ -6,6 +6,7 @@ export class LobbyMember extends Model {
     declare lobbyId: number;
    declare userId: number;
     declare joinedAt: Date;
+    declare waitingForSessionId: number | null;
 }
 
 LobbyMember.init(
@@ -26,6 +27,7 @@ LobbyMember.init(
             allowNull: false,
             field: "user_id",
         },
+        waitingForSessionId: { type: DataTypes.INTEGER, allowNull: true, field: "waiting_for_session_id" },
         joinedAt: {
             type: DataTypes.DATE,
             allowNull: false,
