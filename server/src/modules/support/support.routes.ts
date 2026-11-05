@@ -1,8 +1,76 @@
 import { Router } from 'express';
 import { User } from '../../models/user.js';
-import { listTickets, ticketStatuses, updateTicket } from './support.service.js';
+import { createSupportTicket, listTickets, ticketStatuses, updateTicket } from './support.service.js';
 
 export const supportRouter = Router();
+
+supportRouter.post('/', async (req, res, next) => {
+  try {
+    const userId = req.session?.userId;
+
+    if (!userId) {
+      res.status(401).json({
+        error: 'Please sign in or continue as a guest.',
+      });
+      return;
+    }
+
+    const user = await User.findByPk(userId);
+
+    if (!user || user.isBanned) {
+      res.status(403).json({
+        error: 'Account unavailable.',
+      });
+      return;
+    }
+
+    const { subject, message, replyContact } = req.body ?? {};
+
+    if (
+      typeof subject !== 'string' ||
+      subject.trim().length < 3 ||
+      subject.trim().length > 100
+    ) {
+      res.status(400).json({
+        error: 'Subject must be between 3 and 100 characters.',
+      });
+      return;
+    }
+
+    if (
+      typeof message !== 'string' ||
+      message.trim().length < 10 ||
+      message.trim().length > 2000
+    ) {
+      res.status(400).json({
+        error: 'Message must be between 10 and 2000 characters.',
+      });
+      return;
+    }
+
+    if (
+      typeof replyContact !== 'string' ||
+      replyContact.trim().length > 254 ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyContact.trim())
+    ) {
+      res.status(400).json({
+        error: 'A valid reply email is required.',
+      });
+      return;
+    }
+
+    const ticket = await createSupportTicket(
+      userId,
+      subject.trim(),
+      message.trim(),
+      replyContact.trim()
+    );
+
+    res.status(201).json(ticket);
+  } catch (error) {
+    next(error);
+  }
+});
 
 supportRouter.use(async (req, res, next) => {
   if (!req.session?.userId) { res.status(401).json({ error: 'Not authenticated' }); return; }

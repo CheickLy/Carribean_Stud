@@ -6,7 +6,7 @@ import CreateLobby from "./pages/CreateLobby";
 import LobbyBrowser from "./pages/LobbyBrowser";
 import Gameplay from "./pages/Gameplay";
 import Friends from "./pages/player/Friends";
-import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
 import LobbyRoom from "./pages/LobbyRoom";
 import Avatar from "./pages/player/Avatar";
 import Profile, { ProfileComingSoon } from "./pages/player/Profile";
@@ -19,6 +19,8 @@ import Messages from "./pages/player/Messages";
 import Home from "./pages/guest/Home";
 import { getCurrentUser, logout } from "./services/auth";
 import "./styles/Navigation.css";
+import ContactSupport from "./pages/ContactSupport";
+
 
 type User = { username: string; balance: string; isGuest: boolean; role: string; avatar?: string };
 type Session = { user: User | null; loading: boolean; error: string };
@@ -54,6 +56,7 @@ function Layout() {
         <NavLink to="/" end>Home</NavLink>
         <NavLink to="/lobbies">Tables</NavLink>
         <NavLink to="/create-lobby">Create table</NavLink>
+        <NavLink to="/support">Contact Support</NavLink>
         <NavLink to="/friends">Friends & invitations</NavLink>
         {session.user?.role === "admin" && <NavLink to="/admin">Admin</NavLink>}
       </nav>
@@ -95,6 +98,7 @@ const router = createBrowserRouter([{
     { path: "/", element: <Home /> },
     { path: "/login", element: <LoginPage /> },
     { path: "/register", element: <RegistrationPage /> },
+    { path: "/support", element: <ContactSupport /> },
     { path: "/forgot-password", element: <ForgotPassword /> },
     { path: "/reset-password", element: <ResetPassword /> },
     { path: "/rules", element: <GameRules /> },

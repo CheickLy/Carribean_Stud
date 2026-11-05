@@ -9,6 +9,7 @@ export class SupportTicket extends Model {
   declare status: 'open' | 'in_progress' | 'resolved';
   declare resolutionNote: string | null;
   declare createdAt: Date;
+  declare replyContact: string;
 }
 
 SupportTicket.init(
@@ -36,6 +37,10 @@ SupportTicket.init(
     },
     resolutionNote: {
       type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    replyContact: {
+      type: DataTypes.STRING(254),
       allowNull: true,
     },
   },

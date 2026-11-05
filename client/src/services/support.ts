@@ -30,3 +30,24 @@ export async function saveSupportTicket(ticketId: number, status: TicketStatus, 
     body: JSON.stringify({ status, resolutionNote }),
   }));
 }
+
+export async function submitSupportTicket(
+  subject: string,
+  message: string,
+  replyContact: string
+): Promise<{ ticketId: number; status: string; message: string }> {
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      subject,
+      message,
+      replyContact,
+    }),
+  });
+
+  return readResponse(response);
+}
