@@ -4,6 +4,7 @@ import "../../styles/AdminDashboard.css";
 import SupportReports from './SupportReports';
 import { getCurrentUser, logout } from '../../services/auth';
 import { useNavigate } from 'react-router-dom';
+import CreateAdvert from './CreateAdvert';
 
 const admin = {
   initials: "AN",
@@ -18,7 +19,7 @@ const metrics = [
   { label: "Open reports", value: "0" },
 ];
 
-type Section = "home" | "players" | "reports";
+type Section = "home" | "players" | "reports" | "adverts";
 
 function formatBalance(balance: string) {
   const amount = Number(balance);
@@ -275,6 +276,14 @@ export default function AdminDashboard() {
           <button type="button" className={`admin-nav-item${section === "reports" ? " is-active" : ""}`} onClick={() => setSection("reports")}>
             Reports
           </button>
+
+          <button
+            type="button"
+            className={`admin-nav-item${section === "adverts" ? " is-active" : ""}`}
+            onClick={() => setSection("adverts")}
+          >
+            Adverts
+          </button>
         </nav>
 
         <div className="admin-sidebar-foot">
@@ -302,7 +311,7 @@ export default function AdminDashboard() {
       </aside>
 
       <main className="admin-main">
-        {section === "reports" ? <SupportReports /> : section === "home" ? (
+        {section === "reports" ? <SupportReports /> : section === "adverts" ? <CreateAdvert /> : section === "home" ? (
           <>
             <header className="admin-header">
               <h1>Admin Dashboard</h1>

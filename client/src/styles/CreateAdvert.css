@@ -1,0 +1,34 @@
+.admin-advert-list {
+  margin-top: 48px;
+}
+
+.admin-advert-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.admin-advert-list-header select {
+  max-width: 180px;
+  padding: 10px;
+}
+
+.admin-advert-list .admin-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-advert-list .admin-table {
+  width: 100%;
+}
+
+.admin-advert-list td {
+  vertical-align: top;
+}
+
+.admin-advert-list td div {
+  margin: 6px 0;
+  max-width: 260px;
+  overflow-wrap: anywhere;
+}
