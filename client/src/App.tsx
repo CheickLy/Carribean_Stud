@@ -47,7 +47,7 @@ function Layout() {
       setSession(previous => ({ ...previous, error: error instanceof Error ? error.message : "Could not log out" }));
     }
   }
-  const ownHeader = location.pathname.endsWith("/game-preview") || location.pathname === "/" || location.pathname === "/play" || location.pathname === "/rules" || location.pathname === "/admin" || location.pathname.startsWith("/profile") || /^\/lobbies\/[^/]+\/game$/.test(location.pathname);
+  const ownHeader = location.pathname.endsWith("/game-preview") || location.pathname === "/admin" || /^\/lobbies\/[^/]+\/game$/.test(location.pathname);
   return <>
     {!ownHeader && <header className="site-header">
       <Link className="site-brand" to="/">♠ ReefRoyale</Link>
@@ -57,10 +57,11 @@ function Layout() {
         <NavLink to="/create-lobby">Create table</NavLink>
         <NavLink to="/support">Contact Support</NavLink>
         <NavLink to="/friends">Friends & invitations</NavLink>
+        {session.user && !session.user.isGuest && <NavLink to="/profile">Profile</NavLink>}
         {session.user?.role === "admin" && <NavLink to="/admin">Admin</NavLink>}
       </nav>
       <div className="site-account">
-        {session.user ? <><Link className="site-profile-link" to="/play" title={session.user.isGuest ? "Guest" : session.user.username}><span className="site-username">{session.user.isGuest ? "Guest" : session.user.username}</span><span className="site-chips"> · {Number(session.user.balance).toLocaleString()} chips</span></Link>{session.user.isGuest && <Link to="/register">Save progress</Link>}<button onClick={() => void signOut()}>Log out</button></> : <Link to="/login">Log in / Play as guest</Link>}
+        {session.user ? <><Link className="site-profile-link" to={session.user.isGuest ? "/lobbies" : "/profile"} title={session.user.isGuest ? "Guest" : session.user.username}><span className="site-username">{session.user.isGuest ? "Guest" : session.user.username}</span><span className="site-chips"> · {Number(session.user.balance).toLocaleString()} chips</span></Link>{session.user.isGuest && <Link to="/register">Save progress</Link>}<button onClick={() => void signOut()}>Log out</button></> : <Link to="/login">Log in / Play as guest</Link>}
       </div>
     </header>}
     {session.error && <p className="site-error" role="alert">{session.error}</p>}
@@ -80,7 +81,7 @@ function RequireSession({ admin = false }: { admin?: boolean }) {
 
 function HomePage() {
   const { user, loading, signOut } = useOutletContext<Session>();
-  return <Home user={user} loading={loading} onLogout={signOut} />;
+  return <Home user={user} loading={loading} onLogout={signOut} sharedNavigation />;
 }
 
 function LoginPage() {

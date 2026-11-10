@@ -28,7 +28,7 @@ export default function Profile() {
   const balance = Number(user?.balance);
 
   return <main className="profile-page">
-    <header className="profile-header"><div><p className="profile-eyebrow">REEF ROYALE</p><h1>My Profile</h1></div><button type="button" className="profile-play" onClick={() => navigate("/play")}>Back to Play</button></header>
+    <header className="profile-header"><div><p className="profile-eyebrow">REEF ROYALE</p><h1>My Profile</h1></div><button type="button" className="profile-play" onClick={() => navigate("/lobbies")}>Back to Tables</button></header>
     {error && <p role="alert">{error}</p>}
     {!user && !error && <p>Loading profile...</p>}
     {user && <>

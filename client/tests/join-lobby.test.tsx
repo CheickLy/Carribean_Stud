@@ -56,11 +56,11 @@ it('shows a reserved seat while waiting for the next hand', async () => {
 
 it.each([
   [null, '/'],
-  [{ role: 'player', isGuest: false }, '/play'],
-  [{ role: 'player', isGuest: true }, '/play'],
+  [{ role: 'player', isGuest: false }, '/'],
+  [{ role: 'player', isGuest: true }, '/'],
   [{ role: 'admin' }, '/admin'],
 ])('takes Back to the appropriate home for %j', async (user, destination) => {
   vi.mocked(getCurrentUser).mockResolvedValue(user);
   show();
-  await waitFor(() => expect(screen.getByRole('link', { name: '← Back' }).getAttribute('href')).toBe(destination));
+  await waitFor(() => expect(screen.getByRole('link', { name: destination === '/admin' ? '← Back to Admin' : '← Back to Home' }).getAttribute('href')).toBe(destination));
 });

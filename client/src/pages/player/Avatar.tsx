@@ -134,8 +134,8 @@ export default function Avatar() {
           )}
 
           <div className="avatar-actions">
-            <button type="button" className="avatar-back" onClick={() => navigate("/play")}>
-              Back
+            <button type="button" className="avatar-back" onClick={() => navigate("/profile")}>
+              Back to Profile
             </button>
             <button
               type="button"

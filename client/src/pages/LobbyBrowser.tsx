@@ -11,7 +11,7 @@ export default function LobbyBrowser() {
   useEffect(() => {
     let active = true;
     getCurrentUser().then(user => {
-      if (active && user) setBackPath(user.role === "admin" ? "/admin" : "/play");
+      if (active && user) setBackPath(user.role === "admin" ? "/admin" : "/");
     }).catch(() => {});
     return () => { active = false; };
   }, []);
@@ -104,7 +104,7 @@ export default function LobbyBrowser() {
         <header className="reef-browser-header">
           <div>
             <Link to={backPath} className="reef-browser-back">
-              ← Back
+              ← Back to {backPath === "/admin" ? "Admin" : "Home"}
             </Link>
 
             <h1>Find your table.</h1>

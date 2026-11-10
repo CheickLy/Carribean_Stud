@@ -13,10 +13,11 @@ const lobbies = [
 type HomeProps = {
   user?: { username: string; balance: string; isGuest: boolean; role: string } | null;
   loading?: boolean;
+  sharedNavigation?: boolean;
   onLogout?: () => Promise<void>;
 };
 
-export default function Home({ user, loading = false, onLogout }: HomeProps) {
+export default function Home({ user, loading = false, onLogout, sharedNavigation = false }: HomeProps) {
   const navigate = useNavigate();
   const [dialog, setDialog] = useState<"login" | "register" | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -38,13 +39,13 @@ export default function Home({ user, loading = false, onLogout }: HomeProps) {
     return () => { document.removeEventListener("keydown", closeOnEscape); document.removeEventListener("keydown", keepFocusInside); lastButton.current?.focus(); };
   }, [dialog]);
   return <div className="home">
-    <header className="home-nav"><strong>ReefRoyale</strong><nav aria-label="Main navigation"><a className="home-nav-explore" href="#tables">Explore tables</a>{loading ? <span role="status">Loading account...</span> : user ? <>
+    {!sharedNavigation && <header className="home-nav"><strong>ReefRoyale</strong><nav aria-label="Main navigation"><a className="home-nav-explore" href="#tables">Explore tables</a>{loading ? <span role="status">Loading account...</span> : user ? <>
       <button type="button" className="home-nav-chat" onClick={() => navigate(user.isGuest ? "/lobbies" : "/profile")} aria-label={user.isGuest ? "Guest account" : "Your profile"}>{user.isGuest ? "Guest" : user.username} · {Number(user.balance).toLocaleString()} chips</button>
       <button type="button" className="home-nav-login" onClick={() => navigate("/lobbies")}>Tables</button>
       {user.role === "admin" && <button type="button" className="home-nav-chat" onClick={() => navigate("/admin")}>Admin</button>}
       {user.isGuest && <button type="button" className="home-nav-register" onClick={() => setDialog("register")}>Save progress</button>}
       <button type="button" className="home-nav-chat" onClick={() => void onLogout?.()}>Log out</button>
-    </> : <><button type="button" className="home-nav-login" onClick={() => setDialog("login")}>Log in</button><button type="button" className="home-nav-register" onClick={() => setDialog("register")}>Register</button></>}</nav></header>
+    </> : <><button type="button" className="home-nav-login" onClick={() => setDialog("login")}>Log in</button><button type="button" className="home-nav-register" onClick={() => setDialog("register")}>Register</button></>}</nav></header>}
     <div className="home-ribbon"><span>✦ Free points. No cash value.</span><span>♣ Your table, your people.</span><span>♠ Learn a hand at a time.</span><span>18+ Play for the fun of it.</span></div>
     <section className="home-section home-hero">
       <p className="home-eyebrow">CARIBBEAN STUD. FREE TO PLAY.</p>
