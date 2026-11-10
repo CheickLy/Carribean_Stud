@@ -10,7 +10,13 @@ const lobbies = [
   { name: "The Blue Lagoon", host: "ReefRider", detail: "Bots welcome", seats: "2 / 4 players", points: "10–150 pts" },
 ];
 
-export default function Home() {
+type HomeProps = {
+  user?: { username: string; balance: string; isGuest: boolean; role: string } | null;
+  loading?: boolean;
+  onLogout?: () => Promise<void>;
+};
+
+export default function Home({ user, loading = false, onLogout }: HomeProps) {
   const navigate = useNavigate();
   const [dialog, setDialog] = useState<"login" | "register" | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -32,7 +38,13 @@ export default function Home() {
     return () => { document.removeEventListener("keydown", closeOnEscape); document.removeEventListener("keydown", keepFocusInside); lastButton.current?.focus(); };
   }, [dialog]);
   return <div className="home">
-    <header className="home-nav"><strong>ReefRoyale</strong><nav aria-label="Main navigation"><a className="home-nav-explore" href="#tables">Explore tables</a><button type="button" className="home-nav-login" onClick={() => setDialog("login")}>Log in</button><button type="button" className="home-nav-register" onClick={() => setDialog("register")}>Register</button></nav></header>
+    <header className="home-nav"><strong>ReefRoyale</strong><nav aria-label="Main navigation"><a className="home-nav-explore" href="#tables">Explore tables</a>{loading ? <span role="status">Loading account...</span> : user ? <>
+      <button type="button" className="home-nav-chat" onClick={() => navigate(user.isGuest ? "/lobbies" : "/profile")} aria-label={user.isGuest ? "Guest account" : "Your profile"}>{user.isGuest ? "Guest" : user.username} · {Number(user.balance).toLocaleString()} chips</button>
+      <button type="button" className="home-nav-login" onClick={() => navigate("/lobbies")}>Tables</button>
+      {user.role === "admin" && <button type="button" className="home-nav-chat" onClick={() => navigate("/admin")}>Admin</button>}
+      {user.isGuest && <button type="button" className="home-nav-register" onClick={() => setDialog("register")}>Save progress</button>}
+      <button type="button" className="home-nav-chat" onClick={() => void onLogout?.()}>Log out</button>
+    </> : <><button type="button" className="home-nav-login" onClick={() => setDialog("login")}>Log in</button><button type="button" className="home-nav-register" onClick={() => setDialog("register")}>Register</button></>}</nav></header>
     <div className="home-ribbon"><span>✦ Free points. No cash value.</span><span>♣ Your table, your people.</span><span>♠ Learn a hand at a time.</span><span>18+ Play for the fun of it.</span></div>
     <section className="home-section home-hero">
       <p className="home-eyebrow">CARIBBEAN STUD. FREE TO PLAY.</p>
@@ -53,7 +65,7 @@ export default function Home() {
     </section>
     <section className="home-friends"><div className="home-section home-friends-inner"><div className="home-chat"><span className="home-pill">Lobby chat</span><p><strong>🟡 CocoKai</strong><br/>First time here. Any tips? 🌴</p><p><strong>⚪ MayaReef</strong><br/>Welcome! We're taking it easy today.</p><button type="button" className="home-secondary" onClick={() => navigate("/friends")}>♧ Invite a friend</button></div><div><p className="home-eyebrow">PLAY WITH FRIENDS</p><h2>Invite friends to your table.</h2><p>Chat with other players, add friends, and send invitations to your lobby.</p><strong className="home-accent">Public and private lobbies · Unlimited spectators</strong></div></div></section>
     <section className="home-section home-guide"><div className="home-heading"><div><p className="home-eyebrow">HOW TO PLAY</p><h2>Your hand against the dealer’s.</h2><p>Caribbean Stud is played against the dealer, not against your tablemates.</p></div><button type="button" className="home-buttons-primary" onClick={() => navigate("/rules")}>Read game rules</button></div><div className="home-grid three">{[{n:"01",t:"Take your seat",d:"Choose a table that fits your point balance. Set your ante to enter a hand."},{n:"02",t:"Check your cards",d:"Check your hand alongside the dealer’s visible card. The rest stays face-down."},{n:"03",t:"Make your move",d:"Choose raise or fold. The rules page explains the reveal and hand result."}].map(step=><article className="home-step" key={step.n}><span>{step.n}</span><h3>{step.t}</h3><p>{step.d}</p></article>)}</div><div className="home-guide-note"><span>A quick introduction. Read the full rules before playing.</span><button type="button" className="home-secondary" onClick={() => navigate("/rules")}>Read the how-to-play guide →</button></div></section>
-    {dialog && <div className="home-dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setDialog(null); }}><div className={`home-dialog ${dialog === "register" ? "home-register-dialog" : ""}`} ref={dialogRef} role="dialog" aria-modal="true" aria-label={dialog === "login" ? "Log in" : "Register"}><div className="home-dialog-top"><strong>{dialog === "login" ? "Log in" : "Create your account"}</strong><button type="button" onClick={() => setDialog(null)} aria-label="Close dialog">×</button></div>{dialog === "login" ? <LoginSection onRegisterClick={() => setDialog("register")} onAuthenticated={(role) => navigate(role === "admin" ? "/admin" : "/lobbies")} /> : <RegistrationSection onBackToLogin={() => setDialog("login")} onRegistered={() => navigate("/play")} />}</div></div>}
+    {dialog && <div className="home-dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setDialog(null); }}><div className={`home-dialog ${dialog === "register" ? "home-register-dialog" : ""}`} ref={dialogRef} role="dialog" aria-modal="true" aria-label={dialog === "login" ? "Log in" : "Register"}><div className="home-dialog-top"><strong>{dialog === "login" ? "Log in" : "Create your account"}</strong><button type="button" onClick={() => setDialog(null)} aria-label="Close dialog">×</button></div>{dialog === "login" ? <LoginSection onRegisterClick={() => setDialog("register")} onAuthenticated={(role) => navigate(role === "admin" ? "/admin" : "/lobbies")} /> : <RegistrationSection onBackToLogin={() => setDialog("login")} onRegistered={() => navigate("/lobbies")} />}</div></div>}
     <footer className="home-footer"><div className="home-section home-footer-inner"><div className="home-age">18+</div><div><h3>Play responsibly. Respect other players.</h3><p>Reef Royale is for adults 18 and over. Points are fictional and have no cash value. Take breaks and treat other players with respect.</p></div><span className="home-footer-guide">Our club guide</span></div></footer>
   </div>;
 }

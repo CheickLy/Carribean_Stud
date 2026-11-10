@@ -20,6 +20,8 @@ export default function CreateAdvert() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [startTime, setStartTime] = useState('00:00');
+  const [endTime, setEndTime] = useState('23:59');
 
   function update<K extends keyof CreateAdvertInput>(
     field: K,
@@ -37,10 +39,19 @@ export default function CreateAdvert() {
     setSuccess('');
 
     try {
+      const start = new Date(`${form.startsAt}T${startTime}`);
+      const end = new Date(`${form.endsAt}T${endTime}`);
+      if (!form.startsAt || !form.endsAt || !startTime || !endTime ||
+          Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+        throw new Error('Enter a complete start and end date and time.');
+      }
+      if (end <= start) {
+        throw new Error('End date and time must be after start date and time.');
+      }
       const advert = await createAdvert({
         ...form,
-        startsAt: new Date(form.startsAt).toISOString(),
-        endsAt: new Date(form.endsAt).toISOString(),
+        startsAt: start.toISOString(),
+        endsAt: end.toISOString(),
       });
 
       setSuccess(`Advert #${advert.advertId} created successfully!`);
@@ -121,20 +132,28 @@ export default function CreateAdvert() {
         <label htmlFor="ad-start">Start date</label>
         <input
           id="ad-start"
-          type="datetime-local"
+          type="date"
           required
           value={form.startsAt}
           onChange={e => update('startsAt', e.target.value)}
         />
 
+        <label htmlFor="ad-start-time">Start time (local time)</label>
+        <input id="ad-start-time" type="time" required value={startTime}
+          onChange={e => setStartTime(e.target.value)} />
+
         <label htmlFor="ad-end">End date</label>
         <input
           id="ad-end"
-          type="datetime-local"
+          type="date"
           required
           value={form.endsAt}
           onChange={e => update('endsAt', e.target.value)}
         />
+
+        <label htmlFor="ad-end-time">End time (local time)</label>
+        <input id="ad-end-time" type="time" required value={endTime}
+          onChange={e => setEndTime(e.target.value)} />
 
         <label>
           <input

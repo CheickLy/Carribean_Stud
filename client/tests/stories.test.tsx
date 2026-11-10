@@ -101,7 +101,7 @@ it('takes a guest directly to available tables', async () => {
   await waitFor(() => expect(navigate).toHaveBeenCalledWith('/lobbies'));
 });
 
-it('takes a new account straight to the player home after registration', async () => {
+it('takes a new account straight to tables after registration', async () => {
   auth.register.mockResolvedValue({ user: { username: 'newplayer', role: 'player' } });
   render(<MemoryRouter><Home /></MemoryRouter>);
   fireEvent.click(screen.getByRole('button', { name: 'Register' }));
@@ -111,7 +111,7 @@ it('takes a new account straight to the player home after registration', async (
   fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'Password123!' } });
   fireEvent.click(screen.getAllByRole('button', { name: 'Register', exact: true }).at(-1)!);
   await waitFor(() => expect(auth.register).toHaveBeenCalledWith('newplayer', 'new@example.com', 'Password123!'));
-  expect(navigate).toHaveBeenCalledWith('/play');
+  expect(navigate).toHaveBeenCalledWith('/lobbies');
 });
 
 it('sends a categorized support request and shows the ticket number', async () => {

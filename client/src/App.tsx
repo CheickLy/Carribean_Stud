@@ -10,7 +10,6 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import LobbyRoom from "./pages/LobbyRoom";
 import Avatar from "./pages/player/Avatar";
 import Profile, { ProfileComingSoon } from "./pages/player/Profile";
-import PlayerHome from "./pages/player/PlayerHome";
 import GameRules from "./pages/GameRules";
 import GamePreview from "./pages/GamePreview";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -23,7 +22,7 @@ import ContactSupport from "./pages/ContactSupport";
 
 
 type User = { username: string; balance: string; isGuest: boolean; role: string; avatar?: string };
-type Session = { user: User | null; loading: boolean; error: string };
+type Session = { user: User | null; loading: boolean; error: string; signOut?: () => Promise<void> };
 
 function Layout() {
   const location = useLocation();
@@ -65,7 +64,7 @@ function Layout() {
       </div>
     </header>}
     {session.error && <p className="site-error" role="alert">{session.error}</p>}
-    <Outlet context={session} />
+    <Outlet context={{ ...session, signOut }} />
   </>;
 }
 
@@ -79,23 +78,27 @@ function RequireSession({ admin = false }: { admin?: boolean }) {
   return <Outlet context={{ user, loading, error }} />;
 }
 
+function HomePage() {
+  const { user, loading, signOut } = useOutletContext<Session>();
+  return <Home user={user} loading={loading} onLogout={signOut} />;
+}
+
 function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const destination = location.state?.from;
-  return <LoginSection onRegisterClick={() => navigate("/register", { state: location.state })} onAuthenticated={(role) => navigate(role === "admin" ? "/admin" : typeof destination === "string" && destination.startsWith("/") && !destination.startsWith("//") ? destination : "/lobbies", { replace: true })} />;
+  return <LoginSection onRegisterClick={() => navigate("/register", { state: location.state })} onAuthenticated={(role) => navigate(role === "admin" ? "/admin" : "/lobbies", { replace: true })} />;
 }
 
 function RegistrationPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  return <RegistrationSection onBackToLogin={() => navigate("/login", { state: location.state })} onRegistered={() => navigate(location.state?.from || "/play", { replace: true })} />;
+  return <RegistrationSection onBackToLogin={() => navigate("/login", { state: location.state })} onRegistered={() => navigate("/lobbies", { replace: true })} />;
 }
 
 const router = createBrowserRouter([{
   element: <Layout />,
   children: [
-    { path: "/", element: <Home /> },
+    { path: "/", element: <HomePage /> },
     { path: "/login", element: <LoginPage /> },
     { path: "/register", element: <RegistrationPage /> },
     { path: "/support", element: <ContactSupport /> },
@@ -105,7 +108,7 @@ const router = createBrowserRouter([{
     { path: "/game-preview", element: <GamePreview /> },
     { path: "/lobbies", element: <LobbyBrowser /> },
     { element: <RequireSession />, children: [
-      { path: "/play", element: <PlayerHome /> },
+      { path: "/play", element: <Navigate to="/lobbies" replace /> },
       { path: "/friends", element: <Friends /> },
       { path: "/profile", element: <Profile /> },
       { path: "/profile/statistics", element: <ProfileComingSoon title="Statistics" /> },
