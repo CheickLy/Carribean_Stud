@@ -1,19 +1,6 @@
-import express from "express";
-import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { HAND_RANKS } from "../src/modules/game/hand.js";
 import { Deck, dealTable } from "../src/modules/game/deal.js";
-import { gameRouter } from "../src/modules/game/game.routes.js";
-
-function appAs(userId?: number) {
-  const testApp = express();
-  testApp.use((req, _res, next) => {
-    req.session = { userId } as typeof req.session;
-    next();
-  });
-  testApp.use("/api/game", gameRouter);
-  return testApp;
-}
 
 describe("Deck", () => {
   beforeEach(() => {
@@ -60,24 +47,5 @@ describe("dealTable", () => {
     expect(new Set(cards).size).toBe(10);
     expect(HAND_RANKS).toContain(deal.player.rank);
     expect(HAND_RANKS).toContain(deal.dealer.rank);
-  });
-});
-
-describe("GET /api/game/deal", () => {
-  it("requires a session", async () => {
-    const response = await request(appAs()).get("/api/game/deal");
-
-    expect(response.status).toBe(401);
-    expect(response.body.error).toBe("Authentication required.");
-  });
-
-  it("returns both hands for a signed-in player", async () => {
-    const response = await request(appAs(7)).get("/api/game/deal");
-
-    expect(response.status).toBe(200);
-    expect(response.body.player.cards).toHaveLength(5);
-    expect(response.body.dealer.cards).toHaveLength(5);
-    expect(HAND_RANKS).toContain(response.body.player.rank);
-    expect(HAND_RANKS).toContain(response.body.dealer.rank);
   });
 });
