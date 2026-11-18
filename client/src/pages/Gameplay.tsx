@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from "react";
 import { Link, useOutletContext } from "react-router-dom";
 import arrowLeft from "../assets/gameplay/arrow-left.svg";
 import feltInset from "../assets/gameplay/felt-inset.svg";
@@ -8,7 +8,8 @@ import suitDiamond from "../assets/gameplay/suit-diamond.svg";
 import suitHeart from "../assets/gameplay/suit-heart.svg";
 import suitSpade from "../assets/gameplay/suit-spade.svg";
 import tableRail from "../assets/gameplay/table-rail.svg";
-import { dealTable, type TableDeal } from "../services/game";
+import { dealTable, getGame, playAction, resetGame, type GameState } from "../services/game";
+import HandGuide from "../components/HandGuide";
 import "../styles/Gameplay.css";
 
 type FaceCard = { rank: string; suit: string; red?: boolean; name: string };
@@ -51,9 +52,9 @@ function rankLabel(rank: string) {
   return rank.charAt(0).toUpperCase() + rank.slice(1);
 }
 
-function PlayingCard({ rank, suit, red, name }: FaceCard) {
+function PlayingCard({ rank, suit, red, name, index = 0, reveal = false }: FaceCard & { index?: number; reveal?: boolean }) {
   return (
-    <div className="gameplay-card" role="img" aria-label={name}>
+    <div className={`gameplay-card${reveal ? " gameplay-card-reveal" : ""}`} style={{ "--card-index": index } as CSSProperties} role="img" aria-label={name}>
       <span className={red ? "gameplay-rank gameplay-rank-red" : "gameplay-rank"}>{rank}</span>
       <img src={suit} alt="" width={31} height={31} />
     </div>
@@ -63,8 +64,36 @@ function PlayingCard({ rank, suit, red, name }: FaceCard) {
 export default function Gameplay() {
   const context = useOutletContext<{ user?: { username: string; isGuest: boolean } } | null>();
   const username = context?.user ? (context.user.isGuest ? "Guest" : context.user.username) : "You";
-  const [deal, setDeal] = useState<TableDeal | null>(null);
+  const [game, setGame] = useState<GameState | null>(null);
+  const deal = game?.round;
+  const [ante, setAnte] = useState(10);
+  const [busy, setBusy] = useState(false);
+  const pending = useRef(false);
+  const [dealSequence, setDealSequence] = useState(0);
+  const [motion, setMotion] = useState<"none" | "deal" | "reveal">("none");
+  async function update(operation: () => Promise<GameState>, animation: "none" | "deal" | "reveal" = "none") {
+    if (pending.current) return;
+    pending.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      const next = await operation();
+      setMotion(animation);
+      if (animation === "deal") setDealSequence((value) => value + 1);
+      setGame(next);
+    }
+    catch (cause) { setError(cause instanceof Error ? cause.message : "Could not update game."); }
+    finally { pending.current = false; setBusy(false); }
+  }
   const [error, setError] = useState("");
+  const [guideOpen, setGuideOpen] = useState(false);
+  const [guideExpanded, setGuideExpanded] = useState(false);
+  const guideButton = useRef<HTMLButtonElement>(null);
+  function closeGuide() {
+    setGuideOpen(false);
+    setGuideExpanded(false);
+    guideButton.current?.focus();
+  }
   const [chatOpen, setChatOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([{ name: "CocoKai", text: "Good luck, everyone! ♣" }]);
@@ -78,9 +107,9 @@ export default function Gameplay() {
 
   useEffect(() => {
     let active = true;
-    dealTable()
+    getGame()
       .then((next) => {
-        if (active) setDeal(next);
+        if (active) setGame(next);
       })
       .catch((cause) => {
         if (active) setError(cause instanceof Error ? cause.message : "Could not deal.");
@@ -91,7 +120,7 @@ export default function Gameplay() {
   }, []);
 
   return (
-    <main className="gameplay">
+    <main className={`gameplay${guideOpen ? " gameplay-guide-open" : ""}${guideExpanded ? " gameplay-guide-expanded" : ""}`}>
       <div className="gameplay-fit">
         <div className="gameplay-board">
           <Link className="gameplay-lobbies" to="/lobbies">
@@ -102,18 +131,19 @@ export default function Gameplay() {
             <button type="button" aria-label="Toggle table chat" aria-expanded={chatOpen} aria-controls="game-chat" onClick={() => setChatOpen((value) => !value)}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M21 11.5a9 9 0 0 1-9 9 9.6 9.6 0 0 1-4-.9L3 21l1.4-4.5a9 9 0 1 1 16.6-5Z" /></svg>
             </button>
-            <button type="button" aria-label="Lightning">ϟ</button>
+            <button ref={guideButton} className="gameplay-guide-button" type="button" aria-expanded={guideOpen} aria-controls="hand-guide" onClick={() => guideOpen ? closeGuide() : setGuideOpen(true)}>♧ Hand rankings</button>
           </div>
 
           {error && <p className="gameplay-deal-error" role="alert">{error}</p>}
-          {!deal && !error && <p className="gameplay-deal-status" role="status">Dealing...</p>}
+          {!game && !error && <p className="gameplay-deal-status" role="status">Loading table...</p>}
 
-          <div className="gameplay-dealer" aria-label="Dealer hand">
-            {deal && <p className="gameplay-hand-rank gameplay-dealer-rank">{rankLabel(deal.dealer.rank)}</p>}
-            {deal?.dealer.cards.map((text) => {
+          <div key={`dealer-${dealSequence}`} className={`gameplay-dealer ${motion === "deal" ? "gameplay-dealing" : ""} ${deal?.settled && deal.message === "Dealer wins." ? "gameplay-winning-hand" : ""}`} aria-label="Dealer hand">
+            {deal && <p className="gameplay-hand-rank gameplay-dealer-rank">{deal.settled ? rankLabel(deal.dealer.rank!) : "Dealer · four cards hidden"}</p>}
+            {deal?.dealer.cards.map((text, index) => {
               const card = faceCard(text);
-              return <PlayingCard key={card.name} {...card} />;
+              return <PlayingCard key={card.name} {...card} index={index} reveal={motion === "reveal" && index > 0} />;
             })}
+            {deal && !deal.settled && Array.from({ length: 4 }, (_, i) => <div key={i} className="gameplay-card gameplay-card-back" style={{ "--card-index": i + 1 } as CSSProperties} role="img" aria-label="Hidden dealer card"><span className="gameplay-card-pattern">♣</span></div>)}
           </div>
 
           <img className="gameplay-rail" src={tableRail} alt="" width={1296} height={402} />
@@ -123,31 +153,40 @@ export default function Gameplay() {
             Reef Royale
             <img src={suitClubMark} alt="" width={25} height={25} />
           </p>
-          <p className="gameplay-ante" aria-label="Ante 10">10</p>
+          <p className="gameplay-ante" aria-label={`Ante ${deal?.ante ?? ante}`}>{deal?.ante ?? ante}</p>
+          <p key={`result-${dealSequence}-${deal?.settled}`} className={`gameplay-result ${deal?.settled ? "gameplay-settled" : ""} ${deal?.settled && deal.net! > 0 ? "gameplay-payout-win" : ""}`} role="status">{deal?.settled ? `${deal.message} ${deal.net! > 0 ? "+" : ""}${deal.net} pts` : deal ? "Raise twice your ante to challenge the dealer, or fold." : "Practice against the dealer. Choose your ante and deal."}</p>
 
-          <div className="gameplay-player-hand" aria-label="Your hand">
-            {deal && <p className="gameplay-hand-rank gameplay-player-rank">{rankLabel(deal.player.rank)}</p>}
-            {deal?.player.cards.map((text) => {
+          <div key={`player-${dealSequence}`} className={`gameplay-player-hand ${motion === "deal" ? "gameplay-dealing" : ""} ${deal?.settled && deal.message === "You win!" ? "gameplay-winning-hand" : ""}`} aria-label="Your hand">
+            {deal && <p className="gameplay-hand-rank gameplay-player-rank">{rankLabel(deal.player.rank!)}</p>}
+            {deal?.player.cards.map((text, index) => {
               const card = faceCard(text);
-              return <PlayingCard key={card.name} {...card} />;
+              return <PlayingCard key={card.name} {...card} index={index} />;
             })}
           </div>
 
           <section className="gameplay-seat" aria-label="Your seat">
-            <span className="gameplay-avatar" aria-hidden="true">LO</span>
+            <span className="gameplay-avatar" aria-hidden="true">{username.slice(0, 2).toUpperCase()}</span>
             <span className="gameplay-identity">
-              <strong>LoremOpus</strong>
-              <small>2,450 pts</small>
+              <strong>{username}</strong>
+              <small>{(game?.balance ?? 2450).toLocaleString()} practice pts</small>
             </span>
           </section>
 
           <div className="gameplay-bets" aria-label="Bet controls">
-            <button type="button" aria-disabled="true">Ante · 10 placed</button>
-            <button type="button" aria-disabled="true">Fold</button>
-            <button type="button" className="gameplay-raise" aria-disabled="true">Raise · 20 pts</button>
+            {(!deal || deal.settled) ? <>
+              <label>Ante <input aria-label="Ante points" type="number" min="1" max="100" value={ante} onChange={(event) => setAnte(Number(event.target.value))} /></label>
+              <button type="button" disabled={busy || !game || !Number.isInteger(ante) || ante < 1 || ante > 100 || ante * 3 > game.balance} onClick={() => void update(() => dealTable(ante), "deal")}>{busy ? "Dealing…" : deal ? "Deal next hand" : "Deal hand"}</button>
+              {game && game.balance < 3 && <button disabled={busy} onClick={() => void update(resetGame)}>Reset practice points</button>}
+            </> : <>
+              <button type="button" disabled>Ante · {deal.ante} placed</button>
+              <button type="button" disabled={busy} onClick={() => void update(() => playAction('fold'), "reveal")}>Fold</button>
+              <button type="button" className="gameplay-raise" disabled={busy} onClick={() => void update(() => playAction('raise'), "reveal")}>Raise · {deal.ante * 2} pts</button>
+            </>}
+            {error && <button disabled={busy} onClick={() => void update(getGame)}>Refresh table</button>}
           </div>
         </div>
       </div>
+      <HandGuide currentRank={deal?.player.rank} open={guideOpen} onClose={closeGuide} expanded={guideExpanded} onToggleExpanded={() => setGuideExpanded((value) => !value)} />
       {chatOpen && <aside className="game-chat" id="game-chat" aria-label="Table chat"><div className="game-chat-heading"><div><strong>Table chat</strong><small>Local preview · Messages are not sent</small></div><button type="button" aria-label="Close table chat" onClick={() => setChatOpen(false)}>×</button></div><div className="game-chat-messages" role="log" aria-live="polite">{messages.map((item, index) => <p key={index}><strong>{item.name}</strong><span>{item.text}</span></p>)}</div><form onSubmit={sendMessage}><label className="game-sr-only" htmlFor="game-message">Message</label><input id="game-message" value={message} maxLength={300} onChange={(event) => setMessage(event.target.value)} placeholder="Say something friendly…" autoComplete="off" /><button type="submit" disabled={!message.trim()} aria-label="Send preview message">↑</button></form></aside>}
     </main>
   );
