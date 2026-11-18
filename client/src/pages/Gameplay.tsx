@@ -1,14 +1,12 @@
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from "react";
-import { Link, useOutletContext } from "react-router-dom";
+import { Link, useLocation, useOutletContext } from "react-router-dom";
 import arrowLeft from "../assets/gameplay/arrow-left.svg";
-import feltInset from "../assets/gameplay/felt-inset.svg";
 import suitClub from "../assets/gameplay/suit-club.svg";
 import suitClubMark from "../assets/gameplay/suit-club-mark.svg";
 import suitDiamond from "../assets/gameplay/suit-diamond.svg";
 import suitHeart from "../assets/gameplay/suit-heart.svg";
 import suitSpade from "../assets/gameplay/suit-spade.svg";
-import tableRail from "../assets/gameplay/table-rail.svg";
-import { dealTable, getGame, playAction, resetGame, type GameState } from "../services/game";
+import { dealTable, getGame, heartbeat, playAction, resetGame, type GameState } from "../services/game";
 import HandGuide from "../components/HandGuide";
 import "../styles/Gameplay.css";
 
@@ -64,6 +62,9 @@ function PlayingCard({ rank, suit, red, name, index = 0, reveal = false }: FaceC
 export default function Gameplay() {
   const context = useOutletContext<{ user?: { username: string; isGuest: boolean } } | null>();
   const username = context?.user ? (context.user.isGuest ? "Guest" : context.user.username) : "You";
+  const location = useLocation();
+  const [connection, setConnection] = useState<"connected" | "reconnecting" | "restored">("connected");
+  const [clock, setClock] = useState(Date.now());
   const [game, setGame] = useState<GameState | null>(null);
   const deal = game?.round;
   const [ante, setAnte] = useState(10);
@@ -81,8 +82,9 @@ export default function Gameplay() {
       setMotion(animation);
       if (animation === "deal") setDealSequence((value) => value + 1);
       setGame(next);
+      setConnection("connected");
     }
-    catch (cause) { setError(cause instanceof Error ? cause.message : "Could not update game."); }
+    catch (cause) { setError(cause instanceof Error ? cause.message : "Could not update game."); setConnection("reconnecting"); }
     finally { pending.current = false; setBusy(false); }
   }
   const [error, setError] = useState("");
@@ -107,17 +109,44 @@ export default function Gameplay() {
 
   useEffect(() => {
     let active = true;
-    getGame()
-      .then((next) => {
-        if (active) setGame(next);
-      })
-      .catch((cause) => {
-        if (active) setError(cause instanceof Error ? cause.message : "Could not deal.");
-      });
+    let checking = false;
+    let first = true;
+    async function sync() {
+      if (!active || checking || pending.current) return;
+      checking = true;
+      pending.current = true;
+      try {
+        const next = await heartbeat(location.pathname);
+        if (!active) return;
+        setGame(next);
+        setError("");
+        setConnection((previous) => previous === "reconnecting" || (first && next.round && !next.round.settled) ? "restored" : previous);
+        first = false;
+      } catch {
+        if (active) setConnection("reconnecting");
+      } finally {
+        checking = false;
+        pending.current = false;
+      }
+    }
+    void sync();
+    const timer = window.setInterval(() => void sync(), 5000);
+    const offline = () => setConnection("reconnecting");
+    window.addEventListener("online", sync);
+    window.addEventListener("offline", offline);
     return () => {
       active = false;
+      window.clearInterval(timer);
+      window.removeEventListener("online", sync);
+      window.removeEventListener("offline", offline);
     };
-  }, []);
+  }, [location.pathname]);
+  useEffect(() => {
+    if (connection !== "reconnecting") return;
+    setClock(Date.now());
+    const timer = window.setInterval(() => setClock(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [connection]);
 
   return (
     <main className={`gameplay${guideOpen ? " gameplay-guide-open" : ""}${guideExpanded ? " gameplay-guide-expanded" : ""}`}>
@@ -134,6 +163,11 @@ export default function Gameplay() {
             <button ref={guideButton} className="gameplay-guide-button" type="button" aria-expanded={guideOpen} aria-controls="hand-guide" onClick={() => guideOpen ? closeGuide() : setGuideOpen(true)}>♧ Hand rankings</button>
           </div>
 
+          {connection !== "connected" && <p className={`gameplay-connection gameplay-connection-${connection}`} role="status">
+            {connection === "restored" ? "Connection restored · Your hand and balance are saved." : game?.round && !game.round.settled && game.reconnectDeadline
+              ? clock >= game.reconnectDeadline ? "Reconnect window expired. Waiting to confirm the automatic fold." : `Reconnecting… ${Math.ceil((game.reconnectDeadline - clock) / 1000)}s remaining before automatic fold.`
+              : "Reconnecting… We’ll restore your table automatically."}
+          </p>}
           {error && <p className="gameplay-deal-error" role="alert">{error}</p>}
           {!game && !error && <p className="gameplay-deal-status" role="status">Loading table...</p>}
 
@@ -146,17 +180,25 @@ export default function Gameplay() {
             {deal && !deal.settled && Array.from({ length: 4 }, (_, i) => <div key={i} className="gameplay-card gameplay-card-back" style={{ "--card-index": i + 1 } as CSSProperties} role="img" aria-label="Hidden dealer card"><span className="gameplay-card-pattern">♣</span></div>)}
           </div>
 
-          <img className="gameplay-rail" src={tableRail} alt="" width={1296} height={402} />
-          <img className="gameplay-inset" src={feltInset} alt="" width={1232} height={351} />
+          <div className="gameplay-rail" aria-hidden="true" />
+          <div className="gameplay-inset" aria-hidden="true" />
 
+          <p className="gameplay-table-caption">CARIBBEAN STUD · SOLO TABLE</p>
+          <p className="gameplay-table-rule">DEALER PLAYS WITH ACE–KING OR BETTER<span>Ante pays 1:1 · Raise twice your ante</span></p>
+          <div className="gameplay-bet-spots" aria-hidden="true"><span>ANTE</span><span>RAISE</span></div>
           <p className="gameplay-wordmark">
             Reef Royale
             <img src={suitClubMark} alt="" width={25} height={25} />
           </p>
-          <p className="gameplay-ante" aria-label={`Ante ${deal?.ante ?? ante}`}>{deal?.ante ?? ante}</p>
+          <p key={`ante-${dealSequence}`} className={`gameplay-ante ${motion === "deal" ? "gameplay-chip-landing" : ""}`} aria-label={`Ante ${deal?.ante ?? ante}`}>{deal?.ante ?? ante}</p>
+          {deal?.settled && deal.message !== "You folded." && <p key={`raise-${dealSequence}`} className="gameplay-raise-chip" aria-label={`Raise ${deal.ante * 2}`}>{deal.ante * 2}</p>}
+          {deal?.settled && deal.net! > 0 && <div key={`payout-${dealSequence}`} className="gameplay-payout-effects" aria-hidden="true">
+            {Array.from({ length: 7 }, (_, index) => <span key={index} style={{ "--spark-index": index } as CSSProperties}>✦</span>)}
+            <strong>+{deal.net} pts</strong>
+          </div>}
           <p key={`result-${dealSequence}-${deal?.settled}`} className={`gameplay-result ${deal?.settled ? "gameplay-settled" : ""} ${deal?.settled && deal.net! > 0 ? "gameplay-payout-win" : ""}`} role="status">{deal?.settled ? `${deal.message} ${deal.net! > 0 ? "+" : ""}${deal.net} pts` : deal ? "Raise twice your ante to challenge the dealer, or fold." : "Practice against the dealer. Choose your ante and deal."}</p>
 
-          <div key={`player-${dealSequence}`} className={`gameplay-player-hand ${motion === "deal" ? "gameplay-dealing" : ""} ${deal?.settled && deal.message === "You win!" ? "gameplay-winning-hand" : ""}`} aria-label="Your hand">
+          <div key={`player-${dealSequence}`} className={`gameplay-player-hand ${motion === "deal" ? "gameplay-dealing" : ""} ${deal?.settled && deal.message === "You win!" ? "gameplay-winning-hand" : ""} ${deal?.settled && deal.message === "You folded." ? "gameplay-folded-hand" : ""}`} aria-label="Your hand">
             {deal && <p className="gameplay-hand-rank gameplay-player-rank">{rankLabel(deal.player.rank!)}</p>}
             {deal?.player.cards.map((text, index) => {
               const card = faceCard(text);
@@ -164,25 +206,33 @@ export default function Gameplay() {
             })}
           </div>
 
+          <div className="gameplay-open-seats" aria-label="Future multiplayer seats">
+            {["upper-left", "lower-left", "opposite", "lower-right", "upper-right"].map((position, index) => (
+              <div key={position} className={`gameplay-open-seat gameplay-open-seat-${position}`}>
+                <span className="gameplay-open-avatar" aria-hidden="true">♧</span>
+                <span><strong>Seat {index + 2}</strong><small>Multiplayer coming soon</small></span>
+              </div>
+            ))}
+          </div>
           <section className="gameplay-seat" aria-label="Your seat">
             <span className="gameplay-avatar" aria-hidden="true">{username.slice(0, 2).toUpperCase()}</span>
             <span className="gameplay-identity">
               <strong>{username}</strong>
-              <small>{(game?.balance ?? 2450).toLocaleString()} practice pts</small>
+              <small key={`balance-${dealSequence}-${deal?.settled}`} className={deal?.settled && deal.net! > 0 ? "gameplay-balance-win" : undefined}>{(game?.balance ?? 2450).toLocaleString()} practice pts</small>
             </span>
           </section>
 
           <div className="gameplay-bets" aria-label="Bet controls">
             {(!deal || deal.settled) ? <>
               <label>Ante <input aria-label="Ante points" type="number" min="1" max="100" value={ante} onChange={(event) => setAnte(Number(event.target.value))} /></label>
-              <button type="button" disabled={busy || !game || !Number.isInteger(ante) || ante < 1 || ante > 100 || ante * 3 > game.balance} onClick={() => void update(() => dealTable(ante), "deal")}>{busy ? "Dealing…" : deal ? "Deal next hand" : "Deal hand"}</button>
-              {game && game.balance < 3 && <button disabled={busy} onClick={() => void update(resetGame)}>Reset practice points</button>}
+              <button type="button" disabled={busy || connection === "reconnecting" || !game || !Number.isInteger(ante) || ante < 1 || ante > 100 || ante * 3 > game.balance} onClick={() => void update(() => dealTable(ante), "deal")}>{busy ? "Dealing…" : deal ? "Deal next hand" : "Deal hand"}</button>
+              {game && game.balance < 3 && <button disabled={busy || connection === "reconnecting"} onClick={() => void update(resetGame)}>Reset practice points</button>}
             </> : <>
               <button type="button" disabled>Ante · {deal.ante} placed</button>
-              <button type="button" disabled={busy} onClick={() => void update(() => playAction('fold'), "reveal")}>Fold</button>
-              <button type="button" className="gameplay-raise" disabled={busy} onClick={() => void update(() => playAction('raise'), "reveal")}>Raise · {deal.ante * 2} pts</button>
+              <button type="button" disabled={busy || connection === "reconnecting"} onClick={() => void update(() => playAction('fold'), "reveal")}>Fold</button>
+              <button type="button" className="gameplay-raise" disabled={busy || connection === "reconnecting"} onClick={() => void update(() => playAction('raise'), "reveal")}>Raise · {deal.ante * 2} pts</button>
             </>}
-            {error && <button disabled={busy} onClick={() => void update(getGame)}>Refresh table</button>}
+            {error && <button disabled={busy || connection === "reconnecting"} onClick={() => void update(getGame)}>Refresh table</button>}
           </div>
         </div>
       </div>

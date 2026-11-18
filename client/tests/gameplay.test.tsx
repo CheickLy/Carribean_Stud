@@ -1,9 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import Gameplay from '../src/pages/Gameplay';
-const game = vi.hoisted(() => ({ getGame: vi.fn(), dealTable: vi.fn(), playAction: vi.fn(), resetGame: vi.fn() }));
+const game = vi.hoisted(() => ({ getGame: vi.fn(), heartbeat: vi.fn(), dealTable: vi.fn(), playAction: vi.fn(), resetGame: vi.fn() }));
 vi.mock('../src/services/game', () => game);
 const round = {
   dealer: { cards: ['2C'], rank: null },
@@ -13,6 +13,7 @@ const round = {
 describe('player versus dealer', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    game.heartbeat.mockImplementation(() => game.getGame());
     game.getGame.mockResolvedValue({ balance: 2450, round: null });
     game.dealTable.mockResolvedValue({ balance: 2440, round });
     game.playAction.mockResolvedValue({ balance: 2440, round: { ...round, settled: true,
@@ -66,12 +67,18 @@ describe('player versus dealer', () => {
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByRole('complementary', { name: 'Hand rankings' })).toBeNull();
   });
-  it('keeps the hand playable after a failed action' , async () => {
+  it('pauses bets after a failed action and restores the hand when back online' , async () => {
     game.getGame.mockResolvedValue({ balance: 2440, round });
     game.playAction.mockRejectedValue(new Error('Connection failed'));
     render(<MemoryRouter><Gameplay /></MemoryRouter>);
     await userEvent.click(await screen.findByRole('button', { name: 'Fold' }));
     expect((await screen.findByRole('alert')).textContent).toBe('Connection failed');
-    expect(screen.getByRole('button', { name: 'Fold' }).hasAttribute('disabled')).toBe(false);
+    expect(screen.getByRole('button', { name: 'Fold' }).hasAttribute('disabled')).toBe(true);
+    fireEvent(window, new Event('online'));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Fold' }).hasAttribute('disabled')).toBe(false));
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByText('Connection restored · Your hand and balance are saved.')).toBeTruthy();
+    expect(screen.getByRole('img', { name: 'Ace of spades' })).toBeTruthy();
+    expect(screen.getAllByRole('img', { name: 'Hidden dealer card' })).toHaveLength(4);
   });
 });

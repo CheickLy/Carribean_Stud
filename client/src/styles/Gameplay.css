@@ -410,13 +410,30 @@
 .gameplay-card-pattern { color: white; font-size: 30px; }
 
 .gameplay-tools .gameplay-guide-button { font-size: 14px; padding: 10px 14px; gap: 6px; }
+/* Alternate dealer/player cards from the same spot beside the table. */
+.gameplay-dealer.gameplay-dealing {
+  --deal-origin-x: 430px;
+  --deal-origin-y: 170px;
+  --deal-spacing: 77px;
+  --deal-offset: 0ms;
+}
+.gameplay-player-hand.gameplay-dealing {
+  --deal-origin-x: 434px;
+  --deal-origin-y: -207px;
+  --deal-spacing: 79px;
+  --deal-offset: 110ms;
+}
 .gameplay-dealing > .gameplay-card {
-  animation: gameplay-deal 280ms ease-out both;
-  animation-delay: calc(var(--card-index) * 75ms);
+  animation: gameplay-deal 340ms cubic-bezier(.2, .75, .25, 1) both;
+  animation-delay: calc(var(--card-index) * 220ms + var(--deal-offset));
 }
 @keyframes gameplay-deal {
-  from { opacity: 0; transform: translate(35px, -55px) rotate(7deg); }
-  to { opacity: 1; transform: translate(0, 0) rotate(0); }
+  from {
+    opacity: 0;
+    transform: translate(calc(var(--deal-origin-x) - var(--card-index) * var(--deal-spacing)), var(--deal-origin-y)) rotate(-16deg) scale(.85);
+  }
+  18% { opacity: 1; }
+  to { opacity: 1; transform: translate(0, 0) rotate(0) scale(1); }
 }
 .gameplay-card-reveal {
   position: relative;
@@ -509,3 +526,225 @@
   .gameplay-dealing > .gameplay-card, .gameplay-card-reveal, .gameplay-card-reveal::after, .gameplay-settled { animation: none; }
   .gameplay-card-reveal::after { display: none; }
 }
+
+.gameplay-chip-landing { animation: gameplay-chip-land 480ms cubic-bezier(.2,.8,.3,1) both; }
+@keyframes gameplay-chip-land {
+  0% { opacity: 0; transform: translate(-50%, 160px) scale(.65) rotate(-65deg); }
+  70% { opacity: 1; transform: translate(-50%, -10px) scale(1.08) rotate(8deg); }
+  100% { transform: translate(-50%, 0) scale(1) rotate(0); }
+}
+.gameplay-raise-chip {
+  position: absolute;
+  top: 413px;
+  left: calc(50% + 58px);
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 47px;
+  height: 47px;
+  margin: 0;
+  border: 3px dashed #f8d579;
+  border-radius: 50%;
+  background: #087f9b;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  animation: gameplay-chip-land 480ms cubic-bezier(.2,.8,.3,1) both;
+  transform: translateX(-50%);
+}
+.gameplay-folded-hand > .gameplay-card {
+  animation: gameplay-fold 460ms ease-out both;
+  animation-delay: calc(var(--card-index) * 45ms);
+}
+@keyframes gameplay-fold {
+  to { opacity: .4; transform: translate(0, 16px) rotate(-5deg) scale(.96); filter: grayscale(.65); }
+}
+.gameplay-winning-hand { animation: gameplay-hand-glow 900ms ease-out 750ms; }
+@keyframes gameplay-hand-glow {
+  0%, 100% { filter: brightness(1); }
+  45% { filter: brightness(1.3) drop-shadow(0 0 12px #f8d57988); }
+}
+.gameplay-payout-effects {
+  position: absolute;
+  top: 390px;
+  left: 50%;
+  z-index: 2;
+  pointer-events: none;
+  color: #f8d579;
+}
+.gameplay-payout-effects strong {
+  position: absolute;
+  left: -100px;
+  width: 200px;
+  text-align: center;
+  font-size: 26px;
+  animation: gameplay-payout-float 1600ms ease-out 750ms both;
+}
+@keyframes gameplay-payout-float {
+  0% { opacity: 0; transform: translateY(10px) scale(.7); }
+  20%, 60% { opacity: 1; transform: translateY(-20px) scale(1); }
+  100% { opacity: 0; transform: translateY(-65px) scale(1); }
+}
+.gameplay-payout-effects span {
+  position: absolute;
+  font-size: 22px;
+  animation: gameplay-spark 1100ms ease-out both;
+  animation-delay: calc(750ms + var(--spark-index) * 50ms);
+}
+@keyframes gameplay-spark {
+  from { opacity: 0; transform: translate(0, 0) scale(.4); }
+  25% { opacity: 1; }
+  to { opacity: 0; transform: translate(calc((var(--spark-index) - 3) * 32px), -85px) scale(1.1) rotate(35deg); }
+}
+.gameplay-identity .gameplay-balance-win { animation: gameplay-balance-pulse 900ms ease-out 750ms; }
+@keyframes gameplay-balance-pulse { 45% { color: #087f9b; text-shadow: 0 0 12px #54d4eb; } }
+.gameplay-bets button:not(:disabled), .gameplay-tools button { transition: transform 140ms ease, box-shadow 140ms ease; }
+.gameplay-bets button:not(:disabled):hover, .gameplay-tools button:hover { transform: translateY(-2px); box-shadow: 0 5px 14px #062c3d44; }
+.gameplay-bets button:not(:disabled):active, .gameplay-tools button:active { transform: translateY(1px); }
+.hand-guide { animation: gameplay-guide-enter 220ms ease-out; }
+@keyframes gameplay-guide-enter { from { opacity: 0; translate: 20px 0; } to { opacity: 1; translate: 0 0; } }
+.game-chat { animation: gameplay-chat-enter 220ms ease-out; }
+@keyframes gameplay-chat-enter { from { opacity: 0; translate: -20px 0; } to { opacity: 1; translate: 0 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .gameplay-chip-landing, .gameplay-raise-chip, .gameplay-folded-hand > .gameplay-card,
+  .gameplay-winning-hand, .gameplay-identity .gameplay-balance-win, .hand-guide, .game-chat { animation: none; }
+  .gameplay-payout-effects { display: none; }
+  .gameplay-folded-hand > .gameplay-card { opacity: .65; }
+  .gameplay-bets button:not(:disabled), .gameplay-tools button { transition: none; }
+  .gameplay-bets button:not(:disabled):hover, .gameplay-tools button:hover,
+  .gameplay-bets button:not(:disabled):active, .gameplay-tools button:active { transform: none; }
+}
+
+/* Table finish and hierarchy. The board keeps its original viewport scaling. */
+.gameplay {
+  background: radial-gradient(ellipse at 50% 0%, #f6fdff 0%, #e3f5f9 65%, #d8f0f5 100%);
+}
+.gameplay-rail {
+  top: 186px;
+  left: 72px;
+  width: 1296px;
+  height: 450px;
+  box-sizing: border-box;
+  border: 12px solid #ffffff;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px #c4e2e9, 0 24px 64px #28687c14, 0 6px 16px #28687c0d;
+}
+.gameplay-inset {
+  top: 204px;
+  left: 91px;
+  width: 1258px;
+  height: 414px;
+  box-sizing: border-box;
+  border: 1px solid #b9dfe7;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 30%, #ddf5f7, #bce6ed);
+  box-shadow: inset 0 0 0 8px #ffffff26;
+
+}
+.gameplay-dealer, .gameplay-player-hand { z-index: 2; }
+.gameplay-card {
+  position: relative;
+  width: 84px;
+  height: 118px;
+  padding: 10px;
+  border-radius: 9px;
+  border-color: #d9e8ed;
+  background: linear-gradient(145deg, #ffffff, #f7fcfd);
+  box-shadow: 0 2px 0 #d3e5e9, 0 8px 18px #2855691c;
+}
+.gameplay-rank { font-size: 24px; }
+.gameplay-rank-red { color: #cf5b47; }
+.gameplay-card > img { width: 37px; height: 37px; margin-bottom: 7px; }
+.gameplay-card-back {
+  border: 3px solid #e0faff;
+  background: radial-gradient(circle at 30% 20%, #40adbf, #16829c);
+}
+.gameplay-card-pattern { border-color: #c6f5ff99; color: #f1fcff; }
+.gameplay-player-hand { top: 481px; }
+.gameplay-hand-rank { color: #133f50; letter-spacing: .5px; }
+.gameplay-player-rank { right: auto; left: 50%; transform: translateX(-50%); }
+.gameplay-wordmark { top: 24px; font-family: Georgia, serif; font-weight: 400; font-size: 30px; color: #21566a; letter-spacing: -.5px; }
+.gameplay-table-caption { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); margin: 0; color: #5c8190; font-size: 9px; letter-spacing: 2.5px; }
+.gameplay-bet-spots { position: absolute; top: 359px; left: 50%; display: flex; gap: 14px; transform: translateX(-50%); }
+.gameplay-bet-spots span { display: flex; align-items: flex-end; justify-content: center; box-sizing: border-box; width: 72px; height: 72px; padding-bottom: 6px; border: 1px dashed #73aebb; border-radius: 50%; color: #426f7e; font-size: 9px; letter-spacing: 2px; }
+.gameplay-ante { top: 368px; left: calc(50% - 43px); box-shadow: 0 3px 0 #915f3a, 0 7px 12px #001b2955; }
+.gameplay-raise-chip { top: 368px; left: calc(50% + 43px); box-shadow: 0 3px 0 #075263, 0 7px 12px #001b2955; }
+.gameplay-seat { top: 632px; min-width: 240px; border: 1px solid #d0e6ec; border-radius: 40px; background: #ffffff; box-shadow: 0 8px 24px #13526c14; }
+.gameplay-avatar { background: var(--color-warm, #fff0e6); color: #133f50; }
+.gameplay-identity strong { color: #133f50; font-size: 14px; }
+.gameplay-identity small { color: #526f7a; font-size: 12px; }
+.gameplay-result { top: 712px; box-sizing: border-box; width: 660px; margin: 0; padding: 12px 20px; border: 1px solid transparent; border-radius: 24px; background: transparent; color: #133f50; font-size: 16px; line-height: 1.45; }
+.gameplay-payout-win { color: #22694c; border-color: #a1cfbb; background: #edf9f2; }
+.gameplay-bets { right: auto; left: 50%; transform: translateX(-50%); align-items: center; padding: 10px 12px; border: 1px solid #d0e6ec; border-radius: 40px; background: #ffffffd9; box-shadow: 0 10px 25px #13526c14; }
+.gameplay-bets button { height: 46px; border-radius: 24px; border-color: #d0e6ec; background: #ffffff; color: #133f50; }
+.gameplay-bets .gameplay-raise { background: #087f9b; color: #ffffff; }
+.gameplay-bets input { border: 1px solid #a8c5d0; background: #f3fafc; color: #133f50; }
+.gameplay-tools button, .gameplay-lobbies { border-color: #a8c5d0; background: #ffffff; color: #133f50; }
+.hand-guide { background: #ffffff; border-color: #a8c5d0; }
+.hand-guide-header, .game-chat-heading { background: #ddf6fb; color: #133f50; }
+.hand-guide-header p, .hand-guide-header span, .game-chat-heading small { color: #526f7a; }
+.game-chat { border-color: #a8c5d0; background: #ffffff; }
+.game-chat-heading button { color: #133f50; }
+.game-chat-messages p { background: #ddf6fb; }
+.game-chat form button { background: #087f9b; }
+.gameplay-dealer.gameplay-dealing { --deal-origin-x: 465px; --deal-spacing: 91px; --deal-origin-y: 170px; }
+.gameplay-player-hand.gameplay-dealing { --deal-origin-x: 469px; --deal-spacing: 93px; --deal-origin-y: -214px; }
+
+.hand-guide-header button { border-color: #9ccbd8; color: #133f50; }
+.hand-guide-header button:hover { background: #c6edf5; }
+.gameplay-deal-status, .gameplay-deal-error { color: #133f50; }
+.gameplay-bets label { color: #133f50; }
+.gameplay-payout-effects { color: #133f50; }
+.gameplay-lobbies img { filter: brightness(0) saturate(100%); }
+
+.gameplay-table-rule { position: absolute; top: 300px; left: 50%; transform: translateX(-50%); margin: 0; color: #427787; text-align: center; font-size: 11px; letter-spacing: 2px; line-height: 1.8; }
+.gameplay-table-rule span { display: block; font-size: 10px; letter-spacing: 1px; color: #5d8490; }
+.gameplay-ante { border-color: #fff0d6; background: #e9947b; box-shadow: 0 2px 0 #bc725e, 0 5px 10px #315d7026; }
+.gameplay-raise-chip { border-color: #c9f2f8; box-shadow: 0 2px 0 #075263, 0 5px 10px #315d7026; }
+.gameplay-player-rank { padding: 5px 12px; border-radius: 20px; background: #ffffffb3; font-size: 12px; letter-spacing: .2px; }
+.gameplay-dealer-rank { color: #5c8190; font-size: 12px; font-weight: 400; }
+
+/* Six seat positions around the oval; only the local seat is active in solo play. */
+.gameplay-rail {
+  border-width: 18px;
+  box-shadow: 0 0 0 1px #bddde5, 0 5px 0 #c5e5ec, 0 24px 50px #28687c1c, inset 0 3px 6px #ffffff;
+}
+.gameplay-inset { box-shadow: inset 0 4px 18px #4795a321, inset 0 0 0 5px #ffffff38; }
+.gameplay-open-seat {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 190px;
+  padding: 9px 12px;
+  border: 1px dashed #8eb9c5;
+  border-radius: 36px;
+  background: #edf9fccf;
+  color: #476d7a;
+  transform: translateX(-50%);
+}
+.gameplay-open-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #b5dbe4;
+  border-radius: 50%;
+  color: #6797a5;
+  font-size: 21px;
+}
+.gameplay-open-seat strong { display: block; font-size: 12px; font-weight: 600; }
+.gameplay-open-seat small { display: block; margin-top: 3px; font-size: 9px; color: #5e8290; }
+.gameplay-open-seat-upper-left { top: 302px; left: 172px; }
+.gameplay-open-seat-lower-left { top: 630px; left: 330px; }
+.gameplay-open-seat-opposite { top: 218px; left: 380px; width: 176px; padding: 6px 12px; }
+.gameplay-open-seat-lower-right { top: 630px; left: 1110px; }
+.gameplay-open-seat-upper-right { top: 302px; left: 1268px; }
+.gameplay-seat { border: 2px solid #63b7ca; box-shadow: 0 0 0 4px #ffffff80, 0 8px 24px #13526c14; }
+
+.gameplay-connection { position: absolute; top: 68px; left: 50%; z-index: 4; transform: translateX(-50%); margin: 0; padding: 8px 16px; border: 1px solid #a8c5d0; border-radius: 20px; background: #ffffffed; color: #133f50; font-size: 12px; white-space: nowrap; }
+.gameplay-connection-reconnecting { background: #fff0e6; border-color: #e2b296; }
+.gameplay-connection-restored { top: 693px; font-size: 10px; padding: 3px 10px; }

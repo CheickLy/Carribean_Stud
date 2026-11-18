@@ -1,5 +1,5 @@
 import { createBrowserRouter, Link, NavLink, Navigate, Outlet, RouterProvider, useLocation, useNavigate, useOutletContext } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import LoginSection from "./components/LoginSection";
 import RegistrationSection from "./components/RegistrationSection";
 import CreateLobby from "./pages/CreateLobby";
@@ -18,6 +18,7 @@ import Messages from "./pages/player/Messages";
 import Home from "./pages/guest/Home";
 import { getCurrentUser, logout } from "./services/auth";
 import "./styles/Navigation.css";
+import { getGame } from "./services/game";
 import ContactSupport from "./pages/ContactSupport";
 
 
@@ -38,6 +39,20 @@ function Layout() {
     });
     return () => { active = false; };
   }, [location.pathname]);
+  const resumeChecked = useRef<string | null>(null);
+  useEffect(() => {
+    if (!session.user) { resumeChecked.current = null; return; }
+    if (resumeChecked.current === session.user.username) return;
+    resumeChecked.current = session.user.username;
+    if (!["/", "/lobbies", "/play"].includes(location.pathname)) return;
+    let active = true;
+    getGame().then(game => {
+      if (active && game.round && !game.round.settled && game.activePath && /^\/lobbies\/[1-9]\d*\/game$/.test(game.activePath)) {
+        navigate(game.activePath, { replace: true });
+      }
+    }).catch(() => { /* Normal navigation remains available if the API is offline. */ });
+    return () => { active = false; };
+  }, [session.user?.username, location.pathname, navigate]);
   async function signOut() {
     try {
       await logout();
