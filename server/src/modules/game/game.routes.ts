@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { gameView, startRound, settleRound } from './round.js';
+import { gameView, startRound, settleRound, expireDisconnectedRound, keepConnected } from './round.js';
 
 export const gameRouter = Router();
 gameRouter.use((req, res, next) => {
@@ -8,10 +8,17 @@ gameRouter.use((req, res, next) => {
     return;
   }
   req.session.practiceGame ??= { balance: 2450 };
+  expireDisconnectedRound(req.session.practiceGame);
   res.setHeader('Cache-Control', 'no-store');
   next();
 });
 gameRouter.get('/state', (req, res) => res.json(gameView(req.session.practiceGame!)));
+gameRouter.post('/heartbeat', (req, res) => {
+  const game = req.session.practiceGame!;
+  keepConnected(game);
+  if (typeof req.body?.path === 'string' && /^\/lobbies\/[1-9]\d*\/game$/.test(req.body.path)) game.activePath = req.body.path;
+  res.json(gameView(game));
+});
 gameRouter.post('/deal', (req, res) => {
   try {
     startRound(req.session.practiceGame!, req.body.ante);

@@ -8,13 +8,27 @@ export const PAYOUTS: Record<HandRankName, number> = {
 };
 export type PracticeGame = {
   balance: number;
+  reconnectDeadline?: number;
+  activePath?: string;
   round?: ReturnType<typeof dealTable> & { ante: number; settled: boolean; message?: string; net?: number };
 };
+export const RECONNECT_WINDOW_MS = 30_000;
+export function expireDisconnectedRound(game: PracticeGame, now = Date.now()) {
+  if (game.round && !game.round.settled && game.reconnectDeadline !== undefined && now >= game.reconnectDeadline) {
+    settleRound(game, 'fold');
+    game.round.message = 'Reconnect window expired. Your hand was automatically folded.';
+  }
+}
+export function keepConnected(game: PracticeGame, now = Date.now()) {
+  expireDisconnectedRound(game, now);
+  if (game.round && !game.round.settled) game.reconnectDeadline = now + RECONNECT_WINDOW_MS;
+}
 export function startRound(game: PracticeGame, ante: number) {
   if (game.round && !game.round.settled) throw new Error('Finish your current hand first.');
   if (!Number.isSafeInteger(ante) || ante < 1 || ante > 100 || ante * 3 > game.balance) {
     throw new Error('Choose an ante from 1 to 100 and keep enough points for a raise.');
   }
+  game.reconnectDeadline = Date.now() + RECONNECT_WINDOW_MS;
   game.balance -= ante;
   game.round = { ...dealTable(), ante, settled: false };
 }
@@ -57,6 +71,8 @@ export function gameView(game: PracticeGame) {
   const round = game.round;
   return {
     balance: game.balance,
+    reconnectDeadline: round && !round.settled ? game.reconnectDeadline ?? null : null,
+    activePath: round && !round.settled ? game.activePath ?? null : null,
     round: round ? { ...round, dealer: round.settled ? round.dealer : { cards: [round.dealer.cards[0]], rank: null } } : null,
   };
 }

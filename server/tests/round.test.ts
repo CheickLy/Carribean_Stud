@@ -1,8 +1,8 @@
 import express from 'express';
 import request from 'supertest';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi, afterEach } from 'vitest';
 import { gameRouter } from '../src/modules/game/game.routes.js';
-import { gameView, settleRound, startRound, type PracticeGame } from '../src/modules/game/round.js';
+import { gameView, settleRound, startRound, keepConnected, expireDisconnectedRound, type PracticeGame } from '../src/modules/game/round.js';
 import { Hand } from '../src/modules/game/hand.js';
 function game(player: string[], dealer: string[]): PracticeGame {
   return { balance: 2440, round: {
@@ -88,6 +88,29 @@ describe('game API', () => {
   it('requires authentication', async () => {
     expect((await request(app()).get('/api/game/state')).status).toBe(401);
   });
+  it('expires a disconnected round before accepting an action and remembers its table', async () => {
+    let now = 100_000;
+    const clock = vi.spyOn(Date, 'now').mockImplementation(() => now);
+    try {
+      const server = app(7);
+      await request(server).post('/api/game/heartbeat').send({ path: '/lobbies/12/game' });
+      const dealt = await request(server).post('/api/game/deal').send({ ante: 10 });
+      expect(dealt.body.activePath).toBe('/lobbies/12/game');
+      expect(dealt.body.reconnectDeadline).toBe(130_000);
+      now = 120_000;
+      const resumed = await request(server).post('/api/game/heartbeat').send({ path: 'https://example.com' });
+      expect(resumed.body.round.player.cards).toEqual(dealt.body.round.player.cards);
+      expect(resumed.body.activePath).toBe('/lobbies/12/game');
+      expect(resumed.body.reconnectDeadline).toBe(150_000);
+      now = 150_000;
+      expect((await request(server).post('/api/game/action').send({ action: 'raise' })).status).toBe(400);
+      const expired = await request(server).post('/api/game/heartbeat').send({});
+      expect(expired.body.round.settled).toBe(true);
+      expect(expired.body.round.message).toContain('automatically folded');
+      expect(expired.body.balance).toBe(2440);
+      expect(expired.body.reconnectDeadline).toBeNull();
+    } finally { clock.mockRestore(); }
+  });
   it('plays successive rounds without exposing hidden cards or accepting repeated actions', async () => {
     const server = app(7);
     expect((await request(server).get('/api/game/state')).body.balance).toBe(2450);
@@ -100,5 +123,48 @@ describe('game API', () => {
     expect(folded.body.round.dealer.cards).toHaveLength(5);
     expect((await request(server).post('/api/game/action').send({ action: 'raise' })).status).toBe(400);
     expect((await request(server).post('/api/game/deal').send({ ante: 5 })).status).toBe(200);
+  });
+});
+
+
+describe('reconnection window', () => {
+  afterEach(() => vi.useRealTimers());
+  it('restores the exact cards and balance within the window and extends the lease', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(100_000);
+    const state: PracticeGame = { balance: 2450 };
+    startRound(state, 10);
+    const cards = [...state.round!.player.cards];
+    expect(state.reconnectDeadline).toBe(130_000);
+    keepConnected(state, 129_999);
+    expect(state.round!.player.cards).toEqual(cards);
+    expect(state.balance).toBe(2440);
+    expect(state.round!.settled).toBe(false);
+    expect(state.reconnectDeadline).toBe(159_999);
+    expect(gameView(state).round!.dealer.cards).toHaveLength(1);
+  });
+  it('folds at the deadline once without charging an additional bet', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(100_000);
+    const state: PracticeGame = { balance: 2450 };
+    startRound(state, 10);
+    keepConnected(state, 130_000);
+    expect(state.round!.settled).toBe(true);
+    expect(state.round!.message).toContain('automatically folded');
+    expect(state.round!.net).toBe(-10);
+    expect(state.balance).toBe(2440);
+    expireDisconnectedRound(state, 999_999);
+    expect(state.balance).toBe(2440);
+    expect(() => settleRound(state, 'raise')).toThrow('No active');
+    expect(gameView(state).reconnectDeadline).toBeNull();
+  });
+  it('never expires a settled hand', () => {
+    const state = game(pair, low);
+    state.reconnectDeadline = 1;
+    settleRound(state, 'raise');
+    const balance = state.balance;
+    expireDisconnectedRound(state, 1_000_000);
+    expect(state.balance).toBe(balance);
+    expect(state.round!.message).toContain('does not qualify');
   });
 });
