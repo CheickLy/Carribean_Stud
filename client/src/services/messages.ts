@@ -1,9 +1,11 @@
+import { readJson } from './http';
+
 const API_URL = '/api/messages';
 
 export type FriendMessage = { messageId: number; senderId: number; recipientId: number; message: string; readAt: string | null; createdAt: string };
 
 async function handle(response: Response) {
-  const data = await response.json();
+  const data = await readJson(response);
   if (!response.ok) throw new Error(data.error || 'Message request failed.');
   return data;
 }

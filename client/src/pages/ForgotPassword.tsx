@@ -13,7 +13,7 @@ export default function ForgotPassword() {
     const response = await fetch('/api/auth/forgot-password', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }),
     });
-    const data = await response.json();
+    const data = await readJson(response);
     setMessage(data.message || data.error || 'Request finished.');
     setResetPath(data.resetPath || '');
   }
@@ -27,3 +27,5 @@ export default function ForgotPassword() {
     <Link className="account-back" to="/">← Back to login</Link>
   </section></main>;
 }
+import { readJson } from '../services/http';
+

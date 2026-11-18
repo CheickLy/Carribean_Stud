@@ -14,7 +14,7 @@ export default function ResetPassword() {
     const response = await fetch('/api/auth/reset-password', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: params.get('token'), password }),
     });
-    const data = await response.json();
+    const data = await readJson(response);
     setMessage(data.message || data.error || 'Request finished.');
   }
 
@@ -25,3 +25,5 @@ export default function ResetPassword() {
     {message && <p role="status" className="account-message">{message}</p>}<Link className="account-back" to="/">← Back to login</Link>
   </section></main>;
 }
+import { readJson } from '../services/http';
+

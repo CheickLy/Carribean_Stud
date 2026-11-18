@@ -101,7 +101,7 @@ export default function AdminDashboard() {
     let active = true;
     getCurrentUser().then((user) => {
       if (!active) return;
-      if (!user || user.role !== 'admin') navigate('/', { replace: true });
+      if (!user || user.role.trim().toLowerCase() !== 'admin') navigate('/', { replace: true });
       else {
         setAdminName(user.username);
         setAdminId(typeof user.userId === "number" ? user.userId : null);
@@ -153,7 +153,7 @@ export default function AdminDashboard() {
 
     fetch("/api/lobbies/all", { credentials: "include" })
       .then(async (response) => {
-        const data = await response.json();
+        const data = await readJson(response);
         if (!response.ok) {
           throw new Error(data.error || "Could not load lobbies");
         }
@@ -543,3 +543,5 @@ export default function AdminDashboard() {
     </div>
   );
 }
+import { readJson } from '../../services/http';
+

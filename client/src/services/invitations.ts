@@ -1,3 +1,5 @@
+import { readJson } from "./http";
+
 const API_URL = "/api/invitations";
 
 export interface LobbyInvitation {
@@ -20,7 +22,7 @@ export interface LobbyInvitation {
 }
 
 async function handleResponse(response: Response) {
-  const data = await response.json();
+  const data = await readJson(response);
 
   if (!response.ok) {
     throw new Error(data.error || "Something went wrong.");

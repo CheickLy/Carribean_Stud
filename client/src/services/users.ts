@@ -1,3 +1,5 @@
+import { readJson } from "./http";
+
 const API_URL = "/api/users";
 
 export const AVATARS = [
@@ -39,7 +41,7 @@ export async function setUserBanned(
     credentials: "include",
     body: JSON.stringify({ isBanned }),
   });
-  const data = await response.json();
+  const data = await readJson(response);
 
   if (!response.ok) {
     throw new Error(data.error || "Could not update ban status");
@@ -59,7 +61,7 @@ export async function updateUserAccount(
     credentials: "include",
     body: JSON.stringify({ username, email }),
   });
-  const data = await response.json();
+  const data = await readJson(response);
   if (!response.ok) {
     throw new Error(data.error || "Could not update account");
   }
@@ -72,14 +74,14 @@ export async function deleteUserAccount(userId: number): Promise<void> {
     credentials: "include",
   });
   if (!response.ok) {
-    const data = await response.json().catch(() => ({}));
+    const data = await readJson(response).catch(() => ({}));
     throw new Error(data.error || "Could not delete account");
   }
 }
 
 export async function listUsers(): Promise<AdminUser[]> {
   const response = await fetch(API_URL, { credentials: "include" });
-  const data = await response.json();
+  const data = await readJson(response);
 
   if (!response.ok) {
     throw new Error(data.error || "Could not load users");
@@ -97,7 +99,7 @@ export async function updateAvatar(avatar: string) {
     credentials: "include",
     body: JSON.stringify({ avatar }),
   });
-  const data = await response.json();
+  const data = await readJson(response);
 
   if (!response.ok) {
     throw new Error(data.error || "Could not update avatar");

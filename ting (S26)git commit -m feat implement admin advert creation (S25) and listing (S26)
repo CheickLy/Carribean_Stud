@@ -1,0 +1,11 @@
+ client/src/pages/admin/AdminDashboard.tsx       |  13 [32m+[m[31m-[m
+ client/src/pages/admin/AdvertList.tsx           | 122 [32m++++++++++++++++++[m
+ client/src/pages/admin/CreateAdvert.tsx         | 158 [32m++++++++++++++++++++++++[m
+ client/src/services/adverts.ts                  |  45 [32m+++++++[m
+ client/src/styles/CreateAdvert.css              |  34 [32m+++++[m
+ server/src/app.ts                               |   2 [32m+[m
+ server/src/db/migrations/011-create-adverts.cjs |  63 [32m++++++++++[m
+ server/src/models/advert.ts                     |  71 [32m+++++++++++[m
+ server/src/modules/adverts/adverts.routes.ts    | 122 [32m++++++++++++++++++[m
+ server/src/modules/adverts/adverts.service.ts   |  23 [32m++++[m
+ 10 files changed, 651 insertions(+), 2 deletions(-)

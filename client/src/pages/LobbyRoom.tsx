@@ -34,7 +34,7 @@ export default function LobbyRoom() {
         const response = await fetch(`/api/lobbies/${lobbyId}`, {
           credentials: "include", signal: controller.signal,
         });
-        const data = await response.json();
+        const data = await readJson(response);
         if (!response.ok) throw new Error(data.error || "Unable to load your table.");
         setRoom(data);
         setError("");
@@ -107,3 +107,5 @@ export default function LobbyRoom() {
     </dialog>
   </main></div>;
 }
+import { readJson } from '../services/http';
+

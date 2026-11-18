@@ -23,7 +23,7 @@ const createdUser = {
   username: 'testplayer01',
   email: 'testplayer01@example.com',
   role: 'player',
-  balance: '0.00',
+  balance: '500.00',
 };
 
 beforeEach(() => {
@@ -48,7 +48,7 @@ describe('POST /api/auth/register (S4)', () => {
     );
     expect(response.body.user.username).toBe('testplayer01');
     expect(response.body.user.role).toBe('player');
-    expect(response.body.user.balance).toBe('0.00');
+    expect(response.body.user.balance).toBe('500.00');
   });
 
   it('never returns a password hash', async () => {
@@ -98,7 +98,7 @@ describe('POST /api/auth/register (S4)', () => {
     expect(User.create).toHaveBeenCalledWith(
       expect.objectContaining({
         role: 'player',
-        balance: '0.00',
+        balance: '500.00',
         isGuest: false,
         isBanned: false,
       }),

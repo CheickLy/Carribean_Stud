@@ -1,3 +1,5 @@
+import { readJson } from './http';
+
 const API_URL = '/api/support-tickets';
 
 export type TicketStatus = 'open' | 'in_progress' | 'resolved';
@@ -13,7 +15,7 @@ export type SupportTicket = {
 };
 
 async function readResponse(response: Response) {
-  const data = await response.json();
+  const data = await readJson(response);
   if (!response.ok) throw new Error(data.error || 'Could not load support tickets');
   return data;
 }

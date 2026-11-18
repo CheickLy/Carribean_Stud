@@ -1,3 +1,5 @@
+import { readJson } from "./http";
+
 export async function login(email: string, password: string) {
   const response = await fetch("/api/auth/login", {
     method: "POST",
@@ -8,7 +10,7 @@ export async function login(email: string, password: string) {
     body: JSON.stringify({ email, password }),
   });
 
-  const data = await response.json();
+  const data = await readJson(response);
 
   if (!response.ok) {
     throw new Error(data.error || "Login failed");
@@ -39,7 +41,7 @@ export async function register(
     }
   );
 
-  const data = await response.json();
+  const data = await readJson(response);
 
   if (!response.ok) {
     throw new Error(data.error || 'Registration failed');
@@ -53,7 +55,7 @@ export async function startGuest() {
   const response = await fetch("/api/auth/guest", {
     method: "POST", credentials: "include"
   });
-  const data = await response.json();
+  const data = await readJson(response);
   if (!response.ok) throw new Error(data.error || "Guest play failed");
   return data;
 }
@@ -63,9 +65,9 @@ export async function getCurrentUser() {
     credentials: "include"
   });
   if (response.status === 401) return null;
-  const data = await response.json();
+  const data = await readJson(response);
   if (!response.ok) throw new Error(data.error || "Could not load session");
-  return data.user;
+  return data.user ?? null;
 }
 
 export async function logout() {

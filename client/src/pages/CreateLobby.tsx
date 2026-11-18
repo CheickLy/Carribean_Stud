@@ -128,7 +128,7 @@ export default function CreateLobby() {
     }),
   });
 
-  const data = await response.json();
+  const data = await readJson(response);
 
   if (!response.ok) {
     throw new Error(
@@ -586,3 +586,5 @@ navigate(`/lobbies/${data.lobbyId}`, { state: { created: true } });
     </div>
   );
 }
+import { readJson } from '../services/http';
+

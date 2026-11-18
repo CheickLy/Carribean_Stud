@@ -25,7 +25,7 @@ export default function PlayerHome() {
     }).catch((problem) => { if (active) setError(problem instanceof Error ? problem.message : "Could not load your account."); });
     fetch("/api/lobbies").then(async (response) => {
       if (!response.ok) throw new Error("Could not load tables.");
-      return response.json() as Promise<Table[]>;
+      return readJson<Table[]>(response);
     }).then((list) => { if (active) setTables(list); })
       .catch((problem) => { if (active) setTablesError(problem instanceof Error ? problem.message : "Could not load tables."); })
       .finally(() => { if (active) setTablesLoading(false); });
@@ -53,3 +53,5 @@ export default function PlayerHome() {
     </div>
   </main>;
 }
+import { readJson } from '../../services/http';
+

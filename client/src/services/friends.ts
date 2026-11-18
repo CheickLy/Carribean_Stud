@@ -1,3 +1,5 @@
+import { readJson } from "./http";
+
 const API_URL = "/api/friends";
 
 export interface Friend {
@@ -31,7 +33,7 @@ async function request<T>(
             ...(options.headers || {}),
         },
     });
-    const data = await response.json();
+    const data = await readJson(response);
 
     if (!response.ok){
         throw new Error(

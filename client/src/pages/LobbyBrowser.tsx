@@ -36,7 +36,7 @@ export default function LobbyBrowser() {
         method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ passcode: selected.isPrivate ? passcode : undefined }),
       });
-      const data = await response.json();
+      const data = await readJson(response);
       if (response.status === 401) {
         navigate("/login", { state: { from: "/lobbies" } });
         return;
@@ -77,7 +77,7 @@ export default function LobbyBrowser() {
           throw new Error("Unable to load tables.");
         }
 
-        const data: BrowserLobby[] = await response.json();
+        const data = await readJson<BrowserLobby[]>(response);
 
         setLobbies(data);
       } catch (err) {
@@ -270,3 +270,5 @@ export default function LobbyBrowser() {
     </div>
   );
 }
+import { readJson } from '../services/http';
+

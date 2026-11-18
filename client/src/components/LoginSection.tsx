@@ -26,7 +26,10 @@ export default function LoginSection({
     try {
     const result = await login(email, password);
     setPassword("");
-    onAuthenticated(result.user?.role);
+    const role = typeof result.user?.role === "string"
+      ? result.user.role.trim().toLowerCase()
+      : undefined;
+    onAuthenticated(role);
 } catch (error: unknown) {
   setMessage(
     error instanceof Error ? error.message : "Login failed"

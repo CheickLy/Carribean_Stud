@@ -291,7 +291,7 @@ authRouter.post('/register', async (req, res) => {
       : await User.create({
           username: cleanUsername, email: cleanEmail,
           passwordHash, role: 'player', isGuest: false,
-          isBanned: false, topupCount: 0, balance: '0.00'
+          isBanned: false, topupCount: 0, balance: STARTING_CHIPS
         });
 
     if (req.session) {

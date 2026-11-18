@@ -90,7 +90,7 @@ function RequireSession({ admin = false }: { admin?: boolean }) {
   if (loading) return <main><p role="status">Loading session...</p></main>;
   if (error) return <main><p>Unable to check your session. Please refresh to try again.</p></main>;
   if (!user) return <Navigate to="/login" state={{ from: location.pathname }} replace />;
-  if (admin && user.role !== "admin") return <main><h1>Administrator access required</h1><Link to="/lobbies">Browse tables</Link></main>;
+  if (admin && user.role.trim().toLowerCase() !== "admin") return <main><h1>Administrator access required</h1><Link to="/lobbies">Browse tables</Link></main>;
   return <Outlet context={{ user, loading, error }} />;
 }
 
@@ -102,7 +102,31 @@ function HomePage() {
 function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  return <LoginSection onRegisterClick={() => navigate("/register", { state: location.state })} onAuthenticated={(role) => navigate(role === "admin" ? "/admin" : "/lobbies", { replace: true })} />;
+
+  const destination = location.state?.from;
+
+  async function handleAuthenticated(role?: string) {
+    let resolvedRole = role;
+
+    try {
+      const currentUser = await getCurrentUser();
+      resolvedRole = currentUser?.role ?? resolvedRole;
+    } catch {
+      // The route guard will display the session error if the follow-up check fails.
+    }
+
+    navigate(
+      resolvedRole?.trim().toLowerCase() === "admin"
+        ? "/admin"
+        : typeof destination === "string" && destination.startsWith("/") && !destination.startsWith("//")
+          ? destination
+          : "/lobbies",
+      { replace: true },
+    );
+  }
+
+  return <LoginSection onRegisterClick={() => navigate("/register", { state: location.state })} onAuthenticated={(role) => { void handleAuthenticated(role); }} />;
+
 }
 
 function RegistrationPage() {
