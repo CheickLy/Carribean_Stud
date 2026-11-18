@@ -4,9 +4,10 @@ import { listAdverts, type Advert } from '../../services/adverts';
 
 type Props = {
   refreshKey: number;
+  onEdit: (advert: Advert) => void;
 };
 
-export default function AdvertList({ refreshKey }: Props) {
+export default function AdvertList({ refreshKey, onEdit }: Props) {
   const [adverts, setAdverts] = useState<Advert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -85,6 +86,7 @@ export default function AdvertList({ refreshKey }: Props) {
                 <th>Start</th>
                 <th>End</th>
                 <th>Status</th>
+                <th aria-label="Actions"></th>
               </tr>
             </thead>
             <tbody>
@@ -110,6 +112,11 @@ export default function AdvertList({ refreshKey }: Props) {
                     <span className="admin-tag">
                       {advert.isActive ? 'Active' : 'Inactive'}
                     </span>
+                  </td>
+                  <td>
+                    <button type="button" className="admin-advert-edit" onClick={() => onEdit(advert)}>
+                      Edit
+                    </button>
                   </td>
                 </tr>
               ))}

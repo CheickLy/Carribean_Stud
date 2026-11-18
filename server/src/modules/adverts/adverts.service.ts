@@ -16,6 +16,13 @@ export async function createAdvert(input: CreateAdvertInput) {
   return Advert.create(input);
 }
 
+export async function updateAdvert(advertId: number, input: Partial<CreateAdvertInput>) {
+  const advert = await Advert.findByPk(advertId);
+  if (!advert) return null;
+  await advert.update(input);
+  return advert;
+}
+
 export async function listAdverts() {
   return Advert.findAll({
     order: [['createdAt', 'DESC']],

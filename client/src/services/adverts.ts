@@ -1,3 +1,5 @@
+import { readJson } from './http';
+
 export type CreateAdvertInput = {
   title: string;
   creative: string;
@@ -18,13 +20,25 @@ export async function createAdvert(input: CreateAdvertInput) {
     body: JSON.stringify(input),
   });
 
-  const data = await response.json();
+  const data = await readJson(response);
 
   if (!response.ok) {
     throw new Error(data.error || 'Could not create advert');
   }
 
   return data;
+}
+
+export async function updateAdvert(advertId: number, input: CreateAdvertInput) {
+  const response = await fetch(`/api/admin/adverts/${advertId}`, {
+    method: 'PATCH',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  const data = await readJson(response);
+  if (!response.ok) throw new Error(data.error || 'Could not update advert');
+  return data as Advert;
 }
 
 export type Advert = CreateAdvertInput & {
@@ -41,5 +55,6 @@ export async function listAdverts(): Promise<Advert[]> {
     throw new Error(`Could not load adverts (${response.status})`);
   }
 
-  return response.json();
+  return readJson(response);
 }
+
