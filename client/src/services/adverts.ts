@@ -41,6 +41,17 @@ export async function updateAdvert(advertId: number, input: CreateAdvertInput) {
   return data as Advert;
 }
 
+export async function deleteAdvert(advertId: number) {
+  const response = await fetch(`/api/admin/adverts/${advertId}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const data = await readJson(response);
+    throw new Error(data.error || 'Could not delete advert');
+  }
+}
+
 export type Advert = CreateAdvertInput & {
   advertId: number;
   createdAt: string;

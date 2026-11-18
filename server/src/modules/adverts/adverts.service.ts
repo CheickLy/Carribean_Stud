@@ -23,6 +23,13 @@ export async function updateAdvert(advertId: number, input: Partial<CreateAdvert
   return advert;
 }
 
+export async function deleteAdvert(advertId: number) {
+  const advert = await Advert.findByPk(advertId);
+  if (!advert) return false;
+  await advert.destroy();
+  return true;
+}
+
 export async function listAdverts() {
   return Advert.findAll({
     order: [['createdAt', 'DESC']],

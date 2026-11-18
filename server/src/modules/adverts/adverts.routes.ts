@@ -2,7 +2,7 @@
 import { Router } from 'express';
 import { User } from '../../models/user.js';
 import { Advert } from '../../models/advert.js';
-import { createAdvert, listAdverts, updateAdvert } from './adverts.service.js';
+import { createAdvert, deleteAdvert, listAdverts, updateAdvert } from './adverts.service.js';
 
 
 export const advertsRouter = Router();
@@ -194,5 +194,34 @@ advertsRouter.patch('/:advertId', async (req, res, next) => {
       chipReward, eligibilityLimit, startsAt: start, endsAt: end, isActive,
     });
     res.json(advert);
+  } catch (error) { next(error); }
+});
+
+advertsRouter.delete('/:advertId', async (req, res, next) => {
+  try {
+    if (!req.session?.userId) {
+      res.status(401).json({ error: 'Not authenticated' });
+      return;
+    }
+
+    const user = await User.findByPk(req.session.userId);
+    if (!user || user.isBanned || user.role !== 'admin') {
+      res.status(403).json({ error: 'Admin access required' });
+      return;
+    }
+
+    const advertId = Number(req.params.advertId);
+    if (!Number.isSafeInteger(advertId) || advertId <= 0) {
+      res.status(400).json({ error: 'Invalid advert ID' });
+      return;
+    }
+
+    const deleted = await deleteAdvert(advertId);
+    if (!deleted) {
+      res.status(404).json({ error: 'Advert not found' });
+      return;
+    }
+
+    res.status(204).end();
   } catch (error) { next(error); }
 });

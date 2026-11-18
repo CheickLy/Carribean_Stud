@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { listAdverts, type Advert } from '../../services/adverts';
+import { deleteAdvert, listAdverts, type Advert } from '../../services/adverts';
 
 type Props = {
   refreshKey: number;
@@ -12,6 +12,7 @@ export default function AdvertList({ refreshKey, onEdit }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all');
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -49,6 +50,20 @@ export default function AdvertList({ refreshKey, onEdit }: Props) {
 
   function formatDate(value: string) {
     return new Date(value).toLocaleDateString();
+  }
+
+  async function handleDelete(advert: Advert) {
+    if (deletingId !== null || !window.confirm(`Delete “${advert.title}”? This cannot be undone.`)) return;
+    setDeletingId(advert.advertId);
+    setError('');
+    try {
+      await deleteAdvert(advert.advertId);
+      setAdverts(current => current.filter(item => item.advertId !== advert.advertId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not delete advert');
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   return (
@@ -116,6 +131,9 @@ export default function AdvertList({ refreshKey, onEdit }: Props) {
                   <td>
                     <button type="button" className="admin-advert-edit" onClick={() => onEdit(advert)}>
                       Edit
+                    </button>
+                    <button type="button" className="admin-advert-delete" onClick={() => void handleDelete(advert)} disabled={deletingId === advert.advertId}>
+                      {deletingId === advert.advertId ? 'Deleting...' : 'Delete'}
                     </button>
                   </td>
                 </tr>
