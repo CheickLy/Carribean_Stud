@@ -67,6 +67,12 @@ export default function Gameplay() {
   const [clock, setClock] = useState(Date.now());
   const [game, setGame] = useState<GameState | null>(null);
   const deal = game?.round;
+  const payout = deal?.settled && typeof deal.net === "number" ? (() => {
+    const folded = deal.net === -deal.ante;
+    const anteNet = deal.net > 0 ? deal.ante : deal.net === 0 ? 0 : -deal.ante;
+    return { folded, anteNet, raiseNet: deal.net - anteNet };
+  })() : null;
+  const points = (value: number) => `${value > 0 ? "+" : ""}${value.toLocaleString()} pts`;
   const [ante, setAnte] = useState(10);
   const [busy, setBusy] = useState(false);
   const pending = useRef(false);
@@ -197,6 +203,13 @@ export default function Gameplay() {
             <strong>+{deal.net} pts</strong>
           </div>}
           <p key={`result-${dealSequence}-${deal?.settled}`} className={`gameplay-result ${deal?.settled ? "gameplay-settled" : ""} ${deal?.settled && deal.net! > 0 ? "gameplay-payout-win" : ""}`} role="status">{deal?.settled ? `${deal.message} ${deal.net! > 0 ? "+" : ""}${deal.net} pts` : deal ? "Raise twice your ante to challenge the dealer, or fold." : "Practice against the dealer. Choose your ante and deal."}</p>
+          {deal && payout && <section className="gameplay-breakdown" aria-label="Payout breakdown">
+            <dl>
+              <div><dt>Ante · {deal.ante} staked</dt><dd>{points(payout.anteNet)}</dd></div>
+              <div><dt>Raise · {payout.folded ? "not placed" : `${deal.ante * 2} staked`}</dt><dd>{payout.folded ? "—" : payout.raiseNet === 0 ? "Returned · 0 pts" : points(payout.raiseNet)}</dd></div>
+              <div className="gameplay-breakdown-total"><dt>Net change</dt><dd>{points(deal.net!)}</dd></div>
+            </dl>
+          </section>}
 
           <div key={`player-${dealSequence}`} className={`gameplay-player-hand ${motion === "deal" ? "gameplay-dealing" : ""} ${deal?.settled && deal.message === "You win!" ? "gameplay-winning-hand" : ""} ${deal?.settled && deal.message === "You folded." ? "gameplay-folded-hand" : ""}`} aria-label="Your hand">
             {deal && <p className="gameplay-hand-rank gameplay-player-rank">{rankLabel(deal.player.rank!)}</p>}
@@ -224,6 +237,9 @@ export default function Gameplay() {
 
           <div className="gameplay-bets" aria-label="Bet controls">
             {(!deal || deal.settled) ? <>
+              <div className="gameplay-ante-presets" role="group" aria-label="Quick ante">
+                {[5, 10, 25, 50].map(value => <button key={value} type="button" aria-label={`Set ante to ${value} points`} aria-pressed={ante === value} disabled={busy || connection === "reconnecting" || !game || value * 3 > game.balance} onClick={() => setAnte(value)}>{value}</button>)}
+              </div>
               <label>Ante <input aria-label="Ante points" type="number" min="1" max="100" value={ante} onChange={(event) => setAnte(Number(event.target.value))} /></label>
               <button type="button" disabled={busy || connection === "reconnecting" || !game || !Number.isInteger(ante) || ante < 1 || ante > 100 || ante * 3 > game.balance} onClick={() => void update(() => dealTable(ante), "deal")}>{busy ? "Dealing…" : deal ? "Deal next hand" : "Deal hand"}</button>
               {game && game.balance < 3 && <button disabled={busy || connection === "reconnecting"} onClick={() => void update(resetGame)}>Reset practice points</button>}
@@ -234,6 +250,7 @@ export default function Gameplay() {
             </>}
             {error && <button disabled={busy || connection === "reconnecting"} onClick={() => void update(getGame)}>Refresh table</button>}
           </div>
+          {game && (!deal || deal.settled) && <p className="gameplay-ante-help">Keep 3× your ante available for the ante and raise.{Number.isInteger(ante) && ante >= 1 && ante <= 100 && ante * 3 > game.balance ? ` You need ${(ante * 3).toLocaleString()} pts; you have ${game.balance.toLocaleString()}.` : ""}</p>}
         </div>
       </div>
       <HandGuide currentRank={deal?.player.rank} open={guideOpen} onClose={closeGuide} expanded={guideExpanded} onToggleExpanded={() => setGuideExpanded((value) => !value)} />

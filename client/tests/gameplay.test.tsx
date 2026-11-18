@@ -19,6 +19,35 @@ describe('player versus dealer', () => {
     game.playAction.mockResolvedValue({ balance: 2440, round: { ...round, settled: true,
       dealer: { cards: ['2C','3D','4H','5S','7C'], rank: 'high card' }, message: 'You folded.', net: -10 } });
   });
+  it('selects a quick ante without dealing and disables unaffordable presets', async () => {
+    game.getGame.mockResolvedValue({ balance: 90, round: null });
+    render(<MemoryRouter><Gameplay /></MemoryRouter>);
+    const preset = await screen.findByRole('button', { name: 'Set ante to 25 points' });
+    await waitFor(() => expect(preset.hasAttribute('disabled')).toBe(false));
+    await userEvent.click(preset);
+    expect(preset.getAttribute('aria-pressed')).toBe('true');
+    expect((screen.getByRole('spinbutton', { name: 'Ante points' }) as HTMLInputElement).value).toBe('25');
+    expect(screen.getByRole('button', { name: 'Set ante to 50 points' }).hasAttribute('disabled')).toBe(true);
+    expect(game.dealTable).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: 'Deal hand' }));
+    expect(game.dealTable).toHaveBeenCalledWith(25);
+  });
+  it.each([
+    [-10, '-10 pts', '—', 'not placed'],
+    [-30, '-10 pts', '-20 pts', '20 staked'],
+    [0, '0 pts', 'Returned · 0 pts', '20 staked'],
+    [10, '+10 pts', 'Returned · 0 pts', '20 staked'],
+    [90, '+10 pts', '+80 pts', '20 staked'],
+  ])('breaks down a net result of %s points', async (net, anteResult, raiseResult, raiseStake) => {
+    game.getGame.mockResolvedValue({ balance: 2450 + net, round: { ...round, dealer: { cards: ['2C','3D','4H','5S','7C'], rank: 'high card' }, settled: true, net } });
+    render(<MemoryRouter><Gameplay /></MemoryRouter>);
+    const breakdown = await screen.findByRole('region', { name: 'Payout breakdown' });
+    const anteRow = within(breakdown).getByText('Ante · 10 staked').parentElement!;
+    const raiseRow = within(breakdown).getByText(`Raise · ${raiseStake}`).parentElement!;
+    expect(within(anteRow).getByText(anteResult)).toBeTruthy();
+    expect(within(raiseRow).getByText(raiseResult)).toBeTruthy();
+    expect(within(breakdown).getByText('Net change').nextElementSibling?.textContent).toBe(`${net > 0 ? '+' : ''}${net} pts`);
+  });
   it('deals, hides four dealer cards, folds, and allows another hand', async () => {
     const user = userEvent.setup();
     render(<MemoryRouter><Gameplay /></MemoryRouter>);

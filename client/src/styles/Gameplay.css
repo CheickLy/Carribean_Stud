@@ -748,3 +748,14 @@
 .gameplay-connection { position: absolute; top: 68px; left: 50%; z-index: 4; transform: translateX(-50%); margin: 0; padding: 8px 16px; border: 1px solid #a8c5d0; border-radius: 20px; background: #ffffffed; color: #133f50; font-size: 12px; white-space: nowrap; }
 .gameplay-connection-reconnecting { background: #fff0e6; border-color: #e2b296; }
 .gameplay-connection-restored { top: 693px; font-size: 10px; padding: 3px 10px; }
+
+.gameplay-ante-presets { display: flex; gap: 5px; padding-right: 10px; border-right: 1px solid #d0e6ec; }
+.gameplay-ante-presets button { min-width: 40px; padding: 0 10px; }
+.gameplay-ante-presets button[aria-pressed="true"] { background: #087f9b; border-color: #087f9b; color: white; }
+.gameplay-bets button:not(:disabled) { cursor: pointer; }
+.gameplay-ante-help { position: absolute; top: 858px; left: 50%; transform: translateX(-50%); width: 900px; margin: 0; text-align: center; color: #526f7a; font-size: 10px; }
+.gameplay-breakdown { position: absolute; top: 760px; left: 50%; transform: translateX(-50%); color: #133f50; }
+.gameplay-breakdown dl { display: flex; gap: 20px; margin: 0; white-space: nowrap; font-size: 11px; }
+.gameplay-breakdown dl > div { display: flex; align-items: center; gap: 8px; }
+.gameplay-breakdown dd { margin: 0; font-weight: 700; }
+.gameplay-breakdown-total { padding-left: 16px; border-left: 1px solid #a8c5d0; }
