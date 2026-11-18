@@ -9,6 +9,8 @@ export default function CreateAdvert() {
     title: '',
     creative: '',
     destinationUrl: '',
+    videoUrl: '',
+    requiredWatchSeconds: 30,
     trigger: 'watch',
     chipReward: 10,
     eligibilityLimit: 1,
@@ -38,6 +40,8 @@ export default function CreateAdvert() {
       title: advert.title,
       creative: advert.creative,
       destinationUrl: advert.destinationUrl,
+      videoUrl: advert.videoUrl ?? '',
+      requiredWatchSeconds: advert.requiredWatchSeconds ?? 30,
       trigger: advert.trigger,
       chipReward: advert.chipReward,
       eligibilityLimit: advert.eligibilityLimit,
@@ -54,7 +58,7 @@ export default function CreateAdvert() {
 
   function cancelEdit() {
     setEditingId(null);
-    setForm({ title: '', creative: '', destinationUrl: '', trigger: 'watch', chipReward: 10, eligibilityLimit: 1, startsAt: '', endsAt: '', isActive: false });
+    setForm({ title: '', creative: '', destinationUrl: '', videoUrl: '', requiredWatchSeconds: 30, trigger: 'watch', chipReward: 10, eligibilityLimit: 1, startsAt: '', endsAt: '', isActive: false });
   }
 
   function update<K extends keyof CreateAdvertInput>(
@@ -135,6 +139,12 @@ export default function CreateAdvert() {
             <label htmlFor="ad-url">Destination URL <span>(HTTPS)</span></label>
             <input id="ad-url" type="url" required pattern="https://.*" value={form.destinationUrl} onChange={e => update('destinationUrl', e.target.value)} placeholder="https://example.com/offer" />
           </div>
+
+          <div className="admin-advert-field">
+            <label htmlFor="ad-video-url">Video source URL <span>(HTTPS)</span></label>
+            <input id="ad-video-url" type="url" required={form.trigger === 'watch'} pattern="https://.*" value={form.videoUrl} onChange={e => update('videoUrl', e.target.value)} placeholder="https://cdn.example.com/ad.mp4" />
+            <small>Required for watch advertisements.</small>
+          </div>
         </div>
 
         <div className="admin-advert-card">
@@ -162,6 +172,11 @@ export default function CreateAdvert() {
               <label htmlFor="ad-limit">Eligibility limit</label>
               <input id="ad-limit" type="number" min={1} step={1} required value={form.eligibilityLimit} onChange={e => update('eligibilityLimit', Number(e.target.value))} />
               <small>Maximum rewards per player.</small>
+            </div>
+            <div className="admin-advert-field">
+              <label htmlFor="ad-watch-duration">Required watch duration</label>
+              <input id="ad-watch-duration" type="number" min={1} step={1} required={form.trigger === 'watch'} value={form.requiredWatchSeconds} onChange={e => update('requiredWatchSeconds', Number(e.target.value))} />
+              <small>Eligible playback time in seconds.</small>
             </div>
           </div>
         </div>

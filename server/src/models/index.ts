@@ -8,6 +8,9 @@ import { LobbyInvitation } from "./lobbyInvitation.js";
 import { LobbyMember } from "./lobbyMember.js";
 import { FriendMessage } from './friendMessage.js';
 import { PasswordResetToken } from './passwordResetToken.js';
+import { Advert } from './advert.js';
+import { AdvertWatchSession } from './advertWatchSession.js';
+import { AdvertRewardClaim } from './advertRewardClaim.js';
 
 User.hasMany(Lobby, { foreignKey: 'hostId', as: 'hostedLobbies' });
 Lobby.belongsTo(User, { foreignKey: 'hostId', as: 'host' });
@@ -96,4 +99,7 @@ export {
   User,
   FriendMessage,
   PasswordResetToken,
+  Advert,
+  AdvertWatchSession,
+  AdvertRewardClaim,
 };
