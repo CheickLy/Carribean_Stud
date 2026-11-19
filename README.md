@@ -74,6 +74,8 @@ Any other path redirects to `/`.
 
 ## Server
 
+Shared multiplayer rounds now run at `/lobbies/:lobbyId/game`, using lobby settings, private hands, server timers and persistent hand results. See [Shared table gameplay](Docs/shared-gameplay.md) for rules, table-chip behavior and concurrency checks. Apply migrations before running the updated server.
+
 The API lives in `server/`. PostgreSQL runs in Docker. The Express process runs on your machine and connects to that database.
 
 ### Tech stack
@@ -83,7 +85,7 @@ The API lives in `server/`. PostgreSQL runs in Docker. The Express process runs 
 - **PostgreSQL.** Accounts, lobbies, sessions, hands, friendships, and support tickets are relational data with foreign keys. Postgres matches that ERD.
 - **Docker Compose.** Postgres runs in a container, so nobody has to install the database directly. `docker-compose.yml` at the repo root reads the root `.env`.
 - **Sequelize.** Models describe each table, and the CLI applies `server/src/db/migrations/001-db-schema.cjs` and the user seed. The running app uses the same column names through those models.
-- **Vitest.** `npm test` and `npm run test:coverage` run the server tests. Run `npm run test:coverage` in `server/`. The suite enforces at least 80% coverage for statements, branches, functions, and lines. The HTML report is generated at `server/coverage/index.html`.
+- **Vitest.** `npm test` runs server unit tests without a database. Run `npm run test:coverage` in `server/` with PostgreSQL running; it also measures the shared-game integration tests in an isolated temporary schema. The suite enforces at least 80% coverage for statements, branches, functions, and lines. The HTML report is generated at `server/coverage/index.html`.
 
 ### Folder structure
 

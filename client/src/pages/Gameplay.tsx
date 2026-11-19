@@ -35,7 +35,7 @@ const RANK_NAMES: Record<string, string> = {
   "2": "Two",
 };
 
-function faceCard(text: string): FaceCard {
+export function faceCard(text: string): FaceCard {
   const suit = SUIT_ART[text.slice(-1)];
   const rank = text.slice(0, -1);
   return {
@@ -63,7 +63,7 @@ function handLabel(owner: string, rank: string, cards: string[]) {
   return `${owner} · ${rankLabel(rank)}`;
 }
 
-function PlayingCard({ rank, suit, red, name, index = 0, reveal = false }: FaceCard & { index?: number; reveal?: boolean }) {
+export function PlayingCard({ rank, suit, red, name, index = 0, reveal = false }: FaceCard & { index?: number; reveal?: boolean }) {
   return (
     <div className={`gameplay-card${reveal ? " gameplay-card-reveal" : ""}`} style={{ "--card-index": index } as CSSProperties} role="img" aria-label={name}>
       <span className={red ? "gameplay-rank gameplay-rank-red" : "gameplay-rank"}>{rank}</span>

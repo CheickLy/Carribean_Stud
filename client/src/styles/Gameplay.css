@@ -865,3 +865,7 @@
 }
 .gameplay-identity .gameplay-player-balance { font-size: 24px; }
 @media (prefers-contrast: more) { .gameplay-seat { border: 1px solid #315f6c; } }
+
+.gameplay-table-identity { position: absolute; top: 27px; left: 190px; width: 235px; color: #133f50; }
+.gameplay-table-identity h1 { margin: 0 0 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; }
+.gameplay-table-identity small { display: block; margin-top: 4px; font-size: 10px; }

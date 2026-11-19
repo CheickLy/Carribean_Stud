@@ -1,10 +1,10 @@
 import { createBrowserRouter, Link, NavLink, Navigate, Outlet, RouterProvider, useLocation, useNavigate, useOutletContext } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import LoginSection from "./components/LoginSection";
 import RegistrationSection from "./components/RegistrationSection";
 import CreateLobby from "./pages/CreateLobby";
 import LobbyBrowser from "./pages/LobbyBrowser";
-import Gameplay from "./pages/Gameplay";
+import SharedGameplay from "./pages/SharedGameplay";
 import Friends from "./pages/player/Friends";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import LobbyRoom from "./pages/LobbyRoom";
@@ -18,7 +18,6 @@ import Messages from "./pages/player/Messages";
 import Home from "./pages/guest/Home";
 import { getCurrentUser, logout } from "./services/auth";
 import "./styles/Navigation.css";
-import { getGame } from "./services/game";
 import ContactSupport from "./pages/ContactSupport";
 import suitClubMark from "./assets/gameplay/suit-club-mark.svg";
 
@@ -55,20 +54,6 @@ function Layout() {
     window.addEventListener('reef-balance-updated', updateBalance);
     return () => window.removeEventListener('reef-balance-updated', updateBalance);
   }, []);
-  const resumeChecked = useRef<string | null>(null);
-  useEffect(() => {
-    if (!session.user) { resumeChecked.current = null; return; }
-    if (resumeChecked.current === session.user.username) return;
-    resumeChecked.current = session.user.username;
-    if (!["/", "/lobbies", "/play"].includes(location.pathname)) return;
-    let active = true;
-    getGame().then(game => {
-      if (active && game.round && !game.round.settled && game.activePath && /^\/lobbies\/[1-9]\d*\/game$/.test(game.activePath)) {
-        navigate(game.activePath, { replace: true });
-      }
-    }).catch(() => { /* Normal navigation remains available if the API is offline. */ });
-    return () => { active = false; };
-  }, [session.user?.username, location.pathname, navigate]);
   async function signOut() {
     try {
       await logout();
@@ -173,7 +158,7 @@ const router = createBrowserRouter([{
       { path: "/profile/avatar", element: <Avatar /> },
       { path: "/friends/:friendId/messages", element: <Messages /> },
       { path: "/create-lobby", element: <CreateLobby /> },
-      { path: "/lobbies/:lobbyId/game", element: <Gameplay /> },
+      { path: "/lobbies/:lobbyId/game", element: <SharedGameplay /> },
       { path: "/lobbies/:lobbyId/game-preview", element: <GamePreview /> },
       { path: "/lobbies/:lobbyId/invite", element: <LobbyRoom /> },
       { path: "/lobbies/:lobbyId", element: <LobbyRoom /> },

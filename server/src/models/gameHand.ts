@@ -10,6 +10,8 @@ export class GameHand extends Model {
   declare callBet: string | null;
   declare payout: string | null;
   declare outcome: string | null;
+  declare anteBet: string | null;
+  declare netChange: string | null;
 }
 
 GameHand.init(
@@ -47,6 +49,8 @@ GameHand.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    anteBet: { type: DataTypes.DECIMAL(12, 2), allowNull: true },
+    netChange: { type: DataTypes.DECIMAL(12, 2), allowNull: true },
   },
   {
     sequelize,

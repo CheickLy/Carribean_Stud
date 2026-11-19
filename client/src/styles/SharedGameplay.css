@@ -1,0 +1,19 @@
+.shared-gameplay .gameplay-table-identity { width: 280px; }
+.shared-gameplay .gameplay-table-identity small { line-height: 1.5; }
+.shared-gameplay .gameplay-breakdown { top: 746px; }
+.shared-gameplay .gameplay-breakdown summary { display: inline-block; padding: 5px 12px; border-radius: 8px; }
+.shared-round-clock { display: inline-flex; box-sizing: border-box; max-width: 100%; margin: 8px 0 0; padding: 6px 12px; border: 1px solid #a8c5d0; border-radius: 20px; background: #ffffffd9; color: #21566a; font-size: 12px; line-height: 1.4; font-variant-numeric: tabular-nums; }
+.shared-game-error { position: absolute; z-index: 5; top: 110px; left: 50%; transform: translateX(-50%); max-width: 700px; margin: 0; padding: 8px 16px; border: 1px solid #e2b296; border-radius: 12px; background: #fff0e6; color: #133f50; font-size: 12px; text-align: center; }
+.shared-game-error button { margin-left: 8px; border: 1px solid #a8c5d0; border-radius: 8px; background: white; color: inherit; cursor: pointer; }
+.shared-player-seat { width: 220px; }
+.shared-player-seat small { white-space: normal; line-height: 1.4; }
+.shared-player-seat strong { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shared-waiting { padding: 12px 20px; color: #526f7a; font-size: 14px; }
+.shared-history { position: fixed; z-index: 12; top: 100px; right: 24px; width: min(350px, calc(100vw - 48px)); max-height: calc(100dvh - 140px); overflow: auto; box-sizing: border-box; padding: 20px; border: 1px solid #a8c5d0; border-radius: 18px; background: white; color: #133f50; box-shadow: 0 16px 60px #13526c26; }
+.shared-history header { display: flex; justify-content: space-between; align-items: center; }
+.shared-history h2 { margin: 0; font-size: 18px; }
+.shared-history header button { background: none; border: 0; font-size: 26px; color: inherit; cursor: pointer; }
+.shared-history p { font-size: 12px; line-height: 1.5; }
+.shared-history ol { padding: 0; list-style: none; }
+.shared-history li { display: grid; gap: 7px; padding: 14px 0; border-top: 1px solid #d0e6ec; font-size: 12px; }
+.shared-history li small { color: #526f7a; line-height: 1.5; }

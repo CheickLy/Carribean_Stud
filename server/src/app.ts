@@ -16,6 +16,7 @@ import { gameRouter } from './modules/game/game.routes.js';
 import { advertsRouter } from './modules/adverts/adverts.routes.js';
 import { watchRouter } from './modules/adverts/watch.routes.js';
 import { clickRouter } from './modules/adverts/click.routes.js';
+import { sharedGameRouter } from './modules/shared-game/routes.js';
 
 const SequelizeStore = connectionSessionSequelize(session.Store);
 
@@ -57,6 +58,7 @@ app.use('/api/users', usersRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/friends', friendsRouter);
 app.use('/api/lobbies', tablesRouter);
+app.use('/api/lobbies', sharedGameRouter);
 app.use("/api/invitations", invitationsRouter);
 app.use('/api/messages', messagesRouter);
 app.use('/api/support-tickets', supportRouter);
