@@ -63,3 +63,7 @@
   box-shadow: var(--shadow-card);
 }
 .avatar-actions button { min-height: 44px; border-radius: var(--radius-control); }
+
+/* Keep scrolling available without displaying browser scrollbars. */
+html, body, * { scrollbar-width: none; -ms-overflow-style: none; }
+html::-webkit-scrollbar, body::-webkit-scrollbar, *::-webkit-scrollbar { display: none; }
