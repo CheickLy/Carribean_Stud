@@ -36,6 +36,7 @@ describe('shared table screen', () => {
     show();
     expect(await screen.findByText('You · Pair of aces')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Rules & hands' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Options' })).toBeTruthy();
     expect(screen.queryByRole('region', { name: 'Open seat' })).toBeNull();
     expect(screen.getByRole('timer', { name: 'Round timer' })).toBeTruthy();
   });

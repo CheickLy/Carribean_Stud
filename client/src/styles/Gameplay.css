@@ -868,4 +868,16 @@
 
 .gameplay-table-identity { position: absolute; top: 27px; left: 190px; width: 235px; color: #133f50; }
 .gameplay-table-identity h1 { margin: 0 0 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; }
+.gameplay-tools .gameplay-settings-button { font: inherit; font-size: 14px; font-weight: 400; line-height: 1; padding: 10px 14px; }
 .gameplay-table-identity small { display: block; margin-top: 4px; font-size: 10px; }
+.gameplay-preferences { position: absolute; z-index: 10; top: 64px; right: 31px; width: 240px; padding: 16px; border: 1px solid #a8c5d0; border-radius: 16px; background: white; color: #133f50; box-shadow: 0 10px 30px #13526c26; }
+.gameplay-preferences header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.gameplay-preferences header button { border: 0; background: transparent; color: inherit; font-size: 24px; cursor: pointer; }
+.gameplay-preferences label { display: flex; align-items: center; gap: 10px; padding: 10px 0; font-size: 14px; cursor: pointer; }
+.gameplay-preferences input { width: 18px; height: 18px; accent-color: #087f9b; }
+.gameplay-preferences p { margin: 8px 0 0; color: #526f7a; font-size: 11px; line-height: 1.5; }
+.gameplay-fast-deal .gameplay-dealing > .gameplay-card { animation-duration: 140ms; animation-delay: calc(var(--card-index) * 45ms); }
+.gameplay-fast-deal .gameplay-card-reveal, .gameplay-fast-deal .gameplay-card-reveal::after { animation-duration: 180ms; animation-delay: calc((var(--card-index) - 1) * 30ms); }
+.gameplay-fast-deal .gameplay-settled { animation-delay: 250ms; }
+.gameplay-reduced-motion *, .gameplay-reduced-motion *::before, .gameplay-reduced-motion *::after { animation: none !important; transition: none !important; }
+.gameplay-reduced-motion .gameplay-card-reveal::after { display: none; }

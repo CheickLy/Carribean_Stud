@@ -42,6 +42,29 @@ describe('player versus dealer', () => {
     await userEvent.click(link);
     expect(await screen.findByRole('heading', { name: 'Lobby room' })).toBeTruthy();
   });
+  it('saves sound and animation preferences on this device', async () => {
+    show();
+    await userEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    for (const name of ['Sound effects', 'Reduce motion', 'Faster dealing']) {
+      const input = screen.getByRole('checkbox', { name }) as HTMLInputElement;
+      expect(input.checked).toBe(false);
+      await userEvent.click(input);
+      expect(input.checked).toBe(true);
+    }
+    expect(JSON.parse(localStorage.getItem('reefroyale.tablePreferences')!)).toEqual({ sound: true, reducedMotion: true, fastDeal: true });
+    expect(screen.getByRole('main').className).toContain('gameplay-reduced-motion');
+    expect(screen.getByRole('main').className).toContain('gameplay-fast-deal');
+    await userEvent.click(screen.getByRole('button', { name: 'Close table preferences' }));
+    expect(screen.queryByRole('region', { name: 'Table preferences' })).toBeNull();
+  });
+  it('restores saved preferences after a reload', async () => {
+    localStorage.setItem('reefroyale.tablePreferences', JSON.stringify({ sound: true, reducedMotion: true, fastDeal: true }));
+    show();
+    await userEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    expect((screen.getByRole('checkbox', { name: 'Sound effects' }) as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByRole('checkbox', { name: 'Reduce motion' }) as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByRole('checkbox', { name: 'Faster dealing' }) as HTMLInputElement).checked).toBe(true);
+  });
   it('selects a quick ante without dealing and disables unaffordable presets', async () => {
     game.getGame.mockResolvedValue({ balance: 90, round: null });
     show();

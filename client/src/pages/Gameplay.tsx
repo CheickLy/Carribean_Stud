@@ -8,6 +8,7 @@ import suitHeart from "../assets/gameplay/suit-heart.svg";
 import suitSpade from "../assets/gameplay/suit-spade.svg";
 import { dealTable, getGame, heartbeat, playAction, resetGame, type GameState } from "../services/game";
 import HandGuide from "../components/HandGuide";
+import useTablePreferences from "../components/useTablePreferences";
 import "../styles/Gameplay.css";
 
 type FaceCard = { rank: string; suit: string; red?: boolean; name: string };
@@ -79,6 +80,8 @@ export default function Gameplay() {
   const { lobbyId } = useParams();
   const [tableName, setTableName] = useState<string>(location.state?.tableName || "Your table");
   const [tableNameError, setTableNameError] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const { preferences, setPreferences, prepareSound, playSound } = useTablePreferences();
   useEffect(() => {
     if (!lobbyId) return;
     const controller = new AbortController();
@@ -110,6 +113,7 @@ export default function Gameplay() {
   async function update(operation: () => Promise<GameState>, animation: "none" | "deal" | "reveal" = "none") {
     if (pending.current) return;
     pending.current = true;
+    prepareSound();
     setBusy(true);
     setError("");
     try {
@@ -117,6 +121,7 @@ export default function Gameplay() {
       setMotion(animation);
       if (animation === "deal") setDealSequence((value) => value + 1);
       setGame(next);
+      if (animation !== "none") playSound(animation === "deal" ? "deal" : (next.round?.net ?? 0) > 0 ? "win" : "settle");
       setConnection("connected");
     }
     catch (cause) { setError(cause instanceof Error ? cause.message : "Could not update game."); setConnection("reconnecting"); }
@@ -184,7 +189,7 @@ export default function Gameplay() {
   }, [connection]);
 
   return (
-    <main className={`gameplay${guideOpen ? " gameplay-guide-open" : ""}${guideExpanded ? " gameplay-guide-expanded" : ""}`}>
+    <main className={`gameplay${guideOpen ? " gameplay-guide-open" : ""}${guideExpanded ? " gameplay-guide-expanded" : ""}${preferences.reducedMotion ? " gameplay-reduced-motion" : ""}${preferences.fastDeal ? " gameplay-fast-deal" : ""}`}>
       <div className="gameplay-fit">
         <div className="gameplay-board">
           <Link className="gameplay-lobbies" to={lobbyId ? `/lobbies/${lobbyId}` : "/lobbies"}>
@@ -193,11 +198,20 @@ export default function Gameplay() {
           </Link>
           <div className="gameplay-table-identity"><h1 title={tableName}>{tableName}</h1>{tableNameError && <small>Table name unavailable</small>}</div>
           <div className="gameplay-tools">
+            <button className="gameplay-settings-button" type="button" aria-expanded={settingsOpen} aria-controls="table-preferences" onClick={() => setSettingsOpen(value => !value)}>Settings</button>
             <button type="button" aria-label="Toggle table chat" aria-expanded={chatOpen} aria-controls="game-chat" onClick={() => setChatOpen((value) => !value)}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M21 11.5a9 9 0 0 1-9 9 9.6 9.6 0 0 1-4-.9L3 21l1.4-4.5a9 9 0 1 1 16.6-5Z" /></svg>
             </button>
             <button ref={guideButton} className="gameplay-guide-button" type="button" aria-expanded={guideOpen} aria-controls="hand-guide" onClick={() => guideOpen ? closeGuide() : setGuideOpen(true)}>Rules & hands</button>
           </div>
+          {settingsOpen && <section className="gameplay-preferences" id="table-preferences" aria-label="Table preferences">
+            <header><strong>Table preferences</strong><button type="button" aria-label="Close table preferences" onClick={() => setSettingsOpen(false)}>×</button></header>
+            <label><input type="checkbox" checked={preferences.sound} onChange={event => setPreferences(value => ({ ...value, sound: event.target.checked }))} />Sound effects</label>
+            <label><input type="checkbox" checked={preferences.reducedMotion} onChange={event => setPreferences(value => ({ ...value, reducedMotion: event.target.checked }))} />Reduce motion</label>
+            <label><input type="checkbox" checked={preferences.fastDeal} onChange={event => setPreferences(value => ({ ...value, fastDeal: event.target.checked }))} />Faster dealing</label>
+            <p>Saved on this device. Your system’s reduced-motion setting is also respected.</p>
+          </section>}
+
           {connection !== "connected" && <p className={`gameplay-connection gameplay-connection-${connection}`} role="status">
             {connection === "restored" ? "Connection restored · Your hand and balance are saved." : game?.round && !game.round.settled && game.reconnectDeadline
               ? clock >= game.reconnectDeadline ? "Reconnect window expired. Waiting to confirm the automatic fold." : `Reconnecting… ${Math.ceil((game.reconnectDeadline - clock) / 1000)}s remaining before automatic fold.`

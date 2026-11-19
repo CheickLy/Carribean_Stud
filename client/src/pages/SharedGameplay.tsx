@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { PlayingCard, faceCard, handLabel } from './Gameplay';
 import HandGuide from '../components/HandGuide';
+import useTablePreferences from '../components/useTablePreferences';
 import { decide, leaveTable, loadHistory, placeAnte, syncTable, TableRequestError, type SavedHand, type SharedTable } from '../services/sharedGame';
 import '../styles/Gameplay.css';
 import '../styles/SharedGameplay.css';
@@ -23,6 +24,7 @@ export default function SharedGameplay() {
   const [connected, setConnected] = useState(true);
   const [clock, setClock] = useState(Date.now());
   const clockOffset = useRef(0);
+  const [optionsOpen, setOptionsOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [guideExpanded, setGuideExpanded] = useState(false);
   const guideButton = useRef<HTMLButtonElement>(null);
@@ -30,7 +32,15 @@ export default function SharedGameplay() {
   const [history, setHistory] = useState<SavedHand[]>([]);
   const [historyError, setHistoryError] = useState('');
   const [historyBusy, setHistoryBusy] = useState(false);
+  const { preferences, setPreferences, prepareSound, playSound } = useTablePreferences();
+  const signature = useRef('');
   function receive(next: SharedTable) {
+    const nextSignature = `${next.roundId}:${next.phase}`;
+    if (signature.current && signature.current !== nextSignature) {
+      if (next.phase === 'deciding') playSound('deal');
+      if (next.phase === 'completed') playSound((next.own.result?.net ?? 0) > 0 ? 'win' : 'settle');
+    }
+    signature.current = nextSignature;
     current.current = next;
     clockOffset.current = next.serverNow - Date.now();
     setTable(next);
@@ -68,6 +78,7 @@ export default function SharedGameplay() {
     pending.current = true;
     setBusy(true);
     setError('');
+    prepareSound();
     try { const next = await operation(); if (mounted.current) receive(next); }
     catch (cause) {
       if (mounted.current) {
@@ -91,16 +102,22 @@ export default function SharedGameplay() {
     : self?.status === 'waiting for next hand' || self?.status === 'missed betting' ? 'Your seat is reserved for the next hand.'
     : table.phase === 'betting' ? table.own.ante ? 'Ante placed. Waiting for the other players.' : 'Place your ante before betting closes.'
     : table.own.action ? 'Decision locked. Waiting for the other players.' : 'Raise twice your ante or fold before time runs out.';
-  return <main className={`gameplay shared-gameplay${guideOpen ? ' gameplay-guide-open' : ''}${guideExpanded ? ' gameplay-guide-expanded' : ''}`}>
+  return <main className={`gameplay shared-gameplay${guideOpen ? ' gameplay-guide-open' : ''}${guideExpanded ? ' gameplay-guide-expanded' : ''}${preferences.reducedMotion ? ' gameplay-reduced-motion' : ''}${preferences.fastDeal ? ' gameplay-fast-deal' : ''}`}>
     <div className="gameplay-fit"><div className="gameplay-board">
       <Link className="gameplay-lobbies" to={`/lobbies/${lobbyId}`}>← Back to lobby</Link>
       <div className="gameplay-table-identity"><h1 title={table?.name}>{table?.name ?? 'Your table'}</h1><small>{table ? `${format(table.minBet)}–${format(table.maxBet)} chip ante · Starting chips ${format(table.startingChips)}` : 'Connecting…'}</small>
       {table && <p className="shared-round-clock" role="timer" aria-label="Round timer">Hand {table.roundNumber} · {table.phase === 'betting' ? 'Place antes' : table.phase === 'deciding' ? 'Decide' : table.phase === 'completed' ? 'Next hand' : 'Waiting'}{seconds !== null ? ` · ${seconds}s` : ''}</p>}
       </div>
       <div className="gameplay-tools">
+        <button className="gameplay-settings-button" aria-expanded={optionsOpen} aria-controls="table-options" onClick={() => setOptionsOpen(value => !value)}>Options</button>
         <button className="gameplay-settings-button" aria-expanded={historyOpen} aria-controls="table-history" onClick={() => setHistoryOpen(value => !value)}>History</button>
         <button ref={guideButton} className="gameplay-guide-button" aria-expanded={guideOpen} aria-controls="hand-guide" onClick={() => guideOpen ? closeGuide() : setGuideOpen(true)}>Rules &amp; hands</button>
       </div>
+      {optionsOpen && <section className="gameplay-preferences" id="table-options" aria-label="Table options"><header><strong>Table options</strong><button aria-label="Close table options" onClick={() => setOptionsOpen(false)}>×</button></header>
+        <label><input type="checkbox" checked={preferences.sound} onChange={event => setPreferences(value => ({ ...value, sound: event.target.checked }))} />Sound effects</label>
+        <label><input type="checkbox" checked={preferences.reducedMotion} onChange={event => setPreferences(value => ({ ...value, reducedMotion: event.target.checked }))} />Reduce motion</label>
+        <label><input type="checkbox" checked={preferences.fastDeal} onChange={event => setPreferences(value => ({ ...value, fastDeal: event.target.checked }))} />Faster dealing</label><p>Saved on this device. System reduced motion is respected.</p>
+        </section>}
       <p className="gameplay-wordmark">Reef Royale</p><p className="gameplay-table-caption">CARIBBEAN STUD · SHARED TABLE</p>
       {!connected && <p className="gameplay-connection gameplay-connection-reconnecting" role="status">Reconnecting… The server timer continues; an undecided hand folds at the deadline.</p>}
       {error && <p className="shared-game-error" role="alert">{error} <button onClick={() => { setError(''); void action(() => syncTable(lobbyId)); }}>Refresh table</button></p>}
