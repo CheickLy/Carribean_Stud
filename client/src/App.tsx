@@ -20,6 +20,7 @@ import { getCurrentUser, logout } from "./services/auth";
 import "./styles/Navigation.css";
 import { getGame } from "./services/game";
 import ContactSupport from "./pages/ContactSupport";
+import suitClubMark from "./assets/gameplay/suit-club-mark.svg";
 
 
 type User = { username: string; balance: string; isGuest: boolean; role: string; avatar?: string };
@@ -29,6 +30,13 @@ function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [session, setSession] = useState<Session>({ user: null, loading: true, error: "" });
+  const [scrolled, setScrolled] = useState(() => window.scrollY > 8);
+  useEffect(() => {
+    const updateScroll = () => setScrolled(window.scrollY > 8);
+    updateScroll();
+    window.addEventListener("scroll", updateScroll, { passive: true });
+    return () => window.removeEventListener("scroll", updateScroll);
+  }, []);
   useEffect(() => {
     let active = true;
     setSession(previous => ({ ...previous, loading: true, error: "" }));
@@ -70,25 +78,26 @@ function Layout() {
       setSession(previous => ({ ...previous, error: error instanceof Error ? error.message : "Could not log out" }));
     }
   }
-  const ownHeader = location.pathname.endsWith("/game-preview") || location.pathname === "/admin" || /^\/lobbies\/[^/]+\/game$/.test(location.pathname);
+  const gameBoard = location.pathname.endsWith("/game-preview") || /^\/lobbies\/[^/]+\/game$/.test(location.pathname);
+  const ownHeader = gameBoard || location.pathname === "/admin";
   return <>
-    {!ownHeader && <header className="site-header">
-      <Link className="site-brand" to="/">♠ ReefRoyale</Link>
+    {!ownHeader && <header className={`site-header${["/", "/login", "/register"].includes(location.pathname) ? " site-header-home" : ""}${scrolled ? " is-scrolled" : ""}`}>
+      <Link className="site-brand" to="/">Reef Royale <img src={suitClubMark} alt="" width={21} height={21} /></Link>
       <nav aria-label="Main navigation">
         <NavLink to="/" end>Home</NavLink>
         <NavLink to="/lobbies">Tables</NavLink>
-        <NavLink to="/create-lobby">Create table</NavLink>
-        <NavLink to="/support">Contact Support</NavLink>
-        <NavLink to="/friends">Friends & invitations</NavLink>
+        <NavLink to="/friends">Friends</NavLink>
+        <NavLink to="/rules">Game rules</NavLink>
         {session.user && !session.user.isGuest && <NavLink to="/profile">Profile</NavLink>}
         {session.user?.role === "admin" && <NavLink to="/admin">Admin</NavLink>}
       </nav>
       <div className="site-account">
-        {session.user ? <><Link className="site-profile-link" to={session.user.isGuest ? "/lobbies" : "/profile"} title={session.user.isGuest ? "Guest" : session.user.username}><span className="site-username">{session.user.isGuest ? "Guest" : session.user.username}</span><span className="site-chips"> · {Number(session.user.balance).toLocaleString()} chips</span></Link>{session.user.isGuest && <Link to="/register">Save progress</Link>}<button onClick={() => void signOut()}>Log out</button></> : <Link to="/login">Log in / Play as guest</Link>}
+        {session.user ? <details className="site-account-menu"><summary aria-label={`${session.user.isGuest ? "Guest" : session.user.username}, ${Number(session.user.balance).toLocaleString()} points. Account menu`}><span className="site-username">{session.user.isGuest ? "Guest" : session.user.username}</span><strong className="site-points">{Number(session.user.balance).toLocaleString()} pts</strong></summary><div className="site-account-popover">{!session.user.isGuest && <Link to="/profile" onClick={event => { event.currentTarget.closest("details")?.removeAttribute("open"); }}>Profile</Link>}{session.user.isGuest && <Link to="/register" onClick={event => { event.currentTarget.closest("details")?.removeAttribute("open"); }}>Save progress</Link>}<button onClick={event => { event.currentTarget.closest("details")?.removeAttribute("open"); void signOut(); }}>Log out</button></div></details> : <Link to="/login">Sign in</Link>}
       </div>
     </header>}
     {session.error && <p className="site-error" role="alert">{session.error}</p>}
     <Outlet context={{ ...session, signOut }} />
+    {!gameBoard && !["/admin", "/login", "/register"].includes(location.pathname) && <footer className={`site-footer${["/login", "/register"].includes(location.pathname) ? " site-footer-auth" : ""}`}><div className="site-footer-inner"><strong>18+</strong><p>For adults 18 and over. Points are fictional and have no cash value. Play responsibly and respect other players.</p><Link to="/support">Contact support</Link></div></footer>}
   </>;
 }
 
@@ -133,14 +142,14 @@ function LoginPage() {
     );
   }
 
-  return <LoginSection onRegisterClick={() => navigate("/register", { state: location.state })} onAuthenticated={(role) => { void handleAuthenticated(role); }} />;
+  return <LoginSection beachBackground onRegisterClick={() => navigate("/register", { state: location.state })} onAuthenticated={(role) => { void handleAuthenticated(role); }} />;
 
 }
 
 function RegistrationPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  return <RegistrationSection onBackToLogin={() => navigate("/login", { state: location.state })} onRegistered={() => navigate("/lobbies", { replace: true })} />;
+  return <RegistrationSection beachBackground onBackToLogin={() => navigate("/login", { state: location.state })} onRegistered={() => navigate("/lobbies", { replace: true })} />;
 }
 
 const router = createBrowserRouter([{

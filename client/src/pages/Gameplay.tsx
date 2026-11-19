@@ -50,6 +50,19 @@ function rankLabel(rank: string) {
   return rank.charAt(0).toUpperCase() + rank.slice(1);
 }
 
+function handLabel(owner: string, rank: string, cards: string[]) {
+  if (rank === "pair") {
+    const counts = new Map<string, number>();
+    for (const card of cards) {
+      const value = card.slice(0, -1);
+      counts.set(value, (counts.get(value) ?? 0) + 1);
+    }
+    const pair = [...counts].find(([, count]) => count === 2)?.[0];
+    if (pair) return `${owner} · Pair of ${RANK_NAMES[pair].toLowerCase()}s`;
+  }
+  return `${owner} · ${rankLabel(rank)}`;
+}
+
 function PlayingCard({ rank, suit, red, name, index = 0, reveal = false }: FaceCard & { index?: number; reveal?: boolean }) {
   return (
     <div className={`gameplay-card${reveal ? " gameplay-card-reveal" : ""}`} style={{ "--card-index": index } as CSSProperties} role="img" aria-label={name}>
@@ -166,7 +179,7 @@ export default function Gameplay() {
             <button type="button" aria-label="Toggle table chat" aria-expanded={chatOpen} aria-controls="game-chat" onClick={() => setChatOpen((value) => !value)}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M21 11.5a9 9 0 0 1-9 9 9.6 9.6 0 0 1-4-.9L3 21l1.4-4.5a9 9 0 1 1 16.6-5Z" /></svg>
             </button>
-            <button ref={guideButton} className="gameplay-guide-button" type="button" aria-expanded={guideOpen} aria-controls="hand-guide" onClick={() => guideOpen ? closeGuide() : setGuideOpen(true)}>♧ Hand rankings</button>
+            <button ref={guideButton} className="gameplay-guide-button" type="button" aria-expanded={guideOpen} aria-controls="hand-guide" onClick={() => guideOpen ? closeGuide() : setGuideOpen(true)}>Rules & hands</button>
           </div>
 
           {connection !== "connected" && <p className={`gameplay-connection gameplay-connection-${connection}`} role="status">
@@ -178,7 +191,7 @@ export default function Gameplay() {
           {!game && !error && <p className="gameplay-deal-status" role="status">Loading table...</p>}
 
           <div key={`dealer-${dealSequence}`} className={`gameplay-dealer ${motion === "deal" ? "gameplay-dealing" : ""} ${deal?.settled && deal.message === "Dealer wins." ? "gameplay-winning-hand" : ""}`} aria-label="Dealer hand">
-            {deal && <p className="gameplay-hand-rank gameplay-dealer-rank">{deal.settled ? rankLabel(deal.dealer.rank!) : "Dealer · four cards hidden"}</p>}
+            {deal && <p className="gameplay-hand-rank gameplay-dealer-rank">{deal.settled ? handLabel("Dealer", deal.dealer.rank!, deal.dealer.cards) : "Dealer · four cards hidden"}</p>}
             {deal?.dealer.cards.map((text, index) => {
               const card = faceCard(text);
               return <PlayingCard key={card.name} {...card} index={index} reveal={motion === "reveal" && index > 0} />;
@@ -190,7 +203,7 @@ export default function Gameplay() {
           <div className="gameplay-inset" aria-hidden="true" />
 
           <p className="gameplay-table-caption">CARIBBEAN STUD · SOLO TABLE</p>
-          <p className="gameplay-table-rule">DEALER PLAYS WITH ACE–KING OR BETTER<span>Ante pays 1:1 · Raise twice your ante</span></p>
+
           <div className="gameplay-bet-spots" aria-hidden="true"><span>ANTE</span><span>RAISE</span></div>
           <p className="gameplay-wordmark">
             Reef Royale
@@ -198,63 +211,49 @@ export default function Gameplay() {
           </p>
           <p key={`ante-${dealSequence}`} className={`gameplay-ante ${motion === "deal" ? "gameplay-chip-landing" : ""}`} aria-label={`Ante ${deal?.ante ?? ante}`}>{deal?.ante ?? ante}</p>
           {deal?.settled && deal.message !== "You folded." && <p key={`raise-${dealSequence}`} className="gameplay-raise-chip" aria-label={`Raise ${deal.ante * 2}`}>{deal.ante * 2}</p>}
-          {deal?.settled && deal.net! > 0 && <div key={`payout-${dealSequence}`} className="gameplay-payout-effects" aria-hidden="true">
-            {Array.from({ length: 7 }, (_, index) => <span key={index} style={{ "--spark-index": index } as CSSProperties}>✦</span>)}
-            <strong>+{deal.net} pts</strong>
-          </div>}
-          <p key={`result-${dealSequence}-${deal?.settled}`} className={`gameplay-result ${deal?.settled ? "gameplay-settled" : ""} ${deal?.settled && deal.net! > 0 ? "gameplay-payout-win" : ""}`} role="status">{deal?.settled ? `${deal.message} ${deal.net! > 0 ? "+" : ""}${deal.net} pts` : deal ? "Raise twice your ante to challenge the dealer, or fold." : "Practice against the dealer. Choose your ante and deal."}</p>
-          {deal && payout && <section className="gameplay-breakdown" aria-label="Payout breakdown">
+          <p key={`result-${dealSequence}-${deal?.settled}`} className={`gameplay-result ${deal?.settled ? "gameplay-settled" : ""} ${deal?.settled && deal.net! > 0 ? "gameplay-payout-win" : ""}`} role="status">{deal?.settled ? `${(deal.message?.startsWith("Dealer does not qualify.") ? "Dealer doesn’t qualify" : (deal.message ?? "Hand complete").replace(/[.!]$/, ""))} · ${points(deal.net!)}` : deal ? "Raise or fold" : "Choose your ante"}</p>
+          {deal && payout && <details className="gameplay-breakdown"><summary>Details</summary>
             <dl>
               <div><dt>Ante · {deal.ante} staked</dt><dd>{points(payout.anteNet)}</dd></div>
               <div><dt>Raise · {payout.folded ? "not placed" : `${deal.ante * 2} staked`}</dt><dd>{payout.folded ? "—" : payout.raiseNet === 0 ? "Returned · 0 pts" : points(payout.raiseNet)}</dd></div>
-              <div className="gameplay-breakdown-total"><dt>Net change</dt><dd>{points(deal.net!)}</dd></div>
             </dl>
-          </section>}
+          </details>}
 
           <div key={`player-${dealSequence}`} className={`gameplay-player-hand ${motion === "deal" ? "gameplay-dealing" : ""} ${deal?.settled && deal.message === "You win!" ? "gameplay-winning-hand" : ""} ${deal?.settled && deal.message === "You folded." ? "gameplay-folded-hand" : ""}`} aria-label="Your hand">
-            {deal && <p className="gameplay-hand-rank gameplay-player-rank">{rankLabel(deal.player.rank!)}</p>}
+            {deal && <p className="gameplay-hand-rank gameplay-player-rank">{handLabel("You", deal.player.rank!, deal.player.cards)}</p>}
             {deal?.player.cards.map((text, index) => {
               const card = faceCard(text);
               return <PlayingCard key={card.name} {...card} index={index} />;
             })}
           </div>
 
-          <div className="gameplay-open-seats" aria-label="Future multiplayer seats">
-            {["upper-left", "lower-left", "opposite", "lower-right", "upper-right"].map((position, index) => (
-              <div key={position} className={`gameplay-open-seat gameplay-open-seat-${position}`}>
-                <span className="gameplay-open-avatar" aria-hidden="true">♧</span>
-                <span><strong>Seat {index + 2}</strong><small>Multiplayer coming soon</small></span>
-              </div>
-            ))}
-          </div>
           <section className="gameplay-seat" aria-label="Your seat">
-            <span className="gameplay-avatar" aria-hidden="true">{username.slice(0, 2).toUpperCase()}</span>
             <span className="gameplay-identity">
-              <strong>{username}</strong>
-              <small key={`balance-${dealSequence}-${deal?.settled}`} className={deal?.settled && deal.net! > 0 ? "gameplay-balance-win" : undefined}>{(game?.balance ?? 2450).toLocaleString()} practice pts</small>
+              <span className="gameplay-player-name">{username}</span>
+              <strong className="gameplay-player-balance">{game ? game.balance.toLocaleString() : "—"} <span>pts</span></strong>
             </span>
           </section>
 
           <div className="gameplay-bets" aria-label="Bet controls">
             {(!deal || deal.settled) ? <>
+              <span className="gameplay-ante-label">Ante</span>
               <div className="gameplay-ante-presets" role="group" aria-label="Quick ante">
                 {[5, 10, 25, 50].map(value => <button key={value} type="button" aria-label={`Set ante to ${value} points`} aria-pressed={ante === value} disabled={busy || connection === "reconnecting" || !game || value * 3 > game.balance} onClick={() => setAnte(value)}>{value}</button>)}
               </div>
-              <label>Ante <input aria-label="Ante points" type="number" min="1" max="100" value={ante} onChange={(event) => setAnte(Number(event.target.value))} /></label>
-              <button type="button" disabled={busy || connection === "reconnecting" || !game || !Number.isInteger(ante) || ante < 1 || ante > 100 || ante * 3 > game.balance} onClick={() => void update(() => dealTable(ante), "deal")}>{busy ? "Dealing…" : deal ? "Deal next hand" : "Deal hand"}</button>
+              <label><span className="game-sr-only">Custom ante</span><input aria-label="Ante points" type="number" min="1" max="100" value={ante} onChange={(event) => setAnte(Number(event.target.value))} /></label>
+              <button type="button" disabled={busy || connection === "reconnecting" || !game || !Number.isInteger(ante) || ante < 1 || ante > 100 || ante * 3 > game.balance} onClick={() => void update(() => dealTable(ante), "deal")}>{busy ? "Dealing…" : "Deal"}</button>
               {game && game.balance < 3 && <button disabled={busy || connection === "reconnecting"} onClick={() => void update(resetGame)}>Reset practice points</button>}
             </> : <>
-              <button type="button" disabled>Ante · {deal.ante} placed</button>
               <button type="button" disabled={busy || connection === "reconnecting"} onClick={() => void update(() => playAction('fold'), "reveal")}>Fold</button>
               <button type="button" className="gameplay-raise" disabled={busy || connection === "reconnecting"} onClick={() => void update(() => playAction('raise'), "reveal")}>Raise · {deal.ante * 2} pts</button>
             </>}
             {error && <button disabled={busy || connection === "reconnecting"} onClick={() => void update(getGame)}>Refresh table</button>}
           </div>
-          {game && (!deal || deal.settled) && <p className="gameplay-ante-help">Keep 3× your ante available for the ante and raise.{Number.isInteger(ante) && ante >= 1 && ante <= 100 && ante * 3 > game.balance ? ` You need ${(ante * 3).toLocaleString()} pts; you have ${game.balance.toLocaleString()}.` : ""}</p>}
+          {game && (!deal || deal.settled) && Number.isInteger(ante) && ante >= 1 && ante <= 100 && ante * 3 > game.balance && <p className="gameplay-ante-help" role="status">You need {(ante * 3).toLocaleString()} pts for the ante and raise; you have {game.balance.toLocaleString()}.</p>}
         </div>
       </div>
       <HandGuide currentRank={deal?.player.rank} open={guideOpen} onClose={closeGuide} expanded={guideExpanded} onToggleExpanded={() => setGuideExpanded((value) => !value)} />
-      {chatOpen && <aside className="game-chat" id="game-chat" aria-label="Table chat"><div className="game-chat-heading"><div><strong>Table chat</strong><small>Local preview · Messages are not sent</small></div><button type="button" aria-label="Close table chat" onClick={() => setChatOpen(false)}>×</button></div><div className="game-chat-messages" role="log" aria-live="polite">{messages.map((item, index) => <p key={index}><strong>{item.name}</strong><span>{item.text}</span></p>)}</div><form onSubmit={sendMessage}><label className="game-sr-only" htmlFor="game-message">Message</label><input id="game-message" value={message} maxLength={300} onChange={(event) => setMessage(event.target.value)} placeholder="Say something friendly…" autoComplete="off" /><button type="submit" disabled={!message.trim()} aria-label="Send preview message">↑</button></form></aside>}
+      {chatOpen && <aside className="game-chat" id="game-chat" aria-label="Table chat"><div className="game-chat-messages" role="log" aria-live="polite">{messages.map((item, index) => <p key={index}><strong>{item.name}</strong><span>{item.text}</span></p>)}</div><form onSubmit={sendMessage}><label className="game-sr-only" htmlFor="game-message">Message (press Enter to add to local preview)</label><input id="game-message" value={message} maxLength={300} onChange={(event) => setMessage(event.target.value)} placeholder="Message · Enter to send" aria-describedby="game-chat-note" autoComplete="off" /></form><small className="game-chat-note" id="game-chat-note">Local preview · Messages are not sent</small></aside>}
     </main>
   );
 }

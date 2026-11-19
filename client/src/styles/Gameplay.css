@@ -759,3 +759,109 @@
 .gameplay-breakdown dl > div { display: flex; align-items: center; gap: 8px; }
 .gameplay-breakdown dd { margin: 0; font-weight: 700; }
 .gameplay-breakdown-total { padding-left: 16px; border-left: 1px solid #a8c5d0; }
+
+/* Keep attention on the hands, result, and next action. */
+.gameplay-seat { min-width: 0; padding: 8px 16px; border: 1px solid #d0e6ec; box-shadow: none; }
+.gameplay-identity strong { font-size: 13px; }
+.gameplay-result { top: 701px; font-weight: 700; }
+.gameplay-breakdown { top: 746px; z-index: 5; text-align: center; font-size: 12px; }
+.gameplay-breakdown summary { cursor: pointer; color: #426f7e; }
+.gameplay-breakdown dl { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 12px 16px; border: 1px solid #d0e6ec; border-radius: 12px; background: white; box-shadow: 0 8px 24px #13526c14; }
+.gameplay-ante-label { color: #133f50; font-weight: 700; font-size: 14px; }
+.gameplay-winning-hand > .gameplay-card { outline-width: 1px; box-shadow: 0 2px 0 #d3e5e9, 0 8px 18px #2855691c; }
+.gameplay-winning-hand, .gameplay-settled { animation: none; }
+.gameplay-rail { box-shadow: 0 0 0 1px #bddde5, 0 12px 32px #28687c14; }
+
+/* Compact, quiet hand reference. */
+.hand-guide { width: 320px; background: #fff; border: 1px solid #cbdde2; border-radius: 14px; box-shadow: 0 16px 48px #123c4d24; }
+.hand-guide-header { align-items: flex-start; padding: 18px 18px 14px; background: #fff; border-bottom: 1px solid #e4edf0; }
+.hand-guide-header h2 { margin: 0 0 4px; font-size: 17px; line-height: 1.25; }
+.hand-guide-header span { color: #64808a; font-size: 12px; }
+.hand-guide-header button { width: 32px; height: 32px; border: 0; border-radius: 7px; color: #526f7a; font-size: 22px; line-height: 1; }
+.hand-guide-header button:hover { background: #eff6f7; }
+.hand-guide-columns { display: flex; justify-content: space-between; padding: 13px 18px 7px; color: #718991; font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.hand-guide-list { list-style: none; padding: 0 10px; margin: 0; counter-reset: hand-rank; }
+.hand-guide-list li { display: flex; align-items: center; gap: 10px; min-height: 54px; box-sizing: border-box; padding: 8px; border-bottom: 1px solid #edf2f3; counter-increment: hand-rank; }
+.hand-guide-list li::before { content: counter(hand-rank, decimal-leading-zero); flex: 0 0 20px; color: #8a9ea5; font-size: 11px; font-variant-numeric: tabular-nums; }
+.hand-guide-list li > div { display: block; flex: 1; width: auto; min-width: 0; }
+.hand-guide-list strong { font-size: 13px; font-weight: 600; }
+.hand-guide-example { margin-top: 3px; color: #647f89; font-size: 12px; letter-spacing: .02em; white-space: nowrap; }
+.hand-guide-payout { width: auto; color: #133f50; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.hand-guide-current { background: #eef7f8; outline: none; border-radius: 7px; }
+.hand-guide-badge { margin-left: 6px; padding: 2px 5px; background: #dceef1; color: #215d6a; font-size: 10px; font-weight: 600; }
+.hand-guide-rules { margin: 12px 18px 18px; color: #526f7a; font-size: 12px; line-height: 1.5; }
+.hand-guide-rules summary { color: #215d6a; font-weight: 600; cursor: pointer; }
+.hand-guide-rules p { margin: 10px 0 0; }
+.hand-guide summary:focus-visible { outline: 2px solid #087f9b; outline-offset: 3px; }
+@media (max-width: 900px) { .hand-guide { width: min(320px, calc(100vw - 24px)); } }
+
+/* Results use the same quiet treatment for wins and losses. */
+.gameplay-result.gameplay-payout-win { color: #133f50; background: transparent; border-color: transparent; }
+
+/* A compact chat overlay keeps the table visible behind the conversation. */
+.gameplay .game-chat {
+  left: 24px;
+  bottom: 24px;
+  width: 300px;
+  max-height: min(320px, calc(100dvh - 110px));
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(150, 192, 201, .65);
+  border-radius: 14px;
+  background: rgba(247, 253, 254, .82);
+  box-shadow: 0 10px 32px rgba(19, 63, 80, .14);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.gameplay .game-chat-heading { padding: 11px 12px 9px 14px; background: transparent; border-bottom: 1px solid rgba(150, 192, 201, .3); }
+.gameplay .game-chat-heading strong { font-size: 13px; font-weight: 600; }
+.gameplay .game-chat-heading small { margin-top: 3px; color: #526f7a; font-size: 10px; }
+.gameplay .game-chat-heading button { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border-radius: 7px; color: #526f7a; font-size: 22px; line-height: 1; }
+.gameplay .game-chat-heading button:hover { background: rgba(19, 63, 80, .08); }
+.gameplay .game-chat-messages { min-height: 80px; max-height: 180px; padding: 6px 14px; overflow-y: auto; }
+.gameplay .game-chat-messages p { margin: 7px 0; padding: 0; background: transparent; color: #244c5b; font-size: 12px; line-height: 1.5; }
+.gameplay .game-chat-messages p > strong { display: inline; margin: 0 6px 0 0; color: #087f9b; font-size: 12px; }
+.gameplay .game-chat form { gap: 6px; padding: 8px; border-top: 1px solid rgba(150, 192, 201, .3); }
+.gameplay .game-chat input { box-sizing: border-box; height: 38px; padding: 0 10px; border: 1px solid rgba(150, 192, 201, .7); border-radius: 8px; background: rgba(255, 255, 255, .72); color: #133f50; font: inherit; font-size: 12px; }
+.gameplay .game-chat input::placeholder { color: #6c8790; }
+.gameplay .game-chat form button { min-width: 38px; border-radius: 8px; background: #087f9b; color: #fff; font-size: 18px; }
+.gameplay .game-chat form button:disabled { opacity: .5; cursor: default; }
+.gameplay .game-chat :is(button, input):focus-visible { outline: 2px solid #087f9b; outline-offset: 2px; }
+@media (max-width: 900px) { .gameplay .game-chat { left: 12px; bottom: 12px; width: min(300px, calc(100vw - 24px)); } }
+.gameplay .game-chat { padding: 8px; box-sizing: border-box; }
+.gameplay .game-chat-messages { padding: 2px 6px; }
+.gameplay .game-chat form { padding: 4px 0 0; border: 0; }
+.gameplay .game-chat input { height: 40px; padding: 0 12px; border: 0; background: rgba(220, 236, 239, .85); border-radius: 8px; }
+.gameplay .game-chat-note { padding: 6px 4px 1px; color: #526f7a; font-size: 10px; line-height: 1.3; }
+
+/* The balance is the primary detail in the player's seat. */
+.gameplay-seat { top: 622px; min-width: 150px; justify-content: center; padding: 7px 20px 8px; border-radius: 16px; }
+.gameplay-identity { align-items: center; line-height: 1.2; }
+.gameplay-player-name { max-width: 200px; overflow: hidden; color: #607d87; font-size: 11px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.gameplay-identity .gameplay-player-balance { margin-top: 3px; color: #133f50; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.gameplay-player-balance span { color: #607d87; font-size: 11px; font-weight: 600; letter-spacing: 0; }
+
+/* A light glass surface keeps the balance distinct without obscuring the table. */
+.gameplay-seat {
+  background: rgba(248, 253, 254, .64);
+  border: 1px solid rgba(255, 255, 255, .8);
+  box-shadow: 0 8px 24px rgba(34, 92, 108, .13), inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 -1px 0 rgba(109, 167, 180, .16);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+}
+.gameplay-player-name { color: #416976; letter-spacing: .02em; }
+.gameplay-identity .gameplay-player-balance { color: #103e50; }
+@media (prefers-reduced-transparency: reduce) {
+  .gameplay-seat { background: #f7fcfd; -webkit-backdrop-filter: none; backdrop-filter: none; border-color: #a9cbd3; }
+}
+@media (prefers-contrast: more) {
+  .gameplay-seat { background: #fff; border-color: #315f6c; -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+.gameplay-seat {
+  min-width: 170px;
+  padding: 10px 24px 11px;
+  border: 0;
+  box-shadow: 0 8px 24px rgba(34, 92, 108, .12), inset 0 1px 0 rgba(255, 255, 255, .65);
+}
+.gameplay-identity .gameplay-player-balance { font-size: 24px; }
+@media (prefers-contrast: more) { .gameplay-seat { border: 1px solid #315f6c; } }
