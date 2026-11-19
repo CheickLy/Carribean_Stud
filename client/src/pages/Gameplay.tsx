@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from "react";
-import { Link, useLocation, useOutletContext, useParams } from "react-router-dom";
+import { Link, useBlocker, useLocation, useOutletContext, useParams } from "react-router-dom";
 import arrowLeft from "../assets/gameplay/arrow-left.svg";
 import suitClub from "../assets/gameplay/suit-club.svg";
 import suitClubMark from "../assets/gameplay/suit-club-mark.svg";
@@ -108,6 +108,9 @@ export default function Gameplay() {
   const [ante, setAnte] = useState(10);
   const [busy, setBusy] = useState(false);
   const pending = useRef(false);
+  const leaving = useRef(false);
+  const blocker = useBlocker(({ currentLocation, nextLocation }) =>
+    (busy || Boolean(deal && !deal.settled)) && currentLocation.pathname !== nextLocation.pathname);
   const [dealSequence, setDealSequence] = useState(0);
   const [motion, setMotion] = useState<"none" | "deal" | "reveal">("none");
   async function update(operation: () => Promise<GameState>, animation: "none" | "deal" | "reveal" = "none") {
@@ -128,6 +131,44 @@ export default function Gameplay() {
     finally { pending.current = false; setBusy(false); }
   }
   const [error, setError] = useState("");
+  useEffect(() => {
+    if (blocker.state !== "blocked" || leaving.current) return;
+    if (pending.current) {
+      setError("Please wait for the current table update before leaving.");
+      blocker.reset();
+      return;
+    }
+    if (!deal || deal.settled) { blocker.proceed(); return; }
+    if (!window.confirm(`Leave table and fold?\n\nLeaving will fold your current hand and lose your ${deal.ante} point ante. No raise will be placed.\n\nChoose Cancel to stay and finish your hand.`)) {
+      blocker.reset();
+      return;
+    }
+    leaving.current = true;
+    pending.current = true;
+    setBusy(true);
+    setError("");
+    void playAction("fold").then(next => {
+      setGame(next);
+      blocker.proceed();
+    }).catch(cause => {
+      setError(cause instanceof Error ? cause.message : "Could not confirm your fold. Please try again.");
+      setConnection("reconnecting");
+      blocker.reset();
+    }).finally(() => {
+      leaving.current = false;
+      pending.current = false;
+      setBusy(false);
+    });
+  }, [blocker, deal]);
+  useEffect(() => {
+    if (!busy && (!deal || deal.settled)) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [busy, deal]);
   const [guideOpen, setGuideOpen] = useState(false);
   const [guideExpanded, setGuideExpanded] = useState(false);
   const guideButton = useRef<HTMLButtonElement>(null);
@@ -280,6 +321,7 @@ export default function Gameplay() {
             {error && <button disabled={busy || connection === "reconnecting"} onClick={() => void update(getGame)}>Refresh table</button>}
           </div>
           {game && (!deal || deal.settled) && Number.isInteger(ante) && ante >= 1 && ante <= 100 && ante * 3 > game.balance && <p className="gameplay-ante-help" role="status">You need {(ante * 3).toLocaleString()} pts for the ante and raise; you have {game.balance.toLocaleString()}.</p>}
+          {deal && !deal.settled && <p className="gameplay-ante-help">Leaving this table folds your hand and loses your ante. After closing or refreshing, reconnect within 30 seconds to avoid an automatic fold.</p>}
         </div>
       </div>
       <HandGuide currentRank={deal?.player.rank} open={guideOpen} onClose={closeGuide} expanded={guideExpanded} onToggleExpanded={() => setGuideExpanded((value) => !value)} />

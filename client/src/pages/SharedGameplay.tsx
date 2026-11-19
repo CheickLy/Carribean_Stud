@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useBlocker, useParams } from 'react-router-dom';
 import { PlayingCard, faceCard, handLabel } from './Gameplay';
 import HandGuide from '../components/HandGuide';
 import useTablePreferences from '../components/useTablePreferences';
@@ -71,8 +71,35 @@ export default function SharedGameplay() {
   }, [lobbyId]);
   const seconds = table?.deadline ? Math.max(0, Math.ceil((table.deadline - clock - clockOffset.current) / 1000)) : null;
   const self = table?.seats.find(seat => seat.isYou);
+  const hasHand = Boolean(table?.own.ante && table.phase !== 'completed');
   const isBetting = table?.phase === 'betting' && self?.status === 'betting';
   const isDeciding = table?.phase === 'deciding' && table.own.ante && !table.own.action;
+  const blocked = useBlocker(({ currentLocation, nextLocation }) => Boolean(current.current) && currentLocation.pathname !== nextLocation.pathname);
+  useEffect(() => {
+    if (blocked.state !== 'blocked' || leaving.current) return;
+    if (pending.current) { setError('Please wait for the table update, then try leaving again.'); blocked.reset(); return; }
+    const state = current.current!;
+    if (state.own.ante && state.phase !== 'completed') {
+      const warning = state.own.action === 'raise'
+        ? 'Your raise is already locked. Leaving will not cancel it. Your result will be saved when the hand finishes.'
+        : state.own.action === 'fold' ? 'Your hand is already folded. Your result will be saved when the hand finishes.'
+        : `Leaving will fold your hand and lose your ${format(state.own.ante)} chip ante. No raise will be placed.`;
+      if (!window.confirm(`Leave table?\n\n${warning}\n\nChoose Cancel to stay.`)) { blocked.reset(); return; }
+    }
+    leaving.current = true;
+    pending.current = true;
+    setBusy(true);
+    void leaveTable(lobbyId, state.roundId).then(() => blocked.proceed()).catch(cause => {
+      setError(cause instanceof Error ? cause.message : 'Could not leave the table.');
+      blocked.reset();
+    }).finally(() => { leaving.current = false; pending.current = false; if (mounted.current) setBusy(false); });
+  }, [blocked, lobbyId]);
+  useEffect(() => {
+    if (!hasHand && !busy) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [hasHand, busy]);
   async function action(operation: () => Promise<SharedTable>) {
     if (pending.current) return;
     pending.current = true;

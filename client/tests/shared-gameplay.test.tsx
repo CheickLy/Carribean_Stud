@@ -88,6 +88,23 @@ describe('shared table screen', () => {
     expect(screen.queryByRole('button', { name: 'Fold' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Place ante' })).toBeNull();
   });
+  it('confirms leaving and waits for the server fold before going to the lobby', async () => {
+    api.syncTable.mockResolvedValue(deciding);
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    show(); await screen.findByRole('button', { name: 'Fold' });
+    await userEvent.click(screen.getByRole('link', { name: '← Back to lobby' }));
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('lose your 5 chip ante'));
+    expect(api.leaveTable).toHaveBeenCalledWith('7', 42);
+    expect(await screen.findByRole('heading', { name: 'Lobby room' })).toBeTruthy();
+  });
+  it('does not promise to cancel an already locked raise', async () => {
+    api.syncTable.mockResolvedValue({ ...deciding, own: { ...deciding.own, action: 'raise' } });
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    show(); await screen.findByText('Decision locked. Waiting for the other players.');
+    await userEvent.click(screen.getByRole('link', { name: '← Back to lobby' }));
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('will not cancel it'));
+    expect(api.leaveTable).not.toHaveBeenCalled();
+  });
   it('recovers polling after a connection failure', async () => {
     api.syncTable.mockRejectedValueOnce(new Error('Network failed'));
     show(); expect(await screen.findByRole('alert')).toBeTruthy();

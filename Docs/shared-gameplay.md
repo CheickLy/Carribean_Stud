@@ -10,6 +10,7 @@
 - When bots are enabled, basic bots fill seats not reserved for human members. They ante the minimum and raise a pair or better. Bots use the same deck, chip accounting, timing and settlement as humans; they do not inspect other players' hands.
 - Connected players with enough chips enter the next round automatically. Betting lasts at most 20 seconds; missing betting sits out without a charge. Once all antes are placed or betting expires, players have up to 30 seconds to raise/fold. Unanswered decisions fold at the deadline. After settlement, results remain for 7 seconds before the next eligible round.
 - New arrivals during a round wait for the next one. Disconnected players are marked offline after 15 seconds without a heartbeat. Heartbeats do not extend the shared decision deadline.
+- Leaving through the UI folds an undecided hand before navigating. A raise already submitted remains locked and settles normally even if that player leaves. Closing/refreshing uses a browser warning; the round's deadline continues on the server.
 - Dealer cards remain hidden until every decision is finished. Opponents' cards are never returned, including after settlement. Players can view their own last 20 saved hands from History at the table.
 
 ## Persistence and concurrency

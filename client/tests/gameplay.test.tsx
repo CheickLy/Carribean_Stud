@@ -65,6 +65,49 @@ describe('player versus dealer', () => {
     expect((screen.getByRole('checkbox', { name: 'Reduce motion' }) as HTMLInputElement).checked).toBe(true);
     expect((screen.getByRole('checkbox', { name: 'Faster dealing' }) as HTMLInputElement).checked).toBe(true);
   });
+  it('keeps the active hand when leaving is cancelled', async () => {
+    game.getGame.mockResolvedValue({ balance: 2440, round });
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const router = show();
+    await screen.findByRole('button', { name: 'Fold' });
+    await userEvent.click(screen.getByRole('link', { name: 'Back to lobby' }));
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('lose your 10 point ante'));
+    expect(router.state.location.pathname).toBe('/lobbies/1/game');
+    expect(game.playAction).not.toHaveBeenCalled();
+    const unload = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(unload);
+    expect(unload.defaultPrevented).toBe(true);
+  });
+  it('folds before navigating away after confirmation', async () => {
+    game.getGame.mockResolvedValue({ balance: 2440, round });
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    show();
+    await screen.findByRole('button', { name: 'Fold' });
+    await userEvent.click(screen.getByRole('link', { name: 'Back to lobby' }));
+    expect(await screen.findByRole('heading', { name: 'Lobby room' })).toBeTruthy();
+    expect(game.playAction).toHaveBeenCalledTimes(1);
+    expect(game.playAction).toHaveBeenCalledWith('fold');
+  });
+  it('stays at the table if the fold cannot be confirmed', async () => {
+    game.getGame.mockResolvedValue({ balance: 2440, round });
+    game.playAction.mockRejectedValue(new Error('Could not save fold'));
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const router = show();
+    await screen.findByRole('button', { name: 'Fold' });
+    await userEvent.click(screen.getByRole('link', { name: 'Back to lobby' }));
+    expect((await screen.findByRole('alert')).textContent).toBe('Could not save fold');
+    expect(router.state.location.pathname).toBe('/lobbies/1/game');
+  });
+  it('leaves a settled hand without confirmation or another fold', async () => {
+    game.getGame.mockResolvedValue({ balance: 2440, round: { ...round, settled: true, net: -10, dealer: { cards: ['2C'], rank: 'high card' } } });
+    const confirm = vi.spyOn(window, 'confirm');
+    show();
+    await screen.findByRole('button', { name: 'Deal' });
+    await userEvent.click(screen.getByRole('link', { name: 'Back to lobby' }));
+    expect(await screen.findByRole('heading', { name: 'Lobby room' })).toBeTruthy();
+    expect(confirm).not.toHaveBeenCalled();
+    expect(game.playAction).not.toHaveBeenCalled();
+  });
   it('selects a quick ante without dealing and disables unaffordable presets', async () => {
     game.getGame.mockResolvedValue({ balance: 90, round: null });
     show();
