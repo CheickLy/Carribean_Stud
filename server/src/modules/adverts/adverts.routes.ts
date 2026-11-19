@@ -47,6 +47,8 @@ advertsRouter.post('/', async (req, res, next) => {
       title,
       creative,
       destinationUrl,
+      videoUrl,
+      requiredWatchSeconds,
       trigger,
       chipReward,
       eligibilityLimit,
@@ -90,6 +92,11 @@ advertsRouter.post('/', async (req, res, next) => {
       return;
     }
 
+    if (trigger === 'watch' && (typeof videoUrl !== 'string' || !videoUrl.trim() || !Number.isSafeInteger(requiredWatchSeconds) || requiredWatchSeconds < 1)) {
+      res.status(400).json({ error: 'Watch adverts require a video URL and viewing duration' });
+      return;
+    }
+
     const start = new Date(startsAt);
     const end = new Date(endsAt);
 
@@ -108,6 +115,8 @@ advertsRouter.post('/', async (req, res, next) => {
       title: title.trim(),
       creative: creative.trim(),
       destinationUrl: url.toString(),
+      videoUrl: trigger === 'watch' ? videoUrl.trim() : null,
+      requiredWatchSeconds: trigger === 'watch' ? requiredWatchSeconds : null,
       trigger,
       chipReward,
       eligibilityLimit,
@@ -151,6 +160,8 @@ advertsRouter.patch('/:advertId', async (req, res, next) => {
       title = current.title,
       creative = current.creative,
       destinationUrl = current.destinationUrl,
+      videoUrl = current.videoUrl,
+      requiredWatchSeconds = current.requiredWatchSeconds,
       trigger = current.trigger,
       chipReward = current.chipReward,
       eligibilityLimit = current.eligibilityLimit,
@@ -182,6 +193,11 @@ advertsRouter.patch('/:advertId', async (req, res, next) => {
       return;
     }
 
+    if (trigger === 'watch' && (typeof videoUrl !== 'string' || !videoUrl.trim() || !Number.isSafeInteger(requiredWatchSeconds) || requiredWatchSeconds < 1)) {
+      res.status(400).json({ error: 'Watch adverts require a video URL and viewing duration' });
+      return;
+    }
+
     const start = new Date(startsAt);
     const end = new Date(endsAt);
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start >= end) {
@@ -190,7 +206,7 @@ advertsRouter.patch('/:advertId', async (req, res, next) => {
     }
 
     const advert = await updateAdvert(advertId, {
-      title: title.trim(), creative: creative.trim(), destinationUrl: url.toString(), trigger,
+      title: title.trim(), creative: creative.trim(), destinationUrl: url.toString(), videoUrl: trigger === 'watch' ? videoUrl.trim() : null, requiredWatchSeconds: trigger === 'watch' ? requiredWatchSeconds : null, trigger,
       chipReward, eligibilityLimit, startsAt: start, endsAt: end, isActive,
     });
     res.json(advert);

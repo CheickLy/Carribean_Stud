@@ -7,6 +7,8 @@ export class Advert extends Model {
   declare title: string;
   declare creative: string;
   declare destinationUrl: string;
+  declare videoUrl: string | null;
+  declare requiredWatchSeconds: number | null;
   declare trigger: 'watch' | 'click';
   declare chipReward: number;
   declare eligibilityLimit: number;
@@ -35,6 +37,8 @@ Advert.init(
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    videoUrl: { type: DataTypes.TEXT, allowNull: true },
+    requiredWatchSeconds: { type: DataTypes.INTEGER, allowNull: true },
     trigger: {
       type: DataTypes.ENUM('watch', 'click'),
       allowNull: false,

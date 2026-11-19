@@ -4,6 +4,7 @@ import { Link, useNavigate, useOutletContext } from "react-router-dom";
 import { startGuest } from "../services/auth";
 
 import { selectLobbies, type BrowserLobby } from "./lobbyBrowserControls";
+import SponsoredAdvertBanner from "../components/SponsoredAdvertBanner";
 
 export default function LobbyBrowser() {
   const navigate = useNavigate();
@@ -102,6 +103,7 @@ export default function LobbyBrowser() {
   return (
     <div className="reef-browser-page">
       <main className="reef-browser-container">
+        <SponsoredAdvertBanner />
         <header className="reef-browser-header">
           <div>
             <h1>Tables</h1>

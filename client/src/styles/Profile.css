@@ -17,6 +17,10 @@
 .profile-balance { display: flex; flex-direction: column; gap: 10px; border-left: 1px solid #e8f0f3; padding-left: 40px; }
 .profile-balance span { color: #65808a; font-size: 13px; line-height: 1.5; }
 .profile-balance strong { color: #087f9b; font-size: clamp(30px, 4vw, 42px); letter-spacing: -1px; overflow-wrap: anywhere; }
+.profile-watch-ad { align-self: flex-start; margin-top: 4px; border: 0; border-radius: 8px; padding: 10px 16px; background: #087f9b; color: #fff; font-weight: 700; cursor: pointer; }
+.profile-watch-ad:hover { background: #066b83; }
+.profile-watch-error { color: #a33c42; }
+.profile-watch-message { color: #087f9b; font-weight: 700; }
 .profile-save { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 24px 32px; margin-bottom: 36px; background: #ddf6fb; border: 1px solid #b8e5ed; border-radius: 18px; }
 .profile-save h2 { margin: 0 0 8px; font-size: 20px; letter-spacing: -.5px; }
 .profile-save p { margin: 0; color: #476c7b; font-size: 14px; line-height: 1.7; }

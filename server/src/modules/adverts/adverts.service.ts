@@ -4,6 +4,8 @@ export type CreateAdvertInput = {
   title: string;
   creative: string;
   destinationUrl: string;
+  videoUrl?: string | null;
+  requiredWatchSeconds?: number | null;
   trigger: 'watch' | 'click';
   chipReward: number;
   eligibilityLimit: number;

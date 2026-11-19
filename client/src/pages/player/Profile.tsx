@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { getCurrentUser } from "../../services/auth";
 import { AVATARS } from "../../services/users";
 import { sampleHands, sampleSummary } from "./sampleHands";
+import WatchAdvertModal from "../../components/WatchAdvertModal";
+import { startWatchAdvert, type WatchSession } from "../../services/watchAd";
 import "./Profile.css";
 
 type ProfileUser = { username: string; avatar: string; balance: string; isGuest: boolean };
@@ -11,6 +13,9 @@ export default function Profile() {
   const navigate = useNavigate();
   const [user, setUser] = useState<ProfileUser | null>(null);
   const [error, setError] = useState("");
+  const [watchSession, setWatchSession] = useState<WatchSession | null>(null);
+  const [watchError, setWatchError] = useState("");
+  const [watchMessage, setWatchMessage] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -24,6 +29,16 @@ export default function Profile() {
     return () => { active = false; };
   }, [navigate]);
 
+  async function handleWatchAdvert() {
+    setWatchError("");
+    setWatchMessage("");
+    try {
+      const session = await startWatchAdvert();
+      if (!session) { setWatchError("No eligible advertisements are available right now."); return; }
+      setWatchSession(session);
+    } catch (problem) { setWatchError(problem instanceof Error ? problem.message : "Could not start advertisement."); }
+  }
+
   const avatar = AVATARS.find((choice) => choice.id === user?.avatar) ?? AVATARS[0];
   const balance = Number(user?.balance);
 
@@ -35,13 +50,16 @@ export default function Profile() {
       <section className="profile-card" aria-label="Account summary">
         <span className="profile-avatar" aria-label="Player avatar" role="img">{user.avatar.startsWith("data:image/") ? <img src={user.avatar} alt="" /> : avatar.symbol}</span>
         <div className="profile-identity"><h2>{user.username}</h2><p>Reef Royale Player</p></div>
-        <div className="profile-balance"><span>♣ CHIP BALANCE</span><strong>{Number.isFinite(balance) ? balance.toFixed(2) : user.balance} CHIPS</strong></div>
+        <div className="profile-balance"><span>♣ CHIP BALANCE</span><strong>{Number.isFinite(balance) ? balance.toFixed(2) : user.balance} CHIPS</strong><button type="button" className="profile-watch-ad" onClick={handleWatchAdvert}>Watch AD</button></div>
       </section>
+      {watchError && <p role="alert" className="profile-watch-error">{watchError}</p>}
+      {watchMessage && <p role="status" className="profile-watch-message">{watchMessage}</p>}
       <div className="profile-actions">
         <button type="button" onClick={() => navigate("/profile/avatar")}><span>◉</span><strong>Change Avatar</strong><small>Choose your player look</small></button>
         <button type="button" onClick={() => navigate("/profile/statistics")}><span>▥</span><strong>Statistics</strong><small>Track your results</small></button>
         <button type="button" onClick={() => navigate("/profile/history")}><span>♠</span><strong>Game History</strong><small>Review past hands</small></button>
       </div>
+      {watchSession && <WatchAdvertModal session={watchSession} onClose={(result) => { if (result) { setUser(previous => previous ? { ...previous, balance: result.balance } : previous); setWatchMessage(`Advertisement completed! You earned ${result.reward} CHIPS.`); } setWatchSession(null); }} />}
     </>}
   </main>;
 }
