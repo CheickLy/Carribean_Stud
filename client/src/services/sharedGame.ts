@@ -5,6 +5,7 @@ export type SharedTable = {
   dealer: { cards: string[]; rank: string | null };
   own: { id: string; ante: number; action: 'raise' | 'fold' | null; cards: { cards: string[]; rank: string | null }; result: { anteNet: number; raiseNet: number; returned: number; net: number; message: string } | null };
   seats: TablePlayer[];
+  isHost: boolean; botCount: number; canAddBot: boolean;
 };
 export type SavedHand = { handId: number; roundId: number; playedAt: string; playerCards: string[]; dealerCards: string[]; ante: number; raise: number; returned: number; net: number; message: string };
 export class TableRequestError extends Error { constructor(message: string, public status: number) { super(message); } }
@@ -19,3 +20,4 @@ export const placeAnte = (id: string, roundId: number, ante: number) => request<
 export const decide = (id: string, roundId: number, action: 'fold' | 'raise') => request<SharedTable>(id, 'action', { roundId, action });
 export const leaveTable = (id: string, roundId: number | null) => request<SharedTable>(id, 'leave', { roundId });
 export const loadHistory = (id: string) => request<SavedHand[]>(id, 'history');
+export const addBot = (id: string, requestId: string) => request<SharedTable>(id, 'bots', { requestId });

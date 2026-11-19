@@ -20,6 +20,8 @@ try {
   const lobby = await Lobby.create({ hostId: host.userId, name: 'Shared test', minBet: 10, maxBet: 50, startingMoney: 1000, maxPlayers: 3, botsEnabled: false });
   await LobbyMember.create({ lobbyId: lobby.lobbyId, userId: alice.userId });
   const id = lobby.lobbyId;
+  await assert.rejects(sharedTable(id, host.userId, { kind: 'add-bot', requestId: 'bots-disabled-test' }), /disabled/);
+  await assert.rejects(sharedTable(id, alice.userId, { kind: 'add-bot', requestId: 'non-host-bot-test' }), /Only the host/);
   const now = Date.now();
   // First player starts a betting round. A second arrival must wait for its end.
   const first = await sharedTable(id, host.userId, { kind: 'heartbeat' }, now);
@@ -78,9 +80,22 @@ try {
   assert.equal(await GameHand.count({ where: { sessionId: next.roundId, userId: host.userId } }), 1);
   // A separate bot-enabled table uses actual wall-clock advancement without clients.
   const botLobby = await Lobby.create({ hostId: host.userId, name: 'Bot table', minBet: 5, maxBet: 25, startingMoney: 200, maxPlayers: 6, botsEnabled: true });
-  const botStart = await sharedTable(botLobby.lobbyId, host.userId, { kind: 'heartbeat' });
+  const botNow = Date.now();
+  const firstBotHand = await sharedTable(botLobby.lobbyId, host.userId, { kind: 'heartbeat' }, botNow);
+  assert.equal(firstBotHand.botCount, 0);
+  assert.equal(firstBotHand.canAddBot, true);
+  // A retried/concurrent Add bot request creates exactly one queued bot.
+  await Promise.all([1, 2, 3].map(() => sharedTable(botLobby.lobbyId, host.userId, { kind: 'add-bot', requestId: 'first-bot-request' }, botNow + 1)));
+  let botView = await sharedTable(botLobby.lobbyId, host.userId, { kind: 'heartbeat' }, botNow + 2);
+  assert.equal(botView.botCount, 1);
+  assert.equal(botView.seats.find(seat => seat.bot).status, 'waiting for next hand');
+  for (let index = 2; index <= 5; index++) await sharedTable(botLobby.lobbyId, host.userId, { kind: 'add-bot', requestId: `add-bot-request-${index}` }, botNow + 3);
+  await assert.rejects(sharedTable(botLobby.lobbyId, host.userId, { kind: 'add-bot', requestId: 'one-bot-too-many' }, botNow + 4), /available seats/);
+  await sharedTable(botLobby.lobbyId, null, undefined, botNow + 20001);
+  const botStart = await sharedTable(botLobby.lobbyId, host.userId, { kind: 'heartbeat' }, botNow + 28002);
+  assert.equal(botStart.canAddBot, false);
   assert.equal(botStart.seats.filter(seat => seat.bot).length, 5);
-  const botDeal = await sharedTable(botLobby.lobbyId, host.userId, { kind: 'ante', roundId: botStart.roundId, amount: 5 });
+  const botDeal = await sharedTable(botLobby.lobbyId, host.userId, { kind: 'ante', roundId: botStart.roundId, amount: 5 }, botNow + 28003);
   assert.equal(botDeal.phase, 'deciding');
   const pending = await TableGame.findByPk(botLobby.lobbyId);
   const interrupted = structuredClone(pending.state);

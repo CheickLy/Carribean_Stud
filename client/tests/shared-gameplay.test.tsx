@@ -4,11 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import SharedGameplay from '../src/pages/SharedGameplay';
 import type { SharedTable } from '../src/services/sharedGame';
-const api = vi.hoisted(() => ({ syncTable: vi.fn(), placeAnte: vi.fn(), decide: vi.fn(), leaveTable: vi.fn(), loadHistory: vi.fn() }));
+const api = vi.hoisted(() => ({ syncTable: vi.fn(), placeAnte: vi.fn(), decide: vi.fn(), leaveTable: vi.fn(), loadHistory: vi.fn(), addBot: vi.fn() }));
 vi.mock('../src/services/sharedGame', async original => ({ ...await original<typeof import('../src/services/sharedGame')>(), ...api }));
 const NativeRequest = Request;
 const base: SharedTable = {
-  name: 'Ocean crew', serverNow: Date.now(), maxPlayers: 6, balance: 200, minBet: 5, maxBet: 25, startingChips: 200, botsEnabled: true,
+  isHost: true, botCount: 1, canAddBot: true, name: 'Ocean crew', serverNow: Date.now(), maxPlayers: 6, balance: 200, minBet: 5, maxBet: 25, startingChips: 200, botsEnabled: true,
   roundId: 42, roundNumber: 3, phase: 'betting', deadline: Date.now() + 20000,
   dealer: { cards: [], rank: null }, own: { id: 'u1', ante: 0, action: null, cards: { cards: [], rank: null }, result: null },
   seats: [{ id: 'u1', name: 'Alice', bot: false, balance: 200, online: true, status: 'betting', ante: 0, isYou: true }, { id: 'u2', name: 'Bob', bot: false, balance: 200, online: true, status: 'betting', ante: 0, isYou: false }, { id: 'bot1', name: 'Reef Bot 1', bot: true, balance: 195, online: true, status: 'ante placed', ante: 5, isYou: false }],
@@ -39,6 +39,39 @@ describe('shared table screen', () => {
     expect(screen.getByRole('button', { name: 'Options' })).toBeTruthy();
     expect(screen.queryByRole('region', { name: 'Open seat' })).toBeNull();
     expect(screen.getByRole('timer', { name: 'Round timer' })).toBeTruthy();
+  });
+  it('lets the host add a bot from Options and queues it for the next hand', async () => {
+    api.addBot.mockResolvedValue({ ...base, botCount: 2 });
+    show();
+    await screen.findByRole('heading', { name: 'Ocean crew' });
+    await userEvent.click(screen.getByRole('button', { name: 'Options' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add bot' }));
+    expect(api.addBot).toHaveBeenCalledWith('7', expect.any(String));
+    expect(await screen.findByText('Bot added. It will join the next hand.')).toBeTruthy();
+    expect(api.placeAnte).not.toHaveBeenCalled();
+  });
+  it('reuses the same bot request after a lost response', async () => {
+    api.addBot.mockRejectedValueOnce(new Error('Network failed')).mockResolvedValueOnce({ ...base, botCount: 2 });
+    show(); await screen.findByRole('heading', { name: 'Ocean crew' });
+    await userEvent.click(screen.getByRole('button', { name: 'Options' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add bot' }));
+    await screen.findByRole('alert');
+    fireEvent(window, new Event('online'));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Add bot' }).hasAttribute('disabled')).toBe(false));
+    await userEvent.click(screen.getByRole('button', { name: 'Add bot' }));
+    expect(api.addBot.mock.calls[0][1]).toBe(api.addBot.mock.calls[1][1]);
+  });
+  it.each([
+    [{ botsEnabled: false }, 'Bots are disabled for this lobby.'],
+    [{ isHost: false }, 'Only the host can add bots.'],
+    [{ canAddBot: false }, 'All seats are reserved. No room for another bot.'],
+  ])('explains when adding a bot is unavailable: %j', async (change, message) => {
+    api.syncTable.mockResolvedValue({ ...base, ...change });
+    show(); await screen.findByRole('heading', { name: 'Ocean crew' });
+    await userEvent.click(screen.getByRole('button', { name: 'Options' }));
+    expect(screen.getByText(message)).toBeTruthy();
+    const button = screen.queryByRole('button', { name: 'Add bot' });
+    expect(!button || button.hasAttribute('disabled')).toBe(true);
   });
   it('uses lobby limits, one ante action, table bankroll and real opponent states', async () => {
     show();

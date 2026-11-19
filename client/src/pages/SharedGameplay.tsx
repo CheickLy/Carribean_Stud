@@ -3,7 +3,7 @@ import { Link, useBlocker, useParams } from 'react-router-dom';
 import { PlayingCard, faceCard, handLabel } from './Gameplay';
 import HandGuide from '../components/HandGuide';
 import useTablePreferences from '../components/useTablePreferences';
-import { decide, leaveTable, loadHistory, placeAnte, syncTable, TableRequestError, type SavedHand, type SharedTable } from '../services/sharedGame';
+import { addBot, decide, leaveTable, loadHistory, placeAnte, syncTable, TableRequestError, type SavedHand, type SharedTable } from '../services/sharedGame';
 import '../styles/Gameplay.css';
 import '../styles/SharedGameplay.css';
 
@@ -34,6 +34,9 @@ export default function SharedGameplay() {
   const [historyBusy, setHistoryBusy] = useState(false);
   const { preferences, setPreferences, prepareSound, playSound } = useTablePreferences();
   const signature = useRef('');
+  const botRequest = useRef<string | null>(null);
+  const [botNotice, setBotNotice] = useState('');
+  useEffect(() => setBotNotice(''), [table?.roundId]);
   function receive(next: SharedTable) {
     const nextSignature = `${next.roundId}:${next.phase}`;
     if (signature.current && signature.current !== nextSignature) {
@@ -144,7 +147,13 @@ export default function SharedGameplay() {
         <label><input type="checkbox" checked={preferences.sound} onChange={event => setPreferences(value => ({ ...value, sound: event.target.checked }))} />Sound effects</label>
         <label><input type="checkbox" checked={preferences.reducedMotion} onChange={event => setPreferences(value => ({ ...value, reducedMotion: event.target.checked }))} />Reduce motion</label>
         <label><input type="checkbox" checked={preferences.fastDeal} onChange={event => setPreferences(value => ({ ...value, fastDeal: event.target.checked }))} />Faster dealing</label><p>Saved on this device. System reduced motion is respected.</p>
-        </section>}
+        <div className="shared-bot-options"><strong>Players &amp; bots</strong><p>{!table ? 'Loading table controls…' : !table.botsEnabled ? 'Bots are disabled for this lobby.' : !table.isHost ? 'Only the host can add bots.' : table.canAddBot ? 'Add one bot to an open seat. It joins the next hand.' : 'All seats are reserved. No room for another bot.'}</p>
+          {table?.botsEnabled && table.isHost && <button type="button" disabled={!table.canAddBot || busy || !connected} onClick={() => {
+            botRequest.current ??= crypto.randomUUID();
+            void action(() => addBot(lobbyId, botRequest.current!).then(next => { botRequest.current = null; setBotNotice('Bot added. It will join the next hand.'); return next; }));
+          }}>{busy ? 'Adding…' : 'Add bot'}</button>}
+          {botNotice && <p role="status">{botNotice}</p>}
+        </div></section>}
       <p className="gameplay-wordmark">Reef Royale</p><p className="gameplay-table-caption">CARIBBEAN STUD · SHARED TABLE</p>
       {!connected && <p className="gameplay-connection gameplay-connection-reconnecting" role="status">Reconnecting… The server timer continues; an undecided hand folds at the deadline.</p>}
       {error && <p className="shared-game-error" role="alert">{error} <button onClick={() => { setError(''); void action(() => syncTable(lobbyId)); }}>Refresh table</button></p>}

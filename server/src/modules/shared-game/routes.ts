@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { GameError, type Command } from './engine.js';
-import { handHistory, sharedTable } from './service.js';
+import { GameError } from './engine.js';
+import { handHistory, sharedTable, type TableCommand } from './service.js';
 
 export const sharedGameRouter = Router();
 sharedGameRouter.all('/:lobbyId/game/:operation', async (req, res, next) => {
@@ -13,9 +13,13 @@ sharedGameRouter.all('/:lobbyId/game/:operation', async (req, res, next) => {
   try {
     if (operation === 'history' && req.method === 'GET') { res.json(await handHistory(lobbyId, userId)); return; }
     if (req.method !== 'POST') { res.status(405).json({ error: 'Use POST for table actions.' }); return; }
-    const { roundId, ante, action } = req.body ?? {};
-    let command: Command;
+    const { roundId, ante, action, requestId } = req.body ?? {};
+    let command: TableCommand;
     if (operation === 'state') command = { kind: 'heartbeat' };
+    else if (operation === 'bots') {
+      if (typeof requestId !== 'string' || !/^[a-zA-Z0-9-]{8,80}$/.test(requestId)) throw new GameError(400, 'A valid bot request ID is required.');
+      command = { kind: 'add-bot', requestId };
+    }
     else if (!Number.isSafeInteger(roundId) && !(operation === 'leave' && roundId === null)) throw new GameError(400, 'A valid round ID is required.');
     else if (operation === 'ante') command = { kind: 'ante', roundId, amount: ante };
     else if (operation === 'action' && (action === 'fold' || action === 'raise')) command = { kind: 'action', roundId, action };

@@ -7,6 +7,7 @@ import { Session } from '../../models/session.js';
 import { GameHand } from '../../models/gameHand.js';
 import { TableGame } from '../../models/tableGame.js';
 import { advance, applyCommand, cents, GameError, money, newRound, tableView, type Command, type Settings, type Table } from './engine.js';
+export type TableCommand = Command | { kind: 'add-bot'; requestId: string };
 
 function settingsFor(lobby: Lobby): Settings {
   const settings = { name: lobby.name, min: cents(lobby.minBet), max: cents(lobby.maxBet), starting: cents(lobby.startingMoney), maxPlayers: lobby.maxPlayers, bots: lobby.botsEnabled, allowBets: lobby.allowBets, autoIncr: lobby.autoIncr, increase: cents(lobby.increaseAmount), every: lobby.increaseEveryHands };
@@ -26,7 +27,7 @@ async function saveProgress(table: Table, transaction: Transaction) {
 
 // All table reads and mutations serialize on the same lobby row as admissions.
 // Settlement, bankrolls, phase changes, and history commit in one transaction.
-export async function sharedTable(lobbyId: number, userId: number | null, command?: Command, at?: number) {
+export async function sharedTable(lobbyId: number, userId: number | null, command?: TableCommand, at?: number) {
   const response = await sequelize.transaction(async transaction => {
     const lobby = await Lobby.findByPk(lobbyId, { transaction, lock: transaction.LOCK.UPDATE });
     const now = at ?? Date.now();
@@ -40,6 +41,8 @@ export async function sharedTable(lobbyId: number, userId: number | null, comman
     if (userId !== null && (!caller || caller.isBanned)) throw new GameError(403, 'This account cannot play.');
     const stored = await TableGame.findByPk(lobbyId, { transaction });
     const table: Table = stored ? structuredClone(stored.state) : { seats: [], round: null, handsPlayed: 0 };
+    table.botCount ??= table.seats.filter(seat => seat.bot).length;
+    table.botRequests ??= [];
     for (const user of users.filter(user => !user.isBanned)) {
       const seat = table.seats.find(seat => seat.userId === user.userId);
       if (seat) seat.name = user.isGuest ? 'Guest' : user.username;
@@ -59,7 +62,21 @@ export async function sharedTable(lobbyId: number, userId: number | null, comman
     let error: GameError | undefined;
     const own = table.seats.find(seat => seat.userId === userId);
     if (command && own) {
-      try { applyCommand(table, own, command, now); }
+      try {
+        if (command.kind === 'add-bot') {
+          if (userId !== lobby.hostId) throw new GameError(403, 'Only the host can add bots.');
+          if (!settings.bots) throw new GameError(403, 'Bots are disabled for this lobby.');
+          if (!table.botRequests.includes(command.requestId)) {
+            if (ids.length + table.botCount >= settings.maxPlayers) throw new GameError(409, 'There are no available seats for a bot.');
+            table.botCount++;
+            table.botRequests.push(command.requestId);
+            table.botRequests = table.botRequests.slice(-100);
+            const botId = `bot${table.botCount}`;
+            if (!table.seats.some(seat => seat.id === botId)) table.seats.push({ id: botId, userId: null, name: `Reef Bot ${table.botCount}`, bot: true, balance: settings.starting, lastSeen: now, active: true });
+          }
+          own.lastSeen = now;
+        } else applyCommand(table, own, command, now);
+      }
       catch (cause) { if (cause instanceof GameError) error = cause; else throw cause; }
     }
     const phaseBefore = table.round?.phase;
@@ -68,10 +85,14 @@ export async function sharedTable(lobbyId: number, userId: number | null, comman
     if (!table.round || (table.round.phase === 'completed' && now >= table.round.deadline)) {
       // Bots occupy only seats not reserved for human lobby members.
       const humans = table.seats.filter(seat => !seat.bot && allowed.has(seat.userId!));
+      const previousBots = table.seats.filter(seat => seat.bot);
       table.seats = humans;
-      if (settings.bots) for (let index = 0; index < Math.max(0, settings.maxPlayers - ids.length); index++) {
+      table.botCount = settings.bots ? Math.min(table.botCount, Math.max(0, settings.maxPlayers - ids.length)) : 0;
+      // Preserve bankrolls, including bots just added during this request.
+      const savedBots = stored?.state.seats.filter(seat => seat.bot) ?? [];
+      for (let index = 0; index < table.botCount; index++) {
         const id = `bot${index + 1}`;
-        const previous = stored?.state.seats.find(seat => seat.id === id);
+        const previous = previousBots.find(seat => seat.id === id) ?? savedBots.find(seat => seat.id === id);
         table.seats.push(previous ?? { id, userId: null, name: `Reef Bot ${index + 1}`, bot: true, balance: settings.starting, lastSeen: now, active: true });
       }
       const round = newRound(table, settings, 0, now);
@@ -82,7 +103,7 @@ export async function sharedTable(lobbyId: number, userId: number | null, comman
     }
     if (stored) await stored.update({ state: table }, { transaction });
     else await TableGame.create({ lobbyId, state: table }, { transaction });
-    const view = userId !== null ? tableView(table, settings, userId, now) : null;
+    const view = userId !== null ? { ...tableView(table, settings, userId, now), isHost: userId === lobby.hostId, botCount: table.botCount, canAddBot: settings.bots && userId === lobby.hostId && ids.length + table.botCount < settings.maxPlayers } : null;
     return { view, error };
   });
   // Commit timer advancement even when a late or duplicate conflicting action is rejected.

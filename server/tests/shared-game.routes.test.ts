@@ -62,4 +62,10 @@ describe('shared-game HTTP boundary', () => {
     expect(response.status).toBe(500);
     expect(response.body.error).toBe('Storage unavailable');
   });
+  it('validates bot request IDs and preserves the session identity', async () => {
+    expect((await request(app(7)).post('/api/lobbies/1/game/bots').send({ requestId: 'x' })).status).toBe(400);
+    const response = await request(app(7)).post('/api/lobbies/1/game/bots').send({ requestId: 'bot-request-123', userId: 99 });
+    expect(response.status).toBe(200);
+    expect(service.sharedTable).toHaveBeenLastCalledWith(1, 7, { kind: 'add-bot', requestId: 'bot-request-123' });
+  });
 });

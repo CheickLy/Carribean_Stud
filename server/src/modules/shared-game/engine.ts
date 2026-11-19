@@ -12,7 +12,7 @@ export type Seat = { id: string; userId: number | null; name: string; bot: boole
 export type RoundPlayer = { id: string; cards: string[]; ante: number; action: 'raise' | 'fold' | null; skipped: boolean; timedOut: boolean; result?: Result };
 export type Result = { anteNet: number; raiseNet: number; returned: number; net: number; message: string };
 export type Round = { id: number; number: number; phase: 'betting' | 'deciding' | 'completed'; deadline: number; dealer: string[]; players: RoundPlayer[]; min: number; max: number };
-export type Table = { seats: Seat[]; round: Round | null; handsPlayed: number };
+export type Table = { seats: Seat[]; round: Round | null; handsPlayed: number; botCount?: number; botRequests?: string[] };
 export class GameError extends Error { constructor(public status: number, message: string) { super(message); } }
 export const money = (cents: number) => cents / 100;
 export function cents(value: unknown): number {
@@ -130,7 +130,7 @@ export function tableView(table: Table, settings: Settings, userId: number, now:
     roundId: round?.id ?? null, roundNumber: round?.number ?? 0, phase: round?.phase ?? 'waiting', deadline: round?.deadline ?? null,
     dealer: round && round.phase !== 'betting' ? complete ? ranks(round.dealer) : { cards: [round.dealer[0]], rank: null } : { cards: [], rank: null },
     own: { id: own.id, ante: money(player?.ante ?? 0), action: player?.action ?? null, cards: player && player.ante && round?.phase !== 'betting' ? ranks(player.cards) : { cards: [], rank: null }, result: result ? { ...result, anteNet: money(result.anteNet), raiseNet: money(result.raiseNet), returned: money(result.returned), net: money(result.net) } : null },
-    seats: table.seats.filter(seat => !seat.bot || round?.players.some(player => player.id === seat.id)).map(seat => {
+    seats: table.seats.map(seat => {
       const participant = round?.players.find(player => player.id === seat.id);
       const online = seat.bot || (seat.active && now - seat.lastSeen < OFFLINE_MS);
       let status = !seat.active ? 'sitting out' : seat.balance < (round?.min ?? settings.min) * 3 && !participant?.ante ? 'out of chips' : 'waiting for next hand';
