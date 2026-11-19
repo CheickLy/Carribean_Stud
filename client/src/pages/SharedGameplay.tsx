@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { PlayingCard, faceCard } from './Gameplay';
+import { PlayingCard, faceCard, handLabel } from './Gameplay';
 import HandGuide from '../components/HandGuide';
 import { decide, leaveTable, loadHistory, placeAnte, syncTable, TableRequestError, type SavedHand, type SharedTable } from '../services/sharedGame';
 import '../styles/Gameplay.css';
@@ -99,7 +99,7 @@ export default function SharedGameplay() {
       </div>
       <div className="gameplay-tools">
         <button className="gameplay-settings-button" aria-expanded={historyOpen} aria-controls="table-history" onClick={() => setHistoryOpen(value => !value)}>History</button>
-        <button ref={guideButton} className="gameplay-guide-button" aria-expanded={guideOpen} aria-controls="hand-guide" onClick={() => guideOpen ? closeGuide() : setGuideOpen(true)}>Hand rankings</button>
+        <button ref={guideButton} className="gameplay-guide-button" aria-expanded={guideOpen} aria-controls="hand-guide" onClick={() => guideOpen ? closeGuide() : setGuideOpen(true)}>Rules &amp; hands</button>
       </div>
       <p className="gameplay-wordmark">Reef Royale</p><p className="gameplay-table-caption">CARIBBEAN STUD · SHARED TABLE</p>
       {!connected && <p className="gameplay-connection gameplay-connection-reconnecting" role="status">Reconnecting… The server timer continues; an undecided hand folds at the deadline.</p>}
@@ -108,7 +108,7 @@ export default function SharedGameplay() {
       <div key={`dealer-${table?.roundId}`} className={`gameplay-dealer${table?.phase === 'deciding' ? ' gameplay-dealing' : ''}`} aria-label="Dealer hand">
         {table?.dealer.cards.map((card, index) => <PlayingCard key={card} {...faceCard(card)} index={index} reveal={table.phase === 'completed' && index > 0} />)}
         {table?.phase === 'deciding' && Array.from({ length: 4 }, (_, index) => <div className="gameplay-card gameplay-card-back" key={index} role="img" aria-label="Hidden dealer card"><span className="gameplay-card-pattern">♣</span></div>)}
-        <p className="gameplay-hand-rank gameplay-dealer-rank">{table?.dealer.rank ? table.dealer.rank : table?.phase === 'deciding' ? 'Dealer · four cards hidden' : 'Dealer · waiting for antes'}</p>
+        <p className="gameplay-hand-rank gameplay-dealer-rank">{table?.dealer.rank ? handLabel('Dealer', table.dealer.rank, table.dealer.cards) : table?.phase === 'deciding' ? 'Dealer · four cards hidden' : 'Dealer · waiting for antes'}</p>
       </div>
       <div className="gameplay-bet-spots" aria-hidden="true"><span>ANTE</span><span>RAISE</span></div>
       {!!table?.own.ante && <p className="gameplay-ante">{format(table.own.ante)}</p>}
@@ -116,14 +116,15 @@ export default function SharedGameplay() {
       <div className="gameplay-open-seats" aria-label="Other players">
         {positions.slice(0, (table?.maxPlayers ?? 6) - 1).map((position, index) => {
           const seat = table?.seats.filter(seat => !seat.isYou)[index];
+          if (!seat) return null;
           return <section key={position} className={`gameplay-open-seat shared-player-seat gameplay-open-seat-${position}`} aria-label={seat ? `${seat.name}, ${seat.status}` : 'Open seat'}><span className="gameplay-open-avatar" aria-hidden="true">{seat?.bot ? '♟' : seat?.name.slice(0, 1) ?? '♧'}</span><span><strong>{seat?.name ?? 'Open seat'}{seat?.bot ? ' · Bot' : ''}</strong><small>{seat ? `${format(seat.balance)} chips · ${seat.online ? seat.status : 'disconnected'}` : 'Waiting for a player'}</small>{seat && !seat.online && <small>{seat.status}</small>}</span></section>;
         })}
       </div>
       <div key={`player-${table?.roundId}`} className={`gameplay-player-hand${table?.phase === 'deciding' ? ' gameplay-dealing' : ''}`} aria-label="Your hand">
         {table?.own.cards.cards.map((card, index) => <PlayingCard key={card} {...faceCard(card)} index={index} />)}
-        {table?.own.cards.rank && <p className="gameplay-hand-rank gameplay-player-rank">{table.own.cards.rank}</p>}
+        {table?.own.cards.rank && <p className="gameplay-hand-rank gameplay-player-rank">{handLabel('You', table.own.cards.rank, table.own.cards.cards)}</p>}
       </div>
-      <section className="gameplay-seat" aria-label="Your seat"><span className="gameplay-avatar" aria-hidden="true">{self?.name.slice(0, 2).toUpperCase() ?? '…'}</span><span className="gameplay-identity"><strong>{self?.name ?? 'You'}{self ? ` · ${self.status}` : ''}</strong><small>{table ? `${format(table.balance)} table chips` : 'Loading balance…'}</small></span></section>
+      <section className="gameplay-seat" aria-label="Your seat"><span className="gameplay-identity"><span className="gameplay-player-name">{self?.name ?? 'You'}{self ? ` · ${self.status}` : ''}</span><strong className="gameplay-player-balance">{table ? format(table.balance) : '—'} <span>chips</span></strong><span className="game-sr-only">{table ? `${format(table.balance)} table chips` : 'Loading balance…'}</span></span></section>
       <p className={`gameplay-result${ownResult && ownResult.net > 0 ? ' gameplay-payout-win' : ''}`} role="status">{resultText}</p>
       {ownResult && <details key={table?.roundId} className="gameplay-breakdown" aria-label="Payout breakdown"><summary>Details</summary><dl><div><dt>Ante</dt><dd>{net(ownResult.anteNet)}</dd></div><div><dt>Raise</dt><dd>{table?.own.action === 'fold' ? 'Not placed' : ownResult.raiseNet === 0 ? 'Returned' : net(ownResult.raiseNet)}</dd></div><div className="gameplay-breakdown-total"><dt>Net change</dt><dd>{net(ownResult.net)}</dd></div></dl></details>}
       <div className="gameplay-bets" aria-label="Bet controls">

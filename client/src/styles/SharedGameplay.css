@@ -2,6 +2,7 @@
 .shared-gameplay .gameplay-table-identity small { line-height: 1.5; }
 .shared-gameplay .gameplay-breakdown { top: 746px; }
 .shared-gameplay .gameplay-breakdown summary { display: inline-block; padding: 5px 12px; border-radius: 8px; }
+.shared-gameplay .gameplay-player-balance { font-size: 24px; }
 .shared-round-clock { display: inline-flex; box-sizing: border-box; max-width: 100%; margin: 8px 0 0; padding: 6px 12px; border: 1px solid #a8c5d0; border-radius: 20px; background: #ffffffd9; color: #21566a; font-size: 12px; line-height: 1.4; font-variant-numeric: tabular-nums; }
 .shared-game-error { position: absolute; z-index: 5; top: 110px; left: 50%; transform: translateX(-50%); max-width: 700px; margin: 0; padding: 8px 16px; border: 1px solid #e2b296; border-radius: 12px; background: #fff0e6; color: #133f50; font-size: 12px; text-align: center; }
 .shared-game-error button { margin-left: 8px; border: 1px solid #a8c5d0; border-radius: 8px; background: white; color: inherit; cursor: pointer; }

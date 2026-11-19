@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from "react";
-import { Link, useLocation, useOutletContext } from "react-router-dom";
+import { Link, useLocation, useOutletContext, useParams } from "react-router-dom";
 import arrowLeft from "../assets/gameplay/arrow-left.svg";
 import suitClub from "../assets/gameplay/suit-club.svg";
 import suitClubMark from "../assets/gameplay/suit-club-mark.svg";
@@ -50,7 +50,7 @@ function rankLabel(rank: string) {
   return rank.charAt(0).toUpperCase() + rank.slice(1);
 }
 
-function handLabel(owner: string, rank: string, cards: string[]) {
+export function handLabel(owner: string, rank: string, cards: string[]) {
   if (rank === "pair") {
     const counts = new Map<string, number>();
     for (const card of cards) {
@@ -76,6 +76,22 @@ export default function Gameplay() {
   const context = useOutletContext<{ user?: { username: string; isGuest: boolean } } | null>();
   const username = context?.user ? (context.user.isGuest ? "Guest" : context.user.username) : "You";
   const location = useLocation();
+  const { lobbyId } = useParams();
+  const [tableName, setTableName] = useState<string>(location.state?.tableName || "Your table");
+  const [tableNameError, setTableNameError] = useState(false);
+  useEffect(() => {
+    if (!lobbyId) return;
+    const controller = new AbortController();
+    setTableName(location.state?.tableName || `Table ${lobbyId}`);
+    setTableNameError(false);
+    void fetch(`/api/lobbies/${lobbyId}`, { credentials: "include", signal: controller.signal })
+      .then(async response => {
+        if (!response.ok) throw new Error("Unable to load table name");
+        const room = await response.json();
+        if (!controller.signal.aborted && typeof room.name === "string" && room.name.trim()) setTableName(room.name);
+      }).catch(() => { if (!controller.signal.aborted) setTableNameError(true); });
+    return () => controller.abort();
+  }, [lobbyId, location.state?.tableName]);
   const [connection, setConnection] = useState<"connected" | "reconnecting" | "restored">("connected");
   const [clock, setClock] = useState(Date.now());
   const [game, setGame] = useState<GameState | null>(null);
@@ -171,17 +187,17 @@ export default function Gameplay() {
     <main className={`gameplay${guideOpen ? " gameplay-guide-open" : ""}${guideExpanded ? " gameplay-guide-expanded" : ""}`}>
       <div className="gameplay-fit">
         <div className="gameplay-board">
-          <Link className="gameplay-lobbies" to="/lobbies">
+          <Link className="gameplay-lobbies" to={lobbyId ? `/lobbies/${lobbyId}` : "/lobbies"}>
             <img src={arrowLeft} alt="" width={17} height={17} />
-            Lobbies
+            Back to lobby
           </Link>
+          <div className="gameplay-table-identity"><h1 title={tableName}>{tableName}</h1>{tableNameError && <small>Table name unavailable</small>}</div>
           <div className="gameplay-tools">
             <button type="button" aria-label="Toggle table chat" aria-expanded={chatOpen} aria-controls="game-chat" onClick={() => setChatOpen((value) => !value)}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M21 11.5a9 9 0 0 1-9 9 9.6 9.6 0 0 1-4-.9L3 21l1.4-4.5a9 9 0 1 1 16.6-5Z" /></svg>
             </button>
             <button ref={guideButton} className="gameplay-guide-button" type="button" aria-expanded={guideOpen} aria-controls="hand-guide" onClick={() => guideOpen ? closeGuide() : setGuideOpen(true)}>Rules & hands</button>
           </div>
-
           {connection !== "connected" && <p className={`gameplay-connection gameplay-connection-${connection}`} role="status">
             {connection === "restored" ? "Connection restored · Your hand and balance are saved." : game?.round && !game.round.settled && game.reconnectDeadline
               ? clock >= game.reconnectDeadline ? "Reconnect window expired. Waiting to confirm the automatic fold." : `Reconnecting… ${Math.ceil((game.reconnectDeadline - clock) / 1000)}s remaining before automatic fold.`

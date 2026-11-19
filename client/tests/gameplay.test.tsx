@@ -1,8 +1,14 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, within, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { createMemoryRouter, RouterProvider } from 'react-router-dom';
+function show() {
+  const router = createMemoryRouter([{ path: '/lobbies/:lobbyId/game', element: <Gameplay /> }, { path: '/lobbies/1', element: <h1>Lobby room</h1> }, { path: '/lobbies', element: <h1>Tables</h1> }], { initialEntries: ['/lobbies/1/game'] });
+  render(<RouterProvider router={router} />);
+  return router;
+}
 import Gameplay from '../src/pages/Gameplay';
+const NativeRequest = globalThis.Request;
 const game = vi.hoisted(() => ({ getGame: vi.fn(), heartbeat: vi.fn(), dealTable: vi.fn(), playAction: vi.fn(), resetGame: vi.fn() }));
 vi.mock('../src/services/game', () => game);
 const round = {
@@ -11,17 +17,34 @@ const round = {
   ante: 10, settled: false,
 };
 describe('player versus dealer', () => {
+  afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
   beforeEach(() => {
+    const storage = new Map<string, string>();
+    vi.stubGlobal('localStorage', { getItem: (key: string) => storage.get(key) ?? null, setItem: (key: string, value: string) => storage.set(key, value), clear: () => storage.clear() });
+    // jsdom's AbortSignal cannot be passed to Node's native Request.
+    vi.stubGlobal('Request', class extends NativeRequest {
+      constructor(input: RequestInfo | URL, init?: RequestInit) { super(input, { ...init, signal: undefined }); }
+    });
     vi.resetAllMocks();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ name: 'Ocean room' }) }));
     game.heartbeat.mockImplementation(() => game.getGame());
     game.getGame.mockResolvedValue({ balance: 2450, round: null });
     game.dealTable.mockResolvedValue({ balance: 2440, round });
     game.playAction.mockResolvedValue({ balance: 2440, round: { ...round, settled: true,
       dealer: { cards: ['2C','3D','4H','5S','7C'], rank: 'high card' }, message: 'You folded.', net: -10 } });
   });
+  it('loads the table name and returns to its specific lobby', async () => {
+    show();
+    expect(await screen.findByRole('heading', { name: 'Ocean room' })).toBeTruthy();
+    expect(fetch).toHaveBeenCalledWith('/api/lobbies/1', expect.objectContaining({ credentials: 'include' }));
+    const link = screen.getByRole('link', { name: 'Back to lobby' });
+    expect(link.getAttribute('href')).toBe('/lobbies/1');
+    await userEvent.click(link);
+    expect(await screen.findByRole('heading', { name: 'Lobby room' })).toBeTruthy();
+  });
   it('selects a quick ante without dealing and disables unaffordable presets', async () => {
     game.getGame.mockResolvedValue({ balance: 90, round: null });
-    render(<MemoryRouter><Gameplay /></MemoryRouter>);
+    show();
     const preset = await screen.findByRole('button', { name: 'Set ante to 25 points' });
     await waitFor(() => expect(preset.hasAttribute('disabled')).toBe(false));
     await userEvent.click(preset);
@@ -40,7 +63,7 @@ describe('player versus dealer', () => {
     [90, '+10 pts', '+80 pts', '20 staked'],
   ])('breaks down a net result of %s points', async (net, anteResult, raiseResult, raiseStake) => {
     game.getGame.mockResolvedValue({ balance: 2450 + net, round: { ...round, dealer: { cards: ['2C','3D','4H','5S','7C'], rank: 'high card' }, settled: true, net } });
-    render(<MemoryRouter><Gameplay /></MemoryRouter>);
+    show();
     const details = await screen.findByText('Details');
     await userEvent.click(details);
     const breakdown = details.parentElement!;
@@ -54,14 +77,14 @@ describe('player versus dealer', () => {
     game.getGame.mockResolvedValue({ balance: 2460, round: { ...round, settled: true,
       dealer: { cards: ['2C', '3D', '4H', '5S', '7C'], rank: 'high card' },
       message: 'Dealer does not qualify. Ante wins; raise returned.', net: 10 } });
-    render(<MemoryRouter><Gameplay /></MemoryRouter>);
+    show();
     expect(await screen.findByText('Dealer doesn’t qualify · +10 pts')).toBeTruthy();
     await userEvent.click(screen.getByText('Details'));
     expect(screen.getByText('Returned · 0 pts')).toBeTruthy();
   });
   it('deals, hides four dealer cards, folds, and allows another hand', async () => {
     const user = userEvent.setup();
-    render(<MemoryRouter><Gameplay /></MemoryRouter>);
+    show();
     await user.click(await screen.findByRole('button', { name: 'Deal' }));
     expect(game.dealTable).toHaveBeenCalledWith(10);
     const dealer = screen.getByLabelText('Dealer hand');
@@ -79,7 +102,7 @@ describe('player versus dealer', () => {
     game.getGame.mockResolvedValue({ balance: 2440, round });
     game.playAction.mockResolvedValue({ balance: 2540, round: { ...round, settled: true,
       dealer: { cards: ['2C','2D','4H','5S','7C'], rank: 'pair' }, message: 'You win!', net: 90 } });
-    render(<MemoryRouter><Gameplay /></MemoryRouter>);
+    show();
     await userEvent.click(await screen.findByRole('button', { name: 'Raise · 20 pts' }));
     expect(game.playAction).toHaveBeenCalledWith('raise');
     expect(await screen.findByText('You win · +90 pts')).toBeTruthy();
@@ -87,7 +110,7 @@ describe('player versus dealer', () => {
   });
   it('opens the ranking guide, highlights your hand, and closes it without changing the round', async () => {
     game.getGame.mockResolvedValue({ balance: 2440, round });
-    render(<MemoryRouter><Gameplay /></MemoryRouter>);
+    show();
     await screen.findByRole('button', { name: 'Raise · 20 pts' });
     await userEvent.click(screen.getByRole('button', { name: /Rules & hands/ }));
     const guide = screen.getByRole('complementary', { name: 'Rules & hands' });
@@ -110,7 +133,7 @@ describe('player versus dealer', () => {
   it('pauses bets after a failed action and restores the hand when back online' , async () => {
     game.getGame.mockResolvedValue({ balance: 2440, round });
     game.playAction.mockRejectedValue(new Error('Connection failed'));
-    render(<MemoryRouter><Gameplay /></MemoryRouter>);
+    show();
     await userEvent.click(await screen.findByRole('button', { name: 'Fold' }));
     expect((await screen.findByRole('alert')).textContent).toBe('Connection failed');
     expect(screen.getByRole('button', { name: 'Fold' }).hasAttribute('disabled')).toBe(true);

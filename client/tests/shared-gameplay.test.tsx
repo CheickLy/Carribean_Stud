@@ -31,6 +31,14 @@ beforeEach(() => {
 });
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 describe('shared table screen', () => {
+  it('combines the quieter card screen with shared controls and no empty placeholder seats', async () => {
+    api.syncTable.mockResolvedValue(deciding);
+    show();
+    expect(await screen.findByText('You · Pair of aces')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Rules & hands' })).toBeTruthy();
+    expect(screen.queryByRole('region', { name: 'Open seat' })).toBeNull();
+    expect(screen.getByRole('timer', { name: 'Round timer' })).toBeTruthy();
+  });
   it('uses lobby limits, one ante action, table bankroll and real opponent states', async () => {
     show();
     expect(await screen.findByRole('heading', { name: 'Ocean crew' })).toBeTruthy();
