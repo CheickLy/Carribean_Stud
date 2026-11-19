@@ -1,0 +1,144 @@
+// Proxy pattern for admin support-ticket access.
+// Structure follows https://refactoring.guru/design-patterns/proxy
+//
+// 1. SupportTicketService is the service interface.
+// 2. RealSupportTicketService is the original service. Business logic only.
+// 3. SupportTicketProxy implements the same interface, holds the real service,
+//    checks access, delegates, then logs the request.
+//
+// The client (support.routes.ts) depends on SupportTicketService.
+// Pass the proxy wherever the route used to call listTickets / updateTicket.
+
+import { SupportTicket } from "../../models/supportTicket.js";
+import { User } from "../../models/user.js";
+
+export const ticketStatuses = ["open", "in_progress", "resolved"] as const;
+export type TicketStatus = (typeof ticketStatuses)[number];
+
+export type SupportTicketView = {
+  ticketId: number;
+  subject: string;
+  message: string;
+  status: TicketStatus;
+  resolutionNote: string | null;
+  createdAt: Date;
+  player: { username: string; email: string } | null;
+};
+
+export type TicketActor = {
+  userId: number;
+  role: string;
+  isBanned: boolean;
+};
+
+// Service interface. Proxy and original service are interchangeable.
+export interface SupportTicketService {
+  listTickets(): Promise<SupportTicketView[]>;
+  updateTicket(
+    ticketId: number,
+    status: TicketStatus,
+    resolutionNote: string | null,
+  ): Promise<SupportTicketView | null>;
+}
+
+// Original service. Same work as listTickets and updateTicket
+// in support.service.ts. No access check and no logging.
+export class RealSupportTicketService implements SupportTicketService {
+  async listTickets(): Promise<SupportTicketView[]> {
+    const tickets = await SupportTicket.findAll({
+      include: [{ model: User, as: "user", attributes: ["username", "email"] }],
+      order: [
+        ["createdAt", "DESC"],
+        ["ticketId", "DESC"],
+      ],
+    });
+    return tickets.map((ticket) => this.formatTicket(ticket));
+  }
+
+  async updateTicket(
+    ticketId: number,
+    status: TicketStatus,
+    resolutionNote: string | null,
+  ): Promise<SupportTicketView | null> {
+    const ticket = await SupportTicket.findByPk(ticketId);
+    if (!ticket) return null;
+
+    await ticket.update({ status, resolutionNote });
+
+    const updated = await SupportTicket.findByPk(ticketId, {
+      include: [{ model: User, as: "user", attributes: ["username", "email"] }],
+    });
+    return updated ? this.formatTicket(updated) : null;
+  }
+
+  private formatTicket(ticket: SupportTicket): SupportTicketView {
+    const player = ticket.get("user") as User | null;
+    return {
+      ticketId: ticket.ticketId,
+      subject: ticket.subject,
+      message: ticket.message,
+      status: ticket.status,
+      resolutionNote: ticket.resolutionNote,
+      createdAt: ticket.createdAt,
+      player: player ? { username: player.username, email: player.email } : null,
+    };
+  }
+}
+
+// Protection and logging proxy. Same interface as the original service.
+// The proxy owns the real service and creates it on the first call.
+export class SupportTicketProxy implements SupportTicketService {
+  private service: SupportTicketService | null = null;
+
+  constructor(private readonly actor: TicketActor) {}
+
+  async listTickets(): Promise<SupportTicketView[]> {
+    if (!this.checkAccess()) {
+      throw new Error("Admin access required");
+    }
+
+    const tickets = await this.realService().listTickets();
+    this.logAccess("listTickets");
+    return tickets;
+  }
+
+  async updateTicket(
+    ticketId: number,
+    status: TicketStatus,
+    resolutionNote: string | null,
+  ): Promise<SupportTicketView | null> {
+    if (!this.checkAccess()) {
+      throw new Error("Admin access required");
+    }
+
+    const ticket = await this.realService().updateTicket(ticketId, status, resolutionNote);
+    this.logAccess(`updateTicket ticketId=${ticketId} status=${status}`);
+    return ticket;
+  }
+
+  // Article step: the proxy manages the service lifecycle.
+  private realService(): SupportTicketService {
+    if (this.service === null) {
+      this.service = new RealSupportTicketService();
+    }
+    return this.service;
+  }
+
+  // Protection proxy: only an active admin reaches the original service.
+  // Same rule as the admin gate in support.routes.ts.
+  private checkAccess(): boolean {
+    return this.actor.role === "admin" && !this.actor.isBanned;
+  }
+
+  // Logging proxy: record the request after the original service returns.
+  private logAccess(operation: string): void {
+    console.log(
+      `SupportTicketProxy: user ${this.actor.userId} ${operation} at ${new Date().toISOString()}`,
+    );
+  }
+}
+
+// Client works only with the interface, so a proxy can replace the real service.
+export function ticketAdminService(actor: TicketActor): SupportTicketService {
+  return new SupportTicketProxy(actor);
+}

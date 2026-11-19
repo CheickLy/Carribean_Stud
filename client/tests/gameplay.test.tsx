@@ -29,7 +29,7 @@ describe('player versus dealer', () => {
     expect((screen.getByRole('spinbutton', { name: 'Ante points' }) as HTMLInputElement).value).toBe('25');
     expect(screen.getByRole('button', { name: 'Set ante to 50 points' }).hasAttribute('disabled')).toBe(true);
     expect(game.dealTable).not.toHaveBeenCalled();
-    await userEvent.click(screen.getByRole('button', { name: 'Deal hand' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Deal' }));
     expect(game.dealTable).toHaveBeenCalledWith(25);
   });
   it.each([
@@ -41,17 +41,28 @@ describe('player versus dealer', () => {
   ])('breaks down a net result of %s points', async (net, anteResult, raiseResult, raiseStake) => {
     game.getGame.mockResolvedValue({ balance: 2450 + net, round: { ...round, dealer: { cards: ['2C','3D','4H','5S','7C'], rank: 'high card' }, settled: true, net } });
     render(<MemoryRouter><Gameplay /></MemoryRouter>);
-    const breakdown = await screen.findByRole('region', { name: 'Payout breakdown' });
+    const details = await screen.findByText('Details');
+    await userEvent.click(details);
+    const breakdown = details.parentElement!;
     const anteRow = within(breakdown).getByText('Ante · 10 staked').parentElement!;
     const raiseRow = within(breakdown).getByText(`Raise · ${raiseStake}`).parentElement!;
     expect(within(anteRow).getByText(anteResult)).toBeTruthy();
     expect(within(raiseRow).getByText(raiseResult)).toBeTruthy();
-    expect(within(breakdown).getByText('Net change').nextElementSibling?.textContent).toBe(`${net > 0 ? '+' : ''}${net} pts`);
+    expect(screen.getByRole('status').textContent).toContain(`${net > 0 ? '+' : ''}${net} pts`);
+  });
+  it('shows a concise result when the dealer does not qualify', async () => {
+    game.getGame.mockResolvedValue({ balance: 2460, round: { ...round, settled: true,
+      dealer: { cards: ['2C', '3D', '4H', '5S', '7C'], rank: 'high card' },
+      message: 'Dealer does not qualify. Ante wins; raise returned.', net: 10 } });
+    render(<MemoryRouter><Gameplay /></MemoryRouter>);
+    expect(await screen.findByText('Dealer doesn’t qualify · +10 pts')).toBeTruthy();
+    await userEvent.click(screen.getByText('Details'));
+    expect(screen.getByText('Returned · 0 pts')).toBeTruthy();
   });
   it('deals, hides four dealer cards, folds, and allows another hand', async () => {
     const user = userEvent.setup();
     render(<MemoryRouter><Gameplay /></MemoryRouter>);
-    await user.click(await screen.findByRole('button', { name: 'Deal hand' }));
+    await user.click(await screen.findByRole('button', { name: 'Deal' }));
     expect(game.dealTable).toHaveBeenCalledWith(10);
     const dealer = screen.getByLabelText('Dealer hand');
     expect(within(dealer).getAllByRole('img', { name: 'Hidden dealer card' })).toHaveLength(4);
@@ -59,9 +70,9 @@ describe('player versus dealer', () => {
     expect(screen.getByRole('img', { name: 'Ace of spades' })).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Fold' }));
     expect(game.playAction).toHaveBeenCalledWith('fold');
-    expect(await screen.findByText('You folded. -10 pts')).toBeTruthy();
+    expect(await screen.findByText('You folded · -10 pts')).toBeTruthy();
     expect(screen.getByRole('img', { name: 'Three of diamonds' })).toBeTruthy();
-    await user.click(screen.getByRole('button', { name: 'Deal next hand' }));
+    await user.click(screen.getByRole('button', { name: 'Deal' }));
     expect(game.dealTable).toHaveBeenCalledTimes(2);
   });
   it('raises and shows the authoritative balance and result', async () => {
@@ -71,30 +82,30 @@ describe('player versus dealer', () => {
     render(<MemoryRouter><Gameplay /></MemoryRouter>);
     await userEvent.click(await screen.findByRole('button', { name: 'Raise · 20 pts' }));
     expect(game.playAction).toHaveBeenCalledWith('raise');
-    expect(await screen.findByText('You win! +90 pts')).toBeTruthy();
-    expect(screen.getByText('2,540 practice pts')).toBeTruthy();
+    expect(await screen.findByText('You win · +90 pts')).toBeTruthy();
+    expect(screen.getByText('2,540')).toBeTruthy();
   });
   it('opens the ranking guide, highlights your hand, and closes it without changing the round', async () => {
     game.getGame.mockResolvedValue({ balance: 2440, round });
     render(<MemoryRouter><Gameplay /></MemoryRouter>);
     await screen.findByRole('button', { name: 'Raise · 20 pts' });
-    await userEvent.click(screen.getByRole('button', { name: /Hand rankings/ }));
-    const guide = screen.getByRole('complementary', { name: 'Hand rankings' });
+    await userEvent.click(screen.getByRole('button', { name: /Rules & hands/ }));
+    const guide = screen.getByRole('complementary', { name: 'Rules & hands' });
     expect(within(guide).getAllByRole('listitem')).toHaveLength(10);
     expect(within(guide).getByText('Your hand').closest('li')?.getAttribute('aria-current')).toBe('true');
     expect(within(guide).getByText('Your hand').closest('li')?.textContent).toContain('Straight');
-    expect(within(guide).getByText('100 to 1')).toBeTruthy();
+    expect(within(guide).getByText('100:1')).toBeTruthy();
     // The guide is nonmodal: betting remains available while comparing your hand.
     expect(screen.getByRole('button', { name: 'Raise · 20 pts' }).hasAttribute('disabled')).toBe(false);
     await userEvent.click(within(guide).getByRole('button', { name: 'Expand hand rankings' }));
     expect(within(guide).getByRole('button', { name: 'Collapse hand rankings' }).getAttribute('aria-expanded')).toBe('true');
     await userEvent.click(within(guide).getByRole('button', { name: 'Close hand rankings' }));
-    expect(screen.queryByRole('complementary', { name: 'Hand rankings' })).toBeNull();
-    expect(document.activeElement).toBe(screen.getByRole('button', { name: /Hand rankings/ }));
+    expect(screen.queryByRole('complementary', { name: 'Rules & hands' })).toBeNull();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: /Rules & hands/ }));
     expect(game.playAction).not.toHaveBeenCalled();
-    await userEvent.click(screen.getByRole('button', { name: /Hand rankings/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Rules & hands/ }));
     await userEvent.keyboard('{Escape}');
-    expect(screen.queryByRole('complementary', { name: 'Hand rankings' })).toBeNull();
+    expect(screen.queryByRole('complementary', { name: 'Rules & hands' })).toBeNull();
   });
   it('pauses bets after a failed action and restores the hand when back online' , async () => {
     game.getGame.mockResolvedValue({ balance: 2440, round });
