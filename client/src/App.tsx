@@ -39,6 +39,14 @@ function Layout() {
     });
     return () => { active = false; };
   }, [location.pathname]);
+  useEffect(() => {
+    const updateBalance = (event: Event) => {
+      const balance = (event as CustomEvent<string>).detail;
+      if (typeof balance === 'string') setSession(previous => previous.user ? { ...previous, user: { ...previous.user, balance } } : previous);
+    };
+    window.addEventListener('reef-balance-updated', updateBalance);
+    return () => window.removeEventListener('reef-balance-updated', updateBalance);
+  }, []);
   const resumeChecked = useRef<string | null>(null);
   useEffect(() => {
     if (!session.user) { resumeChecked.current = null; return; }

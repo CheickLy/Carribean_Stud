@@ -11,6 +11,7 @@ import { PasswordResetToken } from './passwordResetToken.js';
 import { Advert } from './advert.js';
 import { AdvertWatchSession } from './advertWatchSession.js';
 import { AdvertRewardClaim } from './advertRewardClaim.js';
+import { AdvertClickClaim } from './advertClickClaim.js';
 
 User.hasMany(Lobby, { foreignKey: 'hostId', as: 'hostedLobbies' });
 Lobby.belongsTo(User, { foreignKey: 'hostId', as: 'host' });
@@ -102,4 +103,5 @@ export {
   Advert,
   AdvertWatchSession,
   AdvertRewardClaim,
+  AdvertClickClaim,
 };

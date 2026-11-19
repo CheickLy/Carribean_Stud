@@ -4,6 +4,7 @@ import "../styles/LobbyBrowser.css";
 import { Link, useNavigate } from "react-router-dom";
 
 import { selectLobbies, type BrowserLobby } from "./lobbyBrowserControls";
+import SponsoredAdvertBanner from "../components/SponsoredAdvertBanner";
 
 export default function LobbyBrowser() {
   const navigate = useNavigate();
@@ -101,6 +102,7 @@ export default function LobbyBrowser() {
   return (
     <div className="reef-browser-page">
       <main className="reef-browser-container">
+        <SponsoredAdvertBanner />
         <header className="reef-browser-header">
           <div>
             <Link to={backPath} className="reef-browser-back">
