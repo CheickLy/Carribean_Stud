@@ -1,16 +1,19 @@
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { register } from "../services/auth";
 import "../styles/LoginSection.css";
+import PasswordInput from "./PasswordInput";
 
 type RegistrationSectionProps = {
   onBackToLogin: () => void;
   onRegistered: () => void;
+  beachBackground?: boolean;
 };
 
 export default function RegistrationSection({
   onBackToLogin,
   onRegistered,
+  beachBackground = false,
 }: RegistrationSectionProps) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -18,6 +21,16 @@ export default function RegistrationSection({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoPlaying, setVideoPlaying] = useState(false);
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !window.matchMedia) return;
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => { if (motion.matches) video.pause(); else void video.play().catch(() => setVideoPlaying(false)); };
+    sync(); motion.addEventListener("change", sync);
+    return () => motion.removeEventListener("change", sync);
+  }, [beachBackground]);
 
   async function handleRegister(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -45,20 +58,11 @@ export default function RegistrationSection({
   }
 
   return (
-    <section className="login-section">
-      <div className="login-intro">
-        <span className="eyebrow">JOIN REEFROYALE</span>
-
-        <h1>Create your account and join the table.</h1>
-
-        <p>
-          Register to save your progress, track your balance,
-          and play Caribbean Stud with other players.
-        </p>
-      </div>
-
+    <section className={`login-section${beachBackground ? " login-section-beach" : ""}`}>
+      {beachBackground && <><video ref={videoRef} className="login-beach-video" muted loop playsInline preload="auto" onPlay={() => setVideoPlaying(true)} onPause={() => setVideoPlaying(false)} aria-hidden="true"><source src="/media/beach-waves.mp4" type="video/mp4" /></video><div className="login-beach-shade" aria-hidden="true" /><button type="button" className="login-video-control" aria-label={videoPlaying ? "Pause beach video" : "Play beach video"} onClick={() => { const video = videoRef.current; if (!video) return; if (video.paused) void video.play().catch(() => setVideoPlaying(false)); else video.pause(); }}>{videoPlaying ? "Ⅱ" : "▶"}</button></>}
       <div className="login-card">
         <h2>Create your account.</h2>
+        <p className="login-subtitle">Join the table and save your progress.</p>
 
           <form onSubmit={handleRegister}>
             <label htmlFor="register-username">Username</label>
@@ -88,10 +92,9 @@ export default function RegistrationSection({
             />
 
             <label htmlFor="register-password">Password</label>
-            <input
+            <PasswordInput fieldLabel="password"
               id="register-password"
-              type="password"
-              placeholder="At least 8 characters"
+                placeholder="At least 8 characters"
               autoComplete="new-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
@@ -103,10 +106,9 @@ export default function RegistrationSection({
             <label htmlFor="register-confirm-password">
               Confirm password
             </label>
-            <input
+            <PasswordInput fieldLabel="confirm password"
               id="register-confirm-password"
-              type="password"
-              placeholder="Re-enter your password"
+                placeholder="Re-enter your password"
               autoComplete="new-password"
               value={confirmPassword}
               onChange={(event) =>
@@ -124,14 +126,14 @@ export default function RegistrationSection({
 
         {message && <p role="status">{message}</p>}
 
-        <p className="register-link">
+        <p className="register-link registration-login">
           Already have an account?{" "}
           <button
             type="button"
             className="register-button"
             onClick={onBackToLogin}
           >
-            Log in →
+            Log in
           </button>
         </p>
       </div>
