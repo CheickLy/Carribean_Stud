@@ -2,20 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCurrentUser } from "../services/auth";
 import "./GameRules.css";
-
-type Payout = { hand: string; ante: string; raise: string };
-
-const payouts: Payout[] = [
-  { hand: "Royal flush", ante: "1 to 1", raise: "100 to 1" },
-  { hand: "Straight flush", ante: "1 to 1", raise: "50 to 1" },
-  { hand: "Four of a kind", ante: "1 to 1", raise: "20 to 1" },
-  { hand: "Full house", ante: "1 to 1", raise: "7 to 1" },
-  { hand: "Flush", ante: "1 to 1", raise: "5 to 1" },
-  { hand: "Straight", ante: "1 to 1", raise: "4 to 1" },
-  { hand: "Three of a kind", ante: "1 to 1", raise: "3 to 1" },
-  { hand: "Two pair", ante: "1 to 1", raise: "2 to 1" },
-  { hand: "One pair or high card", ante: "1 to 1", raise: "1 to 1" },
-];
+import { HANDS } from "../components/HandGuide";
 
 const steps = [
   { title: "Starting a hand", text: "Each player plays against the dealer, not against the other players at the table. Everyone receives five cards; one dealer card is visible." },
@@ -38,10 +25,13 @@ export default function GameRules() {
 
   return <main className="rules-page">
     <div className="rules-container">
-      <header className="rules-header"><div><p className="rules-kicker">REEF ROYALE / HOW TO PLAY</p><h1>Caribbean Stud rules</h1><p>A quick reference for the hand, your choices, and the payout schedule.</p></div><button type="button" onClick={() => navigate(backPath)}>← Back</button></header>
+      <header className="rules-header"><div className="rules-header-actions"><button type="button" aria-label="Back" onClick={() => navigate(backPath)}>←</button><button type="button" className="rules-play" onClick={() => navigate("/lobbies")}>Play now</button></div><div><p className="rules-kicker">REEF ROYALE / HOW TO PLAY</p><h1>Caribbean Stud rules</h1><p>A quick reference for the hand, your choices, and the payout schedule.</p></div></header>
       <div className="rules-layout">
-        <div><section className="rules-intro"><strong>THE SHORT VERSION</strong><p>Place an ante, look at your five cards, then fold or raise. The dealer must qualify before hands are compared.</p></section><div className="rules-grid">{steps.map((step, index) => <article key={step.title}><span>{String(index + 1).padStart(2, "0")}</span><h2>{step.title}</h2><p>{step.text}</p></article>)}</div><section className="rules-note"><h2>Optional rules and side bets</h2><p>Some Caribbean Stud tables offer optional side bets. Reef Royale does not currently show a side-bet option, so the base-game payouts below are the relevant guide.</p></section></div>
-        <aside className="rules-payout"><p className="rules-kicker">PAYOUT REFERENCE</p><h2>Winning hands</h2><p>When the dealer qualifies and your hand wins, the ante pays 1 to 1. The raise pays according to your hand.</p><div className="rules-table-wrap"><table><thead><tr><th scope="col">Your hand</th><th scope="col">Ante</th><th scope="col">Raise</th></tr></thead><tbody>{payouts.map((row) => <tr key={row.hand}><th scope="row">{row.hand}</th><td>{row.ante}</td><td>{row.raise}</td></tr>)}</tbody></table></div><small>Solo practice uses these payouts. Practice points are separate from your account balance.</small></aside>
+        <article className="rules-article">
+          <section className="rules-intro"><strong>TLDR</strong><p>Place an ante, look at your five cards, then fold or raise. The dealer must qualify before hands are compared.</p></section>
+          <div className="rules-grid">{steps.map((step, index) => <section key={step.title}><h2><span>{String(index + 1).padStart(2, "0")}</span>{step.title}</h2><p>{step.text}</p></section>)}</div>
+        </article>
+        <aside className="rules-payout" aria-labelledby="hand-guide-title"><h2 id="hand-guide-title">Hand guide</h2><p>Strongest hands first. Raise payouts apply when the dealer qualifies and your hand wins.</p><div className="rules-table-wrap"><table><thead><tr><th scope="col">Your hand</th><th scope="col">Raise</th></tr></thead><tbody>{HANDS.map((hand) => <tr key={hand.rank}><th scope="row">{hand.rank === "pair" ? "One pair" : hand.rank.charAt(0).toUpperCase() + hand.rank.slice(1)}<span className="rules-hand-example">{hand.example}</span></th><td>{hand.payout} to 1</td></tr>)}</tbody></table></div><small>A winning ante pays 1 to 1. Solo practice points are separate from your account balance.</small></aside>
       </div>
     </div>
   </main>;
