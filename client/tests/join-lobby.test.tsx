@@ -8,7 +8,7 @@ vi.mock('../src/services/auth', () => ({ getCurrentUser: vi.fn() }));
 const navigate = vi.fn();
 vi.mock('react-router-dom', async original => ({ ...await original<typeof import('react-router-dom')>(), useNavigate: () => navigate }));
 const lobby = { lobbyId: 1, hostId: 10, name: 'Reef table', creator: 'Marina', createdAt: new Date().toISOString(), startingMoney: '200', minBet: 10, maxBet: 100, maxPlayers: 2, seatsAvailable: 1, isPrivate: false, botsEnabled: false };
-const response = (data: unknown, status = 200) => ({ ok: status < 400, status, json: async () => data });
+const response = (data: unknown, status = 200) => ({ ok: status < 400, status, json: async () => data, text: async () => JSON.stringify(data) });
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(getCurrentUser).mockResolvedValue(null);

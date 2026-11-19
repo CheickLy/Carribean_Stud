@@ -44,7 +44,7 @@ beforeEach(() => {
   auth.logout.mockResolvedValue(undefined);
   usersApi.listUsers.mockResolvedValue([admin, marina, guest]);
   support.listSupportTickets.mockResolvedValue([]);
-  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => [{ id: 1 }, { id: 2 }] }));
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => [{ id: 1 }, { id: 2 }], text: async () => JSON.stringify([{ id: 1 }, { id: 2 }]) }));
 });
 
 async function openPlayers() {
