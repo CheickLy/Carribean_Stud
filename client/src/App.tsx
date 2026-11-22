@@ -5,6 +5,7 @@ import RegistrationSection from "./components/RegistrationSection";
 import CreateLobby from "./pages/CreateLobby";
 import LobbyBrowser from "./pages/LobbyBrowser";
 import SharedGameplay from "./pages/SharedGameplay";
+import GameTutorial from "./pages/GameTutorial";
 import Friends from "./pages/player/Friends";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import LobbyRoom from "./pages/LobbyRoom";
@@ -63,7 +64,7 @@ function Layout() {
       setSession(previous => ({ ...previous, error: error instanceof Error ? error.message : "Could not log out" }));
     }
   }
-  const gameBoard = location.pathname.endsWith("/game-preview") || /^\/lobbies\/[^/]+\/game$/.test(location.pathname);
+  const gameBoard = location.pathname === "/tutorial" || location.pathname.endsWith("/game-preview") || /^\/lobbies\/[^/]+\/game$/.test(location.pathname);
   const ownHeader = gameBoard || location.pathname === "/admin";
   return <>
     {!ownHeader && <header className={`site-header${["/", "/login", "/register"].includes(location.pathname) ? " site-header-home" : ""}${scrolled ? " is-scrolled" : ""}`}>
@@ -148,6 +149,7 @@ const router = createBrowserRouter([{
     { path: "/reset-password", element: <ResetPassword /> },
     { path: "/rules", element: <GameRules /> },
     { path: "/game-preview", element: <GamePreview /> },
+    { path: "/tutorial", element: <GameTutorial /> },
     { path: "/lobbies", element: <LobbyBrowser /> },
     { element: <RequireSession />, children: [
       { path: "/play", element: <Navigate to="/lobbies" replace /> },

@@ -31,6 +31,17 @@ beforeEach(() => {
 });
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 describe('shared table screen', () => {
+  it('keeps the tutorial separate and requires confirmation before leaving an active hand', async () => {
+    api.syncTable.mockResolvedValue(deciding);
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    show(); await screen.findByRole('button', { name: 'Fold' });
+    await userEvent.click(screen.getByRole('button', { name: 'Options' }));
+    const link = screen.getByRole('link', { name: 'How to play →' });
+    expect(link.getAttribute('href')).toBe('/tutorial');
+    await userEvent.click(link);
+    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('lose your 5 chip ante'));
+    expect(api.leaveTable).not.toHaveBeenCalled();
+  });
   it('combines the quieter card screen with shared controls and no empty placeholder seats', async () => {
     api.syncTable.mockResolvedValue(deciding);
     show();

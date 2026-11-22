@@ -1,0 +1,55 @@
+.tutorial-page { min-height: 100dvh; box-sizing: border-box; padding: 24px clamp(16px, 4vw, 64px) 40px; background: radial-gradient(ellipse at top, #f7fdff, #ddf3f7); color: #133f50; font-family: Arial, sans-serif; }
+.tutorial-header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; max-width: 1320px; margin: 0 auto 40px; }
+.tutorial-header > a { color: #21566a; font-size: 14px; }
+.tutorial-brand { font: 28px Georgia, serif; }
+.tutorial-header > button { justify-self: end; }
+.tutorial-page button, .tutorial-page a.tutorial-primary { padding: 11px 16px; border: 1px solid #a8c5d0; border-radius: 12px; background: white; color: #133f50; font: inherit; font-size: 14px; line-height: 1.4; cursor: pointer; text-decoration: none; }
+.tutorial-page button:disabled { opacity: .5; cursor: default; }
+.tutorial-page button:focus-visible, .tutorial-page a:focus-visible { outline: 3px solid #087f9b; outline-offset: 4px; }
+.tutorial-intro { display: flex; justify-content: space-between; align-items: center; gap: 20px; max-width: 1320px; margin: 0 auto 24px; }
+.tutorial-eyebrow { color: #527987; font-size: 11px; font-weight: 600; letter-spacing: 1.4px; line-height: 1.6; }
+.tutorial-intro h1 { margin: 6px 0 10px; font-size: clamp(24px, 3vw, 36px); font-weight: 500; }
+.tutorial-intro p:last-child { color: #526f7a; line-height: 1.5; }
+.tutorial-balance { flex-shrink: 0; display: grid; gap: 4px; padding: 16px 22px; border: 1px solid #bddde5; border-radius: 16px; text-align: right; color: #526f7a; font-size: 12px; background: #ffffffb3; }
+.tutorial-balance strong { color: #133f50; font-size: 28px; font-variant-numeric: tabular-nums; }
+.tutorial-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 360px); gap: 28px; align-items: start; max-width: 1320px; margin: auto; }
+.tutorial-table { display: grid; gap: 28px; padding: 32px clamp(10px, 2vw, 30px) 20px; border: 12px solid #f8fdff; border-radius: 110px; background: radial-gradient(ellipse, #bce6ed, #d5f1f5); box-shadow: 0 0 0 1px #bddde5, 0 18px 45px #28687c14; }
+.tutorial-hand { justify-self: center; max-width: 100%; padding: 12px 8px; border: 2px solid transparent; border-radius: 20px; text-align: center; }
+.tutorial-hand > p { min-height: 20px; margin: 0 0 14px; color: #315f6c; font-size: 13px; line-height: 1.5; }
+.tutorial-focus { border-color: #087f9b; background: #ffffff40; }
+.tutorial-cards { display: flex; justify-content: center; gap: clamp(3px, .7vw, 10px); min-height: 108px; }
+.tutorial-cards .gameplay-card { box-sizing: border-box; width: clamp(44px, 5.4vw, 76px); height: clamp(68px, 7.7vw, 108px); padding: 7px; flex-shrink: 0; }
+.tutorial-cards .gameplay-card > img { width: clamp(22px, 2.5vw, 35px); height: clamp(22px, 2.5vw, 35px); }
+.tutorial-cards .gameplay-rank { font-size: clamp(17px, 2vw, 24px); }
+.tutorial-page .tutorial-card-button { display: block; padding: 0; border: 0; border-radius: 9px; background: transparent; }
+.tutorial-card-button:hover { transform: translateY(-3px); }
+.tutorial-card-found .gameplay-card { outline: 3px solid #087f9b; }
+.tutorial-card-placeholder { display: grid; align-items: center; padding: 24px; border: 1px dashed #8eb9c5; border-radius: 16px; color: #527987; font-size: 13px; }
+.tutorial-bet-spots { display: flex; justify-content: center; gap: 20px; }
+.tutorial-bet-spots > span { display: flex; flex-direction: column; justify-content: center; gap: 7px; width: 72px; height: 72px; border: 1px dashed #73aebb; border-radius: 50%; text-align: center; font-size: 10px; letter-spacing: 1px; color: #426f7e; }
+.tutorial-bet-spots strong { font-size: 21px; color: #133f50; }
+.tutorial-table-note { margin: 0 14px; color: #527987; font-size: 11px; text-align: center; line-height: 1.6; }
+.tutorial-coach { padding: 24px; border: 1px solid #c8e1e8; border-radius: 20px; background: #ffffffed; box-shadow: 0 12px 32px #13526c0d; }
+.tutorial-coach h2 { margin: 22px 0 12px; font-size: 24px; font-weight: 500; outline: none; }
+.tutorial-coach > p { font-size: 14px; line-height: 1.65; color: #426371; }
+.tutorial-progress { display: flex; gap: 8px; padding: 0; list-style: none; }
+.tutorial-progress li { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid #c8e1e8; border-radius: 50%; color: #6e8b95; font-size: 12px; }
+.tutorial-progress li.is-active { background: #ddf3f7; border-color: #8cc4d1; color: #133f50; }
+.tutorial-progress li[aria-current] { background: #087f9b; color: white; border-color: #087f9b; }
+.tutorial-sr { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.tutorial-ante-options, .tutorial-decisions { display: flex; gap: 10px; margin: 20px 0; }
+.tutorial-ante-options button { flex: 1; }
+.tutorial-ante-options button[aria-pressed="true"] { background: #ddf3f7; border-color: #087f9b; }
+.tutorial-page .tutorial-primary { display: inline-block; background: #087f9b; border-color: #087f9b; color: white; text-align: center; }
+.tutorial-coach .tutorial-cost { font-size: 12px; color: #527987; }
+.tutorial-feedback { padding: 12px; border-radius: 10px; background: #edf7f2; }
+.tutorial-payout { font-size: 12px; }
+.tutorial-payout > div { display: flex; justify-content: space-between; gap: 14px; padding: 10px 0; border-top: 1px solid #e0edf0; line-height: 1.5; }
+.tutorial-payout dd { flex-shrink: 0; margin: 0; font-weight: 600; }
+.tutorial-secondary { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-top: 24px; padding-top: 16px; border-top: 1px solid #e0edf0; }
+.tutorial-secondary a { color: #527987; font-size: 12px; }
+.tutorial-page .tutorial-secondary button { padding: 0; border: 0; color: #527987; background: none; font-size: 12px; text-decoration: underline; }
+.tutorial-page .hand-guide { position: fixed; top: 84px; right: 20px; height: min(650px, calc(100dvh - 110px)); }
+@media (max-width: 1000px) { .tutorial-layout { grid-template-columns: minmax(0, 1fr); } .tutorial-coach { order: -1; } .tutorial-table { max-width: 700px; width: 100%; box-sizing: border-box; justify-self: center; } .tutorial-cards .gameplay-card { width: clamp(44px, 10vw, 76px); height: clamp(68px, 14vw, 108px); } .tutorial-cards .gameplay-card > img { width: 29px; height: 29px; } }
+@media (max-width: 520px) { .tutorial-header { grid-template-columns: 1fr auto; margin-bottom: 24px; } .tutorial-brand { display: none; } .tutorial-intro { align-items: start; flex-direction: column; } .tutorial-balance { display: flex; align-items: center; padding: 10px 14px; } .tutorial-balance strong { font-size: 22px; } .tutorial-table { border-width: 6px; border-radius: 52px; gap: 14px; padding: 20px 6px; } .tutorial-hand { padding: 10px 2px; } .tutorial-coach { padding: 20px; } .tutorial-cards .gameplay-card > img { width: 24px; height: 24px; } }
+@media (prefers-reduced-motion: reduce) { .tutorial-card-button:hover { transform: none; } }

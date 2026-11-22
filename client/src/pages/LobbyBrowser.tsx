@@ -5,6 +5,7 @@ import { startGuest } from "../services/auth";
 
 import { selectLobbies, type BrowserLobby } from "./lobbyBrowserControls";
 import SponsoredAdvertBanner from "../components/SponsoredAdvertBanner";
+import TutorialInvite from "../components/TutorialInvite";
 
 export default function LobbyBrowser() {
   const navigate = useNavigate();
@@ -112,10 +113,11 @@ export default function LobbyBrowser() {
             </p>
           </div>
 
-          <Link to="/create-lobby" className="reef-browser-create">
+          <div className="reef-browser-header-actions"><Link to="/tutorial" className="reef-browser-learn">Learn to play</Link><Link to="/create-lobby" className="reef-browser-create">
             <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3.5v9M3.5 8h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg> Create Table
-          </Link>
+          </Link></div>
         </header>
+        <TutorialInvite />
 
         <section className="reef-browser-section">
           <div className="reef-browser-controls" aria-label="Table sorting and filters">

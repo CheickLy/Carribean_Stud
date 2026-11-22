@@ -40,6 +40,8 @@ Stop the database with `docker compose down` from the repo root. If `POSTGRES_PO
 
 The UI lives in `client/`. Vite serves it during development.
 
+The interactive tutorial is available at `/tutorial`, from **Tables → Learn to play** or **table Options → How to play**. It guides players through two scripted hands with separate tutorial chips, waits for their actions, and supports both raise and fold. Completion is saved on the device; it never changes account/table balances or writes hand history. Leaving a live table to open it still uses the normal leave-hand confirmation.
+
 ### Tech stack
 
 - **React.** Each screen is a component. Shared pieces, such as the login form, stay out of the page folders.
