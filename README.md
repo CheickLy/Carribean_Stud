@@ -78,6 +78,8 @@ Any other path redirects to `/`.
 
 Shared multiplayer rounds now run at `/lobbies/:lobbyId/game`, using lobby settings, private hands, server timers and persistent hand results. See [Shared table gameplay](Docs/shared-gameplay.md) for rules, table-chip behavior and concurrency checks. Apply migrations before running the updated server.
 
+See [Multiplayer verification](Docs/multiplayer-testing.md) for full-suite commands, isolated acceptance tests, and the two-window browser checklist.
+
 The API lives in `server/`. PostgreSQL runs in Docker. The Express process runs on your machine and connects to that database.
 
 ### Tech stack

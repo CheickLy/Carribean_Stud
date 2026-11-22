@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Home from '../src/pages/guest/Home';
 import Profile from '../src/pages/player/Profile';
@@ -38,7 +38,7 @@ describe('iteration two screens', () => {
     expect(screen.getByRole('dialog', { name: 'Log in' })).toBeTruthy();
     fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'admin@example.com' } });
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'Password123!' } });
-    fireEvent.click(screen.getAllByRole('button', { name: 'Log in' }).at(-1)!);
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Log in' })).getByRole('button', { name: 'Sign in', exact: true }));
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('/admin'));
   });
 
@@ -89,7 +89,7 @@ it('takes a player directly to available tables after login', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
   fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'player@example.com' } });
   fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'Password123!' } });
-  fireEvent.click(screen.getAllByRole('button', { name: 'Log in' }).at(-1)!);
+  fireEvent.click(within(screen.getByRole('dialog', { name: 'Log in' })).getByRole('button', { name: 'Sign in', exact: true }));
   await waitFor(() => expect(navigate).toHaveBeenCalledWith('/lobbies'));
 });
 
@@ -97,7 +97,7 @@ it('takes a guest directly to available tables', async () => {
   auth.startGuest.mockResolvedValue({ user: { role: 'player', isGuest: true } });
   render(<MemoryRouter><Home /></MemoryRouter>);
   fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Play as Guest' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Play as guest' }));
   await waitFor(() => expect(navigate).toHaveBeenCalledWith('/lobbies'));
 });
 

@@ -1,33 +1,35 @@
-import { getCurrentUser } from "../src/services/auth";
+import { startGuest } from "../src/services/auth";
 import { beforeEach, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import LobbyRoom from '../src/pages/LobbyRoom';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import LobbyBrowser from '../src/pages/LobbyBrowser';
-vi.mock('../src/services/auth', () => ({ getCurrentUser: vi.fn() }));
+vi.mock('../src/services/auth', () => ({ startGuest: vi.fn() }));
+vi.mock('../src/components/SponsoredAdvertBanner', () => ({ default: () => null }));
+const session = vi.hoisted(() => ({ user: { role: 'player' } as object | null, loading: false, error: '' }));
 const navigate = vi.fn();
-vi.mock('react-router-dom', async original => ({ ...await original<typeof import('react-router-dom')>(), useNavigate: () => navigate }));
+vi.mock('react-router-dom', async original => ({ ...await original<typeof import('react-router-dom')>(), useNavigate: () => navigate, useOutletContext: () => session }));
 const lobby = { lobbyId: 1, hostId: 10, name: 'Reef table', creator: 'Marina', createdAt: new Date().toISOString(), startingMoney: '200', minBet: 10, maxBet: 100, maxPlayers: 2, seatsAvailable: 1, isPrivate: false, botsEnabled: false };
 const response = (data: unknown, status = 200) => ({ ok: status < 400, status, json: async () => data, text: async () => JSON.stringify(data) });
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(getCurrentUser).mockResolvedValue(null);
+  session.user = { role: 'player' }; session.loading = false; session.error = '';
+  vi.mocked(startGuest).mockResolvedValue({ user: { role: 'player', isGuest: true } } as any);
   HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', ''); };
   HTMLDialogElement.prototype.close = function () { this.removeAttribute('open'); };
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response([lobby])));
 });
 function show() { render(<MemoryRouter><LobbyBrowser /></MemoryRouter>); }
-it('confirms the chip requirement and joins with credentials', async () => {
-  show(); fireEvent.click(await screen.findByRole('button', { name: 'Join Table' }));
-  expect(screen.getByText(/Your chip balance will not be charged/)).toBeTruthy();
+it('joins a public table directly with session credentials', async () => {
+  show(); const button = await screen.findByRole('button', { name: 'Join', exact: true });
   vi.mocked(fetch).mockResolvedValueOnce(response({ lobbyId: 1 }) as Response);
-  fireEvent.click(screen.getByRole('button', { name: 'Take a seat' }));
+  fireEvent.click(button);
   await waitFor(() => expect(navigate).toHaveBeenCalledWith('/lobbies/1', { state: { joined: true } }));
   expect(fetch).toHaveBeenLastCalledWith('/api/lobbies/1/join', expect.objectContaining({ credentials: 'include', method: 'POST', body: '{}' }));
 });
 it('submits a private password and keeps failures visible for retry', async () => {
   vi.mocked(fetch).mockResolvedValueOnce(response([{ ...lobby, isPrivate: true }]) as Response);
-  show(); fireEvent.click(await screen.findByRole('button', { name: 'Join Table' }));
+  show(); fireEvent.click(await screen.findByRole('button', { name: 'Join', exact: true }));
   fireEvent.change(screen.getByLabelText('Table password'), { target: { value: 'secret' } });
   vi.mocked(fetch).mockResolvedValueOnce(response({ error: 'Incorrect table password.' }, 403) as Response);
   fireEvent.click(screen.getByRole('button', { name: 'Take a seat' }));
@@ -35,15 +37,18 @@ it('submits a private password and keeps failures visible for retry', async () =
   expect(fetch).toHaveBeenLastCalledWith(expect.anything(), expect.objectContaining({ body: JSON.stringify({ passcode: 'secret' }) }));
   expect(navigate).not.toHaveBeenCalled();
 });
-it('redirects an expired session to login and returns to the browser', async () => {
-  show(); fireEvent.click(await screen.findByRole('button', { name: 'Join Table' }));
+it('offers sign-in or guest play when an existing session expires', async () => {
+  show(); const button = await screen.findByRole('button', { name: 'Join', exact: true });
   vi.mocked(fetch).mockResolvedValueOnce(response({}, 401) as Response);
-  fireEvent.click(screen.getByRole('button', { name: 'Take a seat' }));
-  await waitFor(() => expect(navigate).toHaveBeenCalledWith('/login', { state: { from: '/lobbies' } }));
+  fireEvent.click(button);
+  await screen.findByRole('heading', { name: 'Continue to table' });
+  expect(navigate).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+  expect(navigate).toHaveBeenCalledWith('/login', { state: { from: '/lobbies' } });
 });
 it('disables joining a full table', async () => {
   vi.mocked(fetch).mockResolvedValueOnce(response([{ ...lobby, seatsAvailable: 0 }]) as Response);
-  show(); expect(await screen.findByRole('button', { name: 'Table full' })).toHaveProperty('disabled', true);
+  show(); expect(await screen.findByRole('button', { name: 'Full', exact: true })).toHaveProperty('disabled', true);
 });
 
 it('shows a reserved seat while waiting for the next hand', async () => {
@@ -54,13 +59,20 @@ it('shows a reserved seat while waiting for the next hand', async () => {
   expect(screen.getByText('Waiting for next hand')).toBeTruthy();
 });
 
-it.each([
-  [null, '/'],
-  [{ role: 'player', isGuest: false }, '/'],
-  [{ role: 'player', isGuest: true }, '/'],
-  [{ role: 'admin' }, '/admin'],
-])('takes Back to the appropriate home for %j', async (user, destination) => {
-  vi.mocked(getCurrentUser).mockResolvedValue(user);
-  show();
-  await waitFor(() => expect(screen.getByRole('link', { name: destination === '/admin' ? '← Back to Admin' : '← Back to Home' }).getAttribute('href')).toBe(destination));
+it('offers anonymous players guest access before submitting a join', async () => {
+  session.user = null;
+  show(); fireEvent.click(await screen.findByRole('button', { name: 'Join', exact: true }));
+  expect(screen.getByRole('heading', { name: 'Continue to table' })).toBeTruthy();
+  expect(fetch).toHaveBeenCalledTimes(1);
+  vi.mocked(fetch).mockResolvedValueOnce(response({ lobbyId: 1 }) as Response);
+  fireEvent.click(screen.getByRole('button', { name: 'Play as guest' }));
+  await waitFor(() => expect(navigate).toHaveBeenCalledWith('/lobbies/1', { state: { joined: true } }));
+  expect(startGuest).toHaveBeenCalledOnce();
+});
+it('shows a public-table failure without losing the list', async () => {
+  show(); const button = await screen.findByRole('button', { name: 'Join', exact: true });
+  vi.mocked(fetch).mockResolvedValueOnce(response({ error: 'Table is full.' }, 409) as Response);
+  fireEvent.click(button);
+  expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'Reef table: Table is full.');
+  expect(screen.getByRole('button', { name: 'Join', exact: true }).hasAttribute('disabled')).toBe(false);
 });

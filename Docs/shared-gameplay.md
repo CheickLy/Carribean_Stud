@@ -79,3 +79,5 @@ Options lists Remove bot and Make host controls for the current host. Other play
 A bot outside the current hand is removed immediately. A bot already in the hand is marked “leaving after hand,” finishes its locked action, and has its result saved before the next hand frees its seat. Removal retries are safe, and replacement bots receive fresh IDs so an old retry cannot remove a replacement.
 
 Hosting can be handed to another connected human with confirmation. It also transfers automatically to the first connected human in seat order when the host leaves or has not sent a heartbeat for 15 seconds. Bots cannot host. If no connected human is available, ownership stays in place until one becomes available. Returning former hosts keep their membership, balance, and hand, without taking ownership back.
+
+See [Multiplayer testing](multiplayer-testing.md) for automated acceptance checks and the two-window browser checklist.
