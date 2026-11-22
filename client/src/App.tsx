@@ -26,10 +26,11 @@ import suitClubMark from "./assets/gameplay/suit-club-mark.svg";
 type User = { username: string; balance: string; isGuest: boolean; role: string; avatar?: string };
 type Session = { user: User | null; loading: boolean; error: string; signOut?: () => Promise<void> };
 
-function Layout() {
+export function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [session, setSession] = useState<Session>({ user: null, loading: true, error: "" });
+  const [checkedPath, setCheckedPath] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(() => window.scrollY > 8);
   useEffect(() => {
     const updateScroll = () => setScrolled(window.scrollY > 8);
@@ -41,9 +42,9 @@ function Layout() {
     let active = true;
     setSession(previous => ({ ...previous, loading: true, error: "" }));
     getCurrentUser().then(user => {
-      if (active) setSession({ user, loading: false, error: "" });
+      if (active) { setSession({ user, loading: false, error: "" }); setCheckedPath(location.pathname); }
     }).catch(error => {
-      if (active) setSession({ user: null, loading: false, error: error instanceof Error ? error.message : "Could not load session" });
+      if (active) { setSession({ user: null, loading: false, error: error instanceof Error ? error.message : "Could not load session" }); setCheckedPath(location.pathname); }
     });
     return () => { active = false; };
   }, [location.pathname]);
@@ -82,12 +83,12 @@ function Layout() {
       </div>
     </header>}
     {session.error && <p className="site-error" role="alert">{session.error}</p>}
-    <Outlet context={{ ...session, signOut }} />
+    <Outlet context={{ ...session, loading: session.loading || checkedPath !== location.pathname, signOut }} />
     {!gameBoard && !["/admin", "/login", "/register"].includes(location.pathname) && <footer className={`site-footer${["/login", "/register"].includes(location.pathname) ? " site-footer-auth" : ""}`}><div className="site-footer-inner"><strong>18+</strong><p>For adults 18 and over. Points are fictional and have no cash value. Play responsibly and respect other players.</p><Link to="/support">Contact support</Link></div></footer>}
   </>;
 }
 
-function RequireSession({ admin = false }: { admin?: boolean }) {
+export function RequireSession({ admin = false }: { admin?: boolean }) {
   const { user, loading, error } = useOutletContext<Session>();
   const location = useLocation();
   if (loading) return <main><p role="status">Loading session...</p></main>;
