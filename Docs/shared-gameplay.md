@@ -41,3 +41,22 @@ Run `npm run db:migrate` in `server/` before starting the API. Run the normal se
 For a manual multiplayer check, use two distinct authenticated browser profiles. Join the same lobby, open the table in both, and place antes in the same round. A second tab in the same profile intentionally represents the same player. Verify matching dealer up-cards, different private hands, locked decisions, shared countdowns and saved results. A player who enters during a round waits until the next betting phase.
 
 The shared screen combines the compact card-screen design with live multiplayer state: explicit hand labels, a prominent chip balance, a single lobby return link, real occupied seats, shared countdowns, and collapsible payout details. Options also contains saved sound/motion/deal-speed preferences; Rules & hands uses the shared guide.
+
+## Multi-player Gameplay acceptance
+
+Story: As a player, I want to play at a table with other players against one dealer, so that we can participate in the same game together.
+
+Solo hands remain available while other players join. Arrivals during a hand reserve a place in the next round. The roster beneath the round timer shows every member, including players waiting for a seat in the current hand. Opponents show private card backs and public ante/state information; their net results appear only after everyone has finished. Their card identities and ranks remain private.
+
+Player actions wait for an in-flight background refresh rather than being discarded. The clicked round ID remains attached to the action, so an expired-hand action cannot accidentally place a bet in a newer hand.
+
+`npm run test:multiplayer:postgres` exercises the actual login, join, game, and history HTTP routes with separate cookie sessions in a disposable schema. It verifies:
+
+- Two signed-in players share a round ID, deadline, deck and dealer, while receiving different private hands.
+- One player can win while another loses against that same dealer; both chip changes settle once.
+- A second session for the same account cannot duplicate an ante, raise, payout or history record.
+- A late arrival waits for the next round, which starts automatically after the results interval.
+- An unauthenticated user, nonmember, or forged body user ID cannot access or act on another player's hand.
+- Independent tables keep separate membership, rounds, chips and histories.
+
+For a manual check, sign in to two different accounts in a normal and a private browser window, then join the same table. Two ordinary tabs usually share one account's cookies and therefore represent the same player.

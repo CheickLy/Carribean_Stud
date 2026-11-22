@@ -18,10 +18,13 @@ export default function SharedGameplay() {
   const [ante, setAnte] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const pending = useRef(false);
+  const pollRequest = useRef<Promise<SharedTable> | null>(null);
   const leaving = useRef(false);
   const mounted = useRef(true);
   const [error, setError] = useState('');
   const [connected, setConnected] = useState(true);
+  const [recoveryNotice, setRecoveryNotice] = useState('');
+  const disconnected = useRef(false);
   const [clock, setClock] = useState(Date.now());
   const clockOffset = useRef(0);
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -48,6 +51,8 @@ export default function SharedGameplay() {
     clockOffset.current = next.serverNow - Date.now();
     setTable(next);
     setAnte(previous => previous === null ? next.minBet : previous);
+    if (disconnected.current) setRecoveryNotice('Reconnected. Your seat and current hand are restored from the server.');
+    disconnected.current = false;
     setConnected(true);
   }
   // Keep the poll callback current without restarting its interval on every render.
@@ -57,20 +62,25 @@ export default function SharedGameplay() {
     mounted.current = true;
     let active = true;
     async function refresh() {
-      if (!active || pending.current || leaving.current) return;
-      pending.current = true;
+      if (!active || pending.current || leaving.current || pollRequest.current) return;
+      const request = syncTable(lobbyId);
+      pollRequest.current = request;
       try {
-        const next = await syncTable(lobbyId);
+        const next = await request;
         if (active) { receiveRef.current(next); setError(''); }
       } catch (cause) {
-        if (active) { setConnected(false); setError(cause instanceof Error ? cause.message : 'Unable to load the table.'); }
-      } finally { pending.current = false; }
+        if (active) { disconnected.current = true; setConnected(false); setError(cause instanceof Error ? cause.message : 'Unable to load the table.'); }
+      } finally { if (pollRequest.current === request) pollRequest.current = null; }
     }
     void refresh();
     const poll = window.setInterval(() => void refresh(), 2000);
     const ticker = window.setInterval(() => setClock(Date.now()), 250);
+    const offline = () => { disconnected.current = true; setConnected(false); setRecoveryNotice(''); };
+    const visible = () => { if (document.visibilityState === 'visible') void refresh(); };
+    window.addEventListener('offline', offline);
+    document.addEventListener('visibilitychange', visible);
     window.addEventListener('online', refresh);
-    return () => { active = false; mounted.current = false; window.clearInterval(poll); window.clearInterval(ticker); window.removeEventListener('online', refresh); };
+    return () => { active = false; mounted.current = false; window.clearInterval(poll); window.clearInterval(ticker); window.removeEventListener('online', refresh); window.removeEventListener('offline', offline); document.removeEventListener('visibilitychange', visible); };
   }, [lobbyId]);
   const seconds = table?.deadline ? Math.max(0, Math.ceil((table.deadline - clock - clockOffset.current) / 1000)) : null;
   const self = table?.seats.find(seat => seat.isYou);
@@ -92,7 +102,11 @@ export default function SharedGameplay() {
     leaving.current = true;
     pending.current = true;
     setBusy(true);
-    void leaveTable(lobbyId, state.roundId).then(() => blocked.proceed()).catch(cause => {
+    void (async () => {
+      await pollRequest.current?.catch(() => {});
+      await leaveTable(lobbyId, state.roundId);
+      blocked.proceed();
+    })().catch(cause => {
       setError(cause instanceof Error ? cause.message : 'Could not leave the table.');
       blocked.reset();
     }).finally(() => { leaving.current = false; pending.current = false; if (mounted.current) setBusy(false); });
@@ -104,16 +118,23 @@ export default function SharedGameplay() {
     return () => window.removeEventListener('beforeunload', warn);
   }, [hasHand, busy]);
   async function action(operation: () => Promise<SharedTable>) {
-    if (pending.current) return;
+    if (pending.current || leaving.current) return;
     pending.current = true;
     setBusy(true);
     setError('');
     prepareSound();
-    try { const next = await operation(); if (mounted.current) receive(next); }
+    try {
+      // Finish an in-flight heartbeat before submitting the player's intent.
+      // Polling must never silently consume an ante, raise, fold or bot click.
+      await pollRequest.current?.catch(() => {});
+      if (!mounted.current) return;
+      const next = await operation();
+      if (mounted.current) { receive(next); setError(''); }
+    }
     catch (cause) {
       if (mounted.current) {
         setError(cause instanceof Error ? cause.message : 'Could not update the table.');
-        if (!(cause instanceof TableRequestError) || cause.status >= 500) setConnected(false);
+        if (!(cause instanceof TableRequestError) || cause.status >= 500) { disconnected.current = true; setConnected(false); setRecoveryNotice(''); }
       }
     } finally { pending.current = false; if (mounted.current) setBusy(false); }
   }
@@ -127,9 +148,13 @@ export default function SharedGameplay() {
   }, [historyOpen, lobbyId, table?.roundId, table?.phase]);
   function closeGuide() { setGuideOpen(false); setGuideExpanded(false); guideButton.current?.focus(); }
   const ownResult = table?.own.result;
+  const humanCount = table?.seats.filter(seat => !seat.bot).length ?? 0;
+  const botCount = table?.seats.filter(seat => seat.bot).length ?? 0;
+  const others = table?.seats.filter(seat => !seat.isYou).sort((left, right) => Number(right.inRound) - Number(left.inRound) || left.seatNumber - right.seatNumber) ?? [];
   const resultText = !table ? 'Loading shared table…' : table.phase === 'waiting' ? 'Waiting for a connected player with enough chips for the minimum ante and raise.'
     : table.phase === 'completed' ? ownResult ? `${ownResult.message.startsWith('Dealer does not qualify.') ? 'Dealer doesn’t qualify' : ownResult.message.replace(/[.!]$/, '')} · ${net(ownResult.net)}` : 'Hand finished. You will join the next hand.'
-    : self?.status === 'waiting for next hand' || self?.status === 'missed betting' ? 'Your seat is reserved for the next hand.'
+    : self?.status === 'out of chips' ? `You need ${format(table.minBet * 3)} table chips to cover the minimum ante and raise.`
+    : self?.inRound === false || self?.status === 'waiting for next hand' || self?.status === 'missed betting' ? 'Your seat is reserved for the next hand.'
     : table.phase === 'betting' ? table.own.ante ? 'Ante placed. Waiting for the other players.' : 'Place your ante before betting closes.'
     : table.own.action ? 'Decision locked. Waiting for the other players.' : 'Raise twice your ante or fold before time runs out.';
   return <main className={`gameplay shared-gameplay${guideOpen ? ' gameplay-guide-open' : ''}${guideExpanded ? ' gameplay-guide-expanded' : ''}${preferences.reducedMotion ? ' gameplay-reduced-motion' : ''}${preferences.fastDeal ? ' gameplay-fast-deal' : ''}`}>
@@ -137,6 +162,7 @@ export default function SharedGameplay() {
       <Link className="gameplay-lobbies" to={`/lobbies/${lobbyId}`}>← Back to lobby</Link>
       <div className="gameplay-table-identity"><h1 title={table?.name}>{table?.name ?? 'Your table'}</h1><small>{table ? `${format(table.minBet)}–${format(table.maxBet)} chip ante · Starting chips ${format(table.startingChips)}` : 'Connecting…'}</small>
       {table && <p className="shared-round-clock" role="timer" aria-label="Round timer">Hand {table.roundNumber} · {table.phase === 'betting' ? 'Place antes' : table.phase === 'deciding' ? 'Decide' : table.phase === 'completed' ? 'Next hand' : 'Waiting'}{seconds !== null ? ` · ${seconds}s` : ''}</p>}
+      {table && <details className="shared-roster"><summary>{humanCount} {humanCount === 1 ? 'player' : 'players'} · {botCount} {botCount === 1 ? 'bot' : 'bots'}</summary><ul aria-label="Table roster">{table.seats.map(seat => <li key={seat.id}><strong>Seat {seat.seatNumber} · {seat.name}{seat.isYou ? ' (You)' : seat.bot ? ' (Bot)' : ''}</strong><span>{seat.online ? seat.status : `Disconnected · ${seat.status}`} · {format(seat.balance)} chips</span></li>)}</ul></details>}
       </div>
       <div className="gameplay-tools">
         <button className="gameplay-settings-button" aria-expanded={optionsOpen} aria-controls="table-options" onClick={() => setOptionsOpen(value => !value)}>Options</button>
@@ -156,6 +182,7 @@ export default function SharedGameplay() {
         </div><div className="shared-bot-options"><Link to="/tutorial" state={{ lobbyId }}>How to play →</Link><p>Play a guided practice hand. Leaving an active hand still requires confirmation.</p></div></section>}
       <p className="gameplay-wordmark">Reef Royale</p><p className="gameplay-table-caption">CARIBBEAN STUD · SHARED TABLE</p>
       {!connected && <p className="gameplay-connection gameplay-connection-reconnecting" role="status">Reconnecting… The server timer continues; an undecided hand folds at the deadline.</p>}
+      {connected && recoveryNotice && <p className="gameplay-connection gameplay-connection-restored" role="status">{recoveryNotice}</p>}
       {error && <p className="shared-game-error" role="alert">{error} <button onClick={() => { setError(''); void action(() => syncTable(lobbyId)); }}>Refresh table</button></p>}
       <div className="gameplay-rail" aria-hidden="true" /><div className="gameplay-inset" aria-hidden="true" />
       <div key={`dealer-${table?.roundId}`} className={`gameplay-dealer${table?.phase === 'deciding' ? ' gameplay-dealing' : ''}`} aria-label="Dealer hand">
@@ -168,9 +195,12 @@ export default function SharedGameplay() {
       {table?.own.action === 'raise' && <p className="gameplay-raise-chip">{format(table.own.ante * 2)}</p>}
       <div className="gameplay-open-seats" aria-label="Other players">
         {positions.slice(0, (table?.maxPlayers ?? 6) - 1).map((position, index) => {
-          const seat = table?.seats.filter(seat => !seat.isYou)[index];
+          const seat = others[index];
           if (!seat) return null;
-          return <section key={position} className={`gameplay-open-seat shared-player-seat gameplay-open-seat-${position}`} aria-label={seat ? `${seat.name}, ${seat.status}` : 'Open seat'}><span className="gameplay-open-avatar" aria-hidden="true">{seat?.bot ? '♟' : seat?.name.slice(0, 1) ?? '♧'}</span><span><strong>{seat?.name ?? 'Open seat'}{seat?.bot ? ' · Bot' : ''}</strong><small>{seat ? `${format(seat.balance)} chips · ${seat.online ? seat.status : 'disconnected'}` : 'Waiting for a player'}</small>{seat && !seat.online && <small>{seat.status}</small>}</span></section>;
+          return <section key={seat.id} className={`gameplay-open-seat shared-player-seat gameplay-open-seat-${position}`} aria-label={`${seat.name}, ${seat.status}`}><span className="gameplay-open-avatar" aria-hidden="true">{seat.bot ? '♟' : seat.name.slice(0, 1)}</span><span><strong>{seat.name}{seat.bot ? ' · Bot' : ''}</strong><small title={`${format(seat.balance)} chips · ${seat.online ? seat.status : 'disconnected'}`}>{format(seat.balance)} chips · {seat.online ? seat.status : 'disconnected'}</small>
+            {seat.cardCount > 0 && <span className="shared-private-cards" role="img" aria-label={`${seat.name} has ${seat.cardCount} private cards`}>{Array.from({ length: seat.cardCount }, (_, card) => <i key={card} aria-hidden="true">♣</i>)}</span>}
+            {seat.net !== null && seat.net !== undefined ? <small className="shared-player-result">Hand result · {net(seat.net)}</small> : (seat.ante > 0 || !seat.online) && <small>{!seat.online ? `${seat.status}${seat.ante ? ' · ' : ''}` : ''}{seat.ante > 0 ? `Ante ${format(seat.ante)}` : ''}</small>}
+          </span></section>;
         })}
       </div>
       <div key={`player-${table?.roundId}`} className={`gameplay-player-hand${table?.phase === 'deciding' ? ' gameplay-dealing' : ''}`} aria-label="Your hand">
@@ -183,7 +213,7 @@ export default function SharedGameplay() {
       <div className="gameplay-bets" aria-label="Bet controls">
         {isBetting && <><div className="gameplay-ante-presets" role="group" aria-label="Quick ante">{[...new Set([table!.minBet, 5, 10, 25, 50].filter(value => value >= table!.minBet && value <= table!.maxBet))].sort((a, b) => a - b).map(value => <button key={value} aria-label={`Set ante to ${value} chips`} aria-pressed={ante === value} disabled={busy || value * 3 > table!.balance} onClick={() => setAnte(value)}>{format(value)}</button>)}</div><label>Ante <input aria-label="Ante chips" type="number" step="0.01" min={table!.minBet} max={table!.maxBet} value={ante ?? ''} onChange={event => setAnte(Number(event.target.value))} /></label><button disabled={busy || !connected || !ante || ante < table!.minBet || ante > table!.maxBet || Math.round(ante * 100) * 3 > Math.round(table!.balance * 100) || seconds === 0} onClick={() => void action(() => placeAnte(lobbyId, table!.roundId!, ante!))}>Place ante</button></>}
         {!!isDeciding && <><button disabled={busy || !connected || seconds === 0} onClick={() => void action(() => decide(lobbyId, table!.roundId!, 'fold'))}>Fold</button><button className="gameplay-raise" disabled={busy || !connected || seconds === 0} onClick={() => void action(() => decide(lobbyId, table!.roundId!, 'raise'))}>Raise · {format(table!.own.ante * 2)} chips</button></>}
-        {!isBetting && !isDeciding && <span className="shared-waiting">{table?.phase === 'completed' ? 'Next hand starts automatically' : 'Waiting for the table'}</span>}
+        {!isBetting && !isDeciding && <span className="shared-waiting">{self?.status === 'waiting for next hand' || self?.inRound === false ? 'You’re seated—joining the next hand.' : table?.phase === 'completed' ? 'Next hand starts automatically' : 'Waiting for the table'}</span>}
       </div>
       <p className="gameplay-ante-help">{isBetting ? 'Keep 3× your ante available for the ante and raise. Antes lock when placed.' : 'The server controls the clock. Missed betting sits out; an unanswered decision folds automatically.'}</p>
     </div></div>

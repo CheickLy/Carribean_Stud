@@ -130,14 +130,15 @@ export function tableView(table: Table, settings: Settings, userId: number, now:
     roundId: round?.id ?? null, roundNumber: round?.number ?? 0, phase: round?.phase ?? 'waiting', deadline: round?.deadline ?? null,
     dealer: round && round.phase !== 'betting' ? complete ? ranks(round.dealer) : { cards: [round.dealer[0]], rank: null } : { cards: [], rank: null },
     own: { id: own.id, ante: money(player?.ante ?? 0), action: player?.action ?? null, cards: player && player.ante && round?.phase !== 'betting' ? ranks(player.cards) : { cards: [], rank: null }, result: result ? { ...result, anteNet: money(result.anteNet), raiseNet: money(result.raiseNet), returned: money(result.returned), net: money(result.net) } : null },
-    seats: table.seats.map(seat => {
+    seats: table.seats.map((seat, index) => {
       const participant = round?.players.find(player => player.id === seat.id);
       const online = seat.bot || (seat.active && now - seat.lastSeen < OFFLINE_MS);
       let status = !seat.active ? 'sitting out' : seat.balance < (round?.min ?? settings.min) * 3 && !participant?.ante ? 'out of chips' : 'waiting for next hand';
       if (participant && !participant.skipped) status = complete ? participant.action === 'fold' ? 'folded' : 'finished' : participant.action === 'fold' ? 'folded' : participant.action === 'raise' ? 'raised' : round?.phase === 'betting' ? participant.ante ? 'ante placed' : 'betting' : 'deciding';
       if (participant?.timedOut) status = participant.ante ? 'timed out · folded' : 'missed betting';
-      return { id: seat.id, name: seat.name, bot: seat.bot, balance: money(seat.balance), online, status, ante: money(participant?.ante ?? 0), isYou: seat.id === own.id };
+      return { id: seat.id, seatNumber: index + 1, name: seat.name, bot: seat.bot, balance: money(seat.balance), online, status, ante: money(participant?.ante ?? 0), isYou: seat.id === own.id,
+        inRound: Boolean(participant && !participant.skipped), cardCount: participant?.ante && round?.phase !== 'betting' ? 5 : 0, net: complete && participant?.result ? money(participant.result.net) : null };
     }),
-    // Opponents' cards and results are never included, even after settlement.
+    // Opponents' card identities and hand ranks are never included.
   };
 }

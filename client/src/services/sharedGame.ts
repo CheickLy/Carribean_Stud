@@ -1,4 +1,4 @@
-export type TablePlayer = { id: string; name: string; bot: boolean; balance: number; online: boolean; status: string; ante: number; isYou: boolean };
+export type TablePlayer = { id: string; seatNumber: number; name: string; bot: boolean; balance: number; online: boolean; status: string; ante: number; isYou: boolean; inRound: boolean; cardCount: number; net: number | null };
 export type SharedTable = {
   name: string; serverNow: number; maxPlayers: number; balance: number; minBet: number; maxBet: number; startingChips: number; botsEnabled: boolean;
   roundId: number | null; roundNumber: number; phase: 'waiting' | 'betting' | 'deciding' | 'completed'; deadline: number | null;

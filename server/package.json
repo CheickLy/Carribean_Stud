@@ -11,6 +11,7 @@
     "test:remove-friend:postgres": "npm run build && node tests/remove-friend.postgres.mjs",
     "test:join:postgres": "npm run build && node tests/join.postgres.mjs",
     "test:shared:postgres": "npm run build && node tests/shared-game.postgres.mjs",
+    "test:multiplayer:postgres": "npm run build && node tests/multiplayer.postgres.mjs",
     "test:coverage": "TEST_POSTGRES=1 vitest run --coverage",
     "test:coverage:postgres": "npm run test:coverage",
     "db:migrate": "sequelize-cli db:migrate",

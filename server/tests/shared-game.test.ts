@@ -23,6 +23,9 @@ describe('shared rounds', () => {
     expect(alice.own.cards.cards).toEqual(t.round!.players[0].cards);
     expect(JSON.stringify(alice.seats)).not.toContain('cards');
     expect(alice.own.cards.cards).not.toEqual(bob.own.cards.cards);
+    expect(alice.seats.map(seat => seat.seatNumber)).toEqual(bob.seats.map(seat => seat.seatNumber));
+    expect(alice.seats.every(seat => seat.inRound && seat.cardCount === 5 && seat.net === null)).toBe(true);
+    expect(alice.seats.every(seat => !('rank' in seat))).toBe(true);
   });
   it('hides player and dealer cards until betting closes', () => {
     const t = table(); newRound(t, settings, 9, 1000);

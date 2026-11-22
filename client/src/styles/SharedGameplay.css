@@ -22,3 +22,16 @@
 .shared-history ol { padding: 0; list-style: none; }
 .shared-history li { display: grid; gap: 7px; padding: 14px 0; border-top: 1px solid #d0e6ec; font-size: 12px; }
 .shared-history li small { color: #526f7a; line-height: 1.5; }
+.shared-player-seat strong { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shared-player-seat > span:last-child { min-width: 0; flex: 1; }
+.shared-player-seat small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shared-private-cards { position: absolute; left: 12px; bottom: -6px; display: flex; gap: 1px; }
+.shared-private-cards i { display: grid; place-items: center; box-sizing: border-box; width: 8px; height: 12px; border: 1px solid #d7f4f7; border-radius: 2px; background: #087f9b; color: #d7f4f7; font-size: 6px; font-style: normal; }
+.shared-player-seat .shared-player-result { font-weight: 600; color: #21566a; }
+.shared-roster { position: relative; z-index: 6; margin-top: 8px; color: #527987; font-size: 11px; }
+.shared-roster summary { width: fit-content; cursor: pointer; }
+.shared-roster summary:focus-visible { outline: 2px solid #087f9b; outline-offset: 3px; }
+.shared-roster ul { position: absolute; left: 0; top: 100%; box-sizing: border-box; width: 280px; max-height: 270px; margin: 8px 0 0; padding: 8px 14px; overflow-y: auto; list-style: none; border: 1px solid #a8c5d0; border-radius: 12px; background: white; box-shadow: 0 8px 24px #13526c14; }
+.shared-roster li { display: grid; gap: 5px; padding: 10px 0; border-bottom: 1px solid #e0edf0; line-height: 1.4; }
+.shared-roster li:last-child { border-bottom: 0; }
+.shared-roster strong { color: #133f50; font-size: 12px; }

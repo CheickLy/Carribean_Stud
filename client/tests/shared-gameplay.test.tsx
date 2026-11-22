@@ -1,9 +1,9 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import SharedGameplay from '../src/pages/SharedGameplay';
-import type { SharedTable } from '../src/services/sharedGame';
+import { TableRequestError, type SharedTable } from '../src/services/sharedGame';
 const api = vi.hoisted(() => ({ syncTable: vi.fn(), placeAnte: vi.fn(), decide: vi.fn(), leaveTable: vi.fn(), loadHistory: vi.fn(), addBot: vi.fn() }));
 vi.mock('../src/services/sharedGame', async original => ({ ...await original<typeof import('../src/services/sharedGame')>(), ...api }));
 const NativeRequest = Request;
@@ -11,9 +11,9 @@ const base: SharedTable = {
   isHost: true, botCount: 1, canAddBot: true, name: 'Ocean crew', serverNow: Date.now(), maxPlayers: 6, balance: 200, minBet: 5, maxBet: 25, startingChips: 200, botsEnabled: true,
   roundId: 42, roundNumber: 3, phase: 'betting', deadline: Date.now() + 20000,
   dealer: { cards: [], rank: null }, own: { id: 'u1', ante: 0, action: null, cards: { cards: [], rank: null }, result: null },
-  seats: [{ id: 'u1', name: 'Alice', bot: false, balance: 200, online: true, status: 'betting', ante: 0, isYou: true }, { id: 'u2', name: 'Bob', bot: false, balance: 200, online: true, status: 'betting', ante: 0, isYou: false }, { id: 'bot1', name: 'Reef Bot 1', bot: true, balance: 195, online: true, status: 'ante placed', ante: 5, isYou: false }],
+  seats: [{ id: 'u1', name: 'Alice', bot: false, balance: 200, online: true, status: 'betting', ante: 0, isYou: true }, { id: 'u2', name: 'Bob', bot: false, balance: 200, online: true, status: 'betting', ante: 0, isYou: false }, { id: 'bot1', name: 'Reef Bot 1', bot: true, balance: 195, online: true, status: 'ante placed', ante: 5, isYou: false }].map((seat, index) => ({ ...seat, seatNumber: index + 1, inRound: true, cardCount: 0, net: null })),
 };
-const deciding: SharedTable = { ...base, phase: 'deciding', balance: 195, dealer: { cards: ['KC'], rank: null }, own: { ...base.own, ante: 5, cards: { cards: ['AS','AH','QD','JC','9S'], rank: 'pair' } }, seats: base.seats.map(seat => ({ ...seat, status: seat.isYou ? 'deciding' : seat.status })) };
+const deciding: SharedTable = { ...base, phase: 'deciding', balance: 195, dealer: { cards: ['KC'], rank: null }, own: { ...base.own, ante: 5, cards: { cards: ['AS','AH','QD','JC','9S'], rank: 'pair' } }, seats: base.seats.map(seat => ({ ...seat, cardCount: 5, status: seat.bot ? 'folded' : 'deciding' })) };
 function show() {
   const router = createMemoryRouter([{ path: '/lobbies/:lobbyId/game', element: <SharedGameplay /> }, { path: '/lobbies/7', element: <h1>Lobby room</h1> }], { initialEntries: ['/lobbies/7/game'] });
   render(<RouterProvider router={router} />);
@@ -31,6 +31,73 @@ beforeEach(() => {
 });
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 describe('shared table screen', () => {
+  it('queues an ante behind an in-flight heartbeat instead of losing the click', async () => {
+    let finish!: (table: SharedTable) => void;
+    const refreshing = new Promise<SharedTable>(resolve => { finish = resolve; });
+    api.syncTable.mockResolvedValueOnce(base).mockReturnValueOnce(refreshing);
+    show(); await screen.findByRole('button', { name: 'Place ante' });
+    fireEvent(window, new Event('online'));
+    expect(api.syncTable).toHaveBeenCalledTimes(2);
+    await userEvent.click(screen.getByRole('button', { name: 'Place ante' }));
+    expect(api.placeAnte).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Place ante' }).hasAttribute('disabled')).toBe(true);
+    await act(async () => finish(base));
+    await waitFor(() => expect(api.placeAnte).toHaveBeenCalledWith('7', 42, 5));
+    expect(api.placeAnte).toHaveBeenCalledTimes(1);
+    expect(await screen.findByText('Ante placed. Waiting for the other players.')).toBeTruthy();
+  });
+  it('does not drop a raise when a background refresh is running', async () => {
+    let finish!: (table: SharedTable) => void;
+    api.syncTable.mockResolvedValueOnce(deciding).mockReturnValueOnce(new Promise<SharedTable>(resolve => { finish = resolve; }));
+    api.decide.mockResolvedValue({ ...deciding, balance: 185, own: { ...deciding.own, action: 'raise' } });
+    show(); await screen.findByRole('button', { name: 'Raise · 10 chips' });
+    fireEvent(window, new Event('online'));
+    await userEvent.click(screen.getByRole('button', { name: 'Raise · 10 chips' }));
+    expect(api.decide).not.toHaveBeenCalled();
+    await act(async () => finish(deciding));
+    await waitFor(() => expect(api.decide).toHaveBeenCalledWith('7', 42, 'raise'));
+    expect(api.decide).toHaveBeenCalledTimes(1);
+  });
+  it('does not move an old ante intent into a newer hand while waiting for a refresh', async () => {
+    let finish!: (table: SharedTable) => void;
+    api.syncTable.mockResolvedValueOnce(base).mockReturnValueOnce(new Promise<SharedTable>(resolve => { finish = resolve; }));
+    api.placeAnte.mockRejectedValue(new TableRequestError('This hand has ended. Refresh the table.', 409));
+    show(); await screen.findByRole('button', { name: 'Place ante' });
+    fireEvent(window, new Event('online'));
+    await userEvent.click(screen.getByRole('button', { name: 'Place ante' }));
+    await act(async () => finish({ ...base, roundId: 43, roundNumber: 4 }));
+    expect((await screen.findByRole('alert')).textContent).toContain('This hand has ended.');
+    expect(api.placeAnte).toHaveBeenCalledWith('7', 42, 5);
+    expect(api.placeAnte).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('timer', { name: 'Round timer' }).textContent).toContain('Hand 4');
+  });
+  it('waits for a background refresh before leaving without asking the player to retry', async () => {
+    let finish!: (table: SharedTable) => void;
+    api.syncTable.mockResolvedValueOnce(base).mockReturnValueOnce(new Promise<SharedTable>(resolve => { finish = resolve; }));
+    show(); await screen.findByRole('button', { name: 'Place ante' });
+    fireEvent(window, new Event('online'));
+    await userEvent.click(screen.getByRole('link', { name: '← Back to lobby' }));
+    expect(api.leaveTable).not.toHaveBeenCalled();
+    await act(async () => finish(base));
+    expect(await screen.findByRole('heading', { name: 'Lobby room' })).toBeTruthy();
+    expect(api.leaveTable).toHaveBeenCalledWith('7', 42);
+  });
+  it('shows opponents participating with private card backs and the full table roster', async () => {
+    api.syncTable.mockResolvedValue(deciding);
+    show();
+    expect(await screen.findByRole('img', { name: 'Bob has 5 private cards' })).toBeTruthy();
+    await userEvent.click(screen.getByText('2 players · 1 bot'));
+    const roster = screen.getByRole('list', { name: 'Table roster' });
+    expect(within(roster).getByText('Seat 1 · Alice (You)')).toBeTruthy();
+    expect(within(roster).getByText('Seat 2 · Bob')).toBeTruthy();
+    expect(within(roster).getByText('Seat 3 · Reef Bot 1 (Bot)')).toBeTruthy();
+  });
+  it('shows other players’ settled net results without showing their card identities', async () => {
+    api.syncTable.mockResolvedValue({ ...deciding, phase: 'completed', seats: deciding.seats.map(seat => ({ ...seat, status: 'finished', net: seat.isYou ? 15 : -15 })) });
+    show();
+    expect((await screen.findAllByText('Hand result · -15 chips')).length).toBe(2);
+    expect(screen.queryByRole('img', { name: 'Queen of clubs' })).toBeNull();
+  });
   it('keeps the tutorial separate and requires confirmation before leaving an active hand', async () => {
     api.syncTable.mockResolvedValue(deciding);
     vi.spyOn(window, 'confirm').mockReturnValue(false);
@@ -148,6 +215,19 @@ describe('shared table screen', () => {
     await userEvent.click(screen.getByRole('link', { name: '← Back to lobby' }));
     expect(confirm).toHaveBeenCalledWith(expect.stringContaining('will not cancel it'));
     expect(api.leaveTable).not.toHaveBeenCalled();
+  });
+  it('restores the server hand after going offline without replaying an action', async () => {
+    api.syncTable.mockResolvedValue(deciding);
+    show(); await screen.findByRole('button', { name: 'Fold' });
+    fireEvent(window, new Event('offline'));
+    expect(screen.getByText(/Reconnecting…/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Fold' }).hasAttribute('disabled')).toBe(true);
+    api.syncTable.mockResolvedValue({ ...deciding, own: { ...deciding.own, action: 'raise' }, balance: 185 });
+    fireEvent(window, new Event('online'));
+    await screen.findByText('Reconnected. Your seat and current hand are restored from the server.');
+    expect(screen.getByText('Decision locked. Waiting for the other players.')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Fold' })).toBeNull();
+    expect(api.decide).not.toHaveBeenCalled();
   });
   it('recovers polling after a connection failure', async () => {
     api.syncTable.mockRejectedValueOnce(new Error('Network failed'));
