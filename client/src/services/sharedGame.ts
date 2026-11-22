@@ -1,4 +1,4 @@
-export type TablePlayer = { id: string; seatNumber: number; name: string; bot: boolean; balance: number; online: boolean; status: string; ante: number; isYou: boolean; inRound: boolean; cardCount: number; net: number | null };
+export type TablePlayer = { id: string; seatNumber: number; name: string; bot: boolean; balance: number; online: boolean; status: string; ante: number; isYou: boolean; inRound: boolean; cardCount: number; net: number | null; isHost?: boolean; removalPending?: boolean };
 export type SharedTable = {
   name: string; serverNow: number; maxPlayers: number; balance: number; minBet: number; maxBet: number; startingChips: number; botsEnabled: boolean;
   roundId: number | null; roundNumber: number; phase: 'waiting' | 'betting' | 'deciding' | 'completed'; deadline: number | null;
@@ -21,3 +21,6 @@ export const decide = (id: string, roundId: number, action: 'fold' | 'raise') =>
 export const leaveTable = (id: string, roundId: number | null) => request<SharedTable>(id, 'leave', { roundId });
 export const loadHistory = (id: string) => request<SavedHand[]>(id, 'history');
 export const addBot = (id: string, requestId: string) => request<SharedTable>(id, 'bots', { requestId });
+
+export const removeBot = (id: string, seatId: string) => request<SharedTable>(id, 'remove-bot', { seatId });
+export const transferHost = (id: string, seatId: string) => request<SharedTable>(id, 'transfer-host', { seatId });

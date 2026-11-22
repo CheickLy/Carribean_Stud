@@ -3,7 +3,7 @@ import { Link, useBlocker, useParams } from 'react-router-dom';
 import { PlayingCard, faceCard, handLabel } from './Gameplay';
 import HandGuide from '../components/HandGuide';
 import useTablePreferences from '../components/useTablePreferences';
-import { addBot, decide, leaveTable, loadHistory, placeAnte, syncTable, TableRequestError, type SavedHand, type SharedTable } from '../services/sharedGame';
+import { removeBot, transferHost, addBot, decide, leaveTable, loadHistory, placeAnte, syncTable, TableRequestError, type SavedHand, type SharedTable } from '../services/sharedGame';
 import '../styles/Gameplay.css';
 import '../styles/SharedGameplay.css';
 
@@ -162,7 +162,7 @@ export default function SharedGameplay() {
       <Link className="gameplay-lobbies" to={`/lobbies/${lobbyId}`}>← Back to lobby</Link>
       <div className="gameplay-table-identity"><h1 title={table?.name}>{table?.name ?? 'Your table'}</h1><small>{table ? `${format(table.minBet)}–${format(table.maxBet)} chip ante · Starting chips ${format(table.startingChips)}` : 'Connecting…'}</small>
       {table && <p className="shared-round-clock" role="timer" aria-label="Round timer">Hand {table.roundNumber} · {table.phase === 'betting' ? 'Place antes' : table.phase === 'deciding' ? 'Decide' : table.phase === 'completed' ? 'Next hand' : 'Waiting'}{seconds !== null ? ` · ${seconds}s` : ''}</p>}
-      {table && <details className="shared-roster"><summary>{humanCount} {humanCount === 1 ? 'player' : 'players'} · {botCount} {botCount === 1 ? 'bot' : 'bots'}</summary><ul aria-label="Table roster">{table.seats.map(seat => <li key={seat.id}><strong>Seat {seat.seatNumber} · {seat.name}{seat.isYou ? ' (You)' : seat.bot ? ' (Bot)' : ''}</strong><span>{seat.online ? seat.status : `Disconnected · ${seat.status}`} · {format(seat.balance)} chips</span></li>)}</ul></details>}
+      {table && <details className="shared-roster"><summary>{humanCount} {humanCount === 1 ? 'player' : 'players'} · {botCount} {botCount === 1 ? 'bot' : 'bots'}</summary><ul aria-label="Table roster">{table.seats.map(seat => <li key={seat.id}><strong>Seat {seat.seatNumber} · {seat.name}{seat.isYou ? ' (You)' : seat.bot ? ' (Bot)' : ''}{seat.isHost ? ' · Host' : ''}</strong><span>{seat.online ? seat.status : `Disconnected · ${seat.status}`} · {format(seat.balance)} chips</span></li>)}</ul></details>}
       </div>
       <div className="gameplay-tools">
         <button className="gameplay-settings-button" aria-expanded={optionsOpen} aria-controls="table-options" onClick={() => setOptionsOpen(value => !value)}>Options</button>
@@ -178,6 +178,11 @@ export default function SharedGameplay() {
             botRequest.current ??= crypto.randomUUID();
             void action(() => addBot(lobbyId, botRequest.current!).then(next => { botRequest.current = null; setBotNotice('Bot added. It will join the next hand.'); return next; }));
           }}>{busy ? 'Adding…' : 'Add bot'}</button>}
+          {table?.isHost && <ul className="shared-host-controls" aria-label="Host controls">{table.seats.filter(seat => seat.bot || (!seat.isYou && seat.online && seat.status !== 'sitting out')).map(seat => <li key={seat.id}><span>{seat.name}</span><button type="button" disabled={busy || !connected || seat.removalPending} onClick={() => {
+            if (seat.bot) void action(() => removeBot(lobbyId, seat.id).then(next => { setBotNotice('Bot removal saved. Any current hand will finish before its seat is freed.'); return next; }));
+            else if (window.confirm(`Make ${seat.name} the host? You will hand over the host controls.`)) void action(() => transferHost(lobbyId, seat.id).then(next => { setBotNotice(`Hosting transferred to ${seat.name}.`); return next; }));
+          }} aria-label={seat.bot ? `Remove ${seat.name}` : `Make ${seat.name} host`}>{seat.removalPending ? 'Leaving after hand' : seat.bot ? 'Remove bot' : 'Make host'}</button></li>)}</ul>}
+          <p>Hosting passes to another connected player when the host leaves or stays disconnected for 15 seconds.</p>
           {botNotice && <p role="status">{botNotice}</p>}
         </div><div className="shared-bot-options"><Link to="/tutorial" state={{ lobbyId }}>How to play →</Link><p>Play a guided practice hand. Leaving an active hand still requires confirmation.</p></div></section>}
       <p className="gameplay-wordmark">Reef Royale</p><p className="gameplay-table-caption">CARIBBEAN STUD · SHARED TABLE</p>
@@ -197,7 +202,7 @@ export default function SharedGameplay() {
         {positions.slice(0, (table?.maxPlayers ?? 6) - 1).map((position, index) => {
           const seat = others[index];
           if (!seat) return null;
-          return <section key={seat.id} className={`gameplay-open-seat shared-player-seat gameplay-open-seat-${position}`} aria-label={`${seat.name}, ${seat.status}`}><span className="gameplay-open-avatar" aria-hidden="true">{seat.bot ? '♟' : seat.name.slice(0, 1)}</span><span><strong>{seat.name}{seat.bot ? ' · Bot' : ''}</strong><small title={`${format(seat.balance)} chips · ${seat.online ? seat.status : 'disconnected'}`}>{format(seat.balance)} chips · {seat.online ? seat.status : 'disconnected'}</small>
+          return <section key={seat.id} className={`gameplay-open-seat shared-player-seat gameplay-open-seat-${position}`} aria-label={`${seat.name}, ${seat.status}`}><span className="gameplay-open-avatar" aria-hidden="true">{seat.bot ? '♟' : seat.name.slice(0, 1)}</span><span><strong>{seat.name}{seat.bot ? ' · Bot' : seat.isHost ? ' · Host' : ''}</strong><small title={`${format(seat.balance)} chips · ${seat.online ? seat.status : 'disconnected'}`}>{format(seat.balance)} chips · {seat.removalPending ? 'leaving after hand' : seat.online ? seat.status : 'disconnected'}</small>
             {seat.cardCount > 0 && <span className="shared-private-cards" role="img" aria-label={`${seat.name} has ${seat.cardCount} private cards`}>{Array.from({ length: seat.cardCount }, (_, card) => <i key={card} aria-hidden="true">♣</i>)}</span>}
             {seat.net !== null && seat.net !== undefined ? <small className="shared-player-result">Hand result · {net(seat.net)}</small> : (seat.ante > 0 || !seat.online) && <small>{!seat.online ? `${seat.status}${seat.ante ? ' · ' : ''}` : ''}{seat.ante > 0 ? `Ante ${format(seat.ante)}` : ''}</small>}
           </span></section>;

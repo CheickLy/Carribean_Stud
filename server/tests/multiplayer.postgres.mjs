@@ -152,7 +152,71 @@ try {
   const otherView = (await host.post(`/api/lobbies/${other.lobbyId}/game/state`).send({}).expect(200)).body;
   assert.notEqual(otherView.roundId, next.roundId); assert.equal(otherView.balance, 500);
   await alice.post(`/api/lobbies/${other.lobbyId}/game/state`).send({}).expect(403);
-  console.log('Passed multiplayer story: real independent logins, solo and late join, shared dealer/deadline, private hands, identity isolation, independent payouts, idempotent tabs, history, automatic next round.');
+  // Host controls use the same lock as decisions, admission and settlement.
+  const controls = (await host.post('/api/lobbies').send({ ...settings, name: 'Host controls acceptance', maxPlayers: 4, botsEnabled: true }).expect(201)).body;
+  const controlsId = controls.lobbyId;
+  const controlsPath = `/api/lobbies/${controlsId}/game`;
+  await host.post(`${controlsPath}/state`).send({}).expect(200);
+  await alice.post(`/api/lobbies/${controlsId}/join`).send({}).expect(200);
+  await alice.post(`${controlsPath}/state`).send({}).expect(200);
+  await Promise.all([host, hostTab].map(agent => agent.post(`${controlsPath}/bots`).send({ requestId: 'host-controls-bot-one' }).expect(200)));
+  await host.post(`${controlsPath}/bots`).send({ requestId: 'host-controls-bot-two' }).expect(200);
+  await alice.post(`${controlsPath}/remove-bot`).send({ seatId: 'bot1' }).expect(403);
+  const immediate = (await host.post(`${controlsPath}/remove-bot`).send({ seatId: 'bot1' }).expect(200)).body;
+  assert(!immediate.seats.some(seat => seat.id === 'bot1'));
+  assert.equal(immediate.botCount, 1);
+  await host.post(`${controlsPath}/remove-bot`).send({ seatId: 'bot1' }).expect(200); // Safe lost-response retry.
+  async function expireControlsPhase() {
+    const row = await TableGame.findByPk(controlsId);
+    const state = structuredClone(row.state);
+    state.round.deadline = Date.now() - 1;
+    await row.update({ state });
+    return (await host.post(`${controlsPath}/state`).send({}).expect(200)).body;
+  }
+  await expireControlsPhase();
+  const controlRound = await expireControlsPhase();
+  assert.equal(controlRound.phase, 'betting');
+  assert.equal(controlRound.seats.filter(seat => seat.inRound).length, 3);
+  await host.post(`${controlsPath}/ante`).send({ roundId: controlRound.roundId, ante: 5 }).expect(200);
+  const controlsDeal = (await alice.post(`${controlsPath}/ante`).send({ roundId: controlRound.roundId, ante: 5 }).expect(200)).body;
+  assert.equal(controlsDeal.phase, 'deciding');
+  const pendingRemoval = (await host.post(`${controlsPath}/remove-bot`).send({ seatId: 'bot2' }).expect(200)).body;
+  assert.equal(pendingRemoval.seats.find(seat => seat.id === 'bot2').removalPending, true);
+  assert.deepEqual(pendingRemoval.dealer, controlsDeal.dealer);
+  await alice.post(`${controlsPath}/transfer-host`).send({ seatId: `u${users[1].userId}` }).expect(403);
+  await host.post(`${controlsPath}/transfer-host`).send({ seatId: 'bot2' }).expect(409);
+  await host.post(`${controlsPath}/transfer-host`).send({ seatId: 'u99999999' }).expect(409);
+  const transferred = (await host.post(`${controlsPath}/transfer-host`).send({ seatId: `u${users[1].userId}` }).expect(200)).body;
+  assert.equal(transferred.isHost, false);
+  assert.equal(transferred.seats.find(seat => seat.id === `u${users[1].userId}`).isHost, true);
+  await host.post(`${controlsPath}/bots`).send({ requestId: 'former-host-denied' }).expect(403);
+  await host.post(`${controlsPath}/remove-bot`).send({ seatId: 'bot2' }).expect(403);
+  const aliceHost = (await alice.post(`${controlsPath}/state`).send({}).expect(200)).body;
+  assert.equal(aliceHost.isHost, true);
+  await host.post(`${controlsPath}/action`).send({ roundId: controlRound.roundId, action: 'raise' }).expect(200);
+  await alice.post(`${controlsPath}/leave`).send({ roundId: controlRound.roundId }).expect(200);
+  const inherited = (await host.post(`${controlsPath}/state`).send({}).expect(200)).body;
+  assert.equal(inherited.isHost, true);
+  assert.equal(inherited.phase, 'completed');
+  assert.equal(await GameHand.count({ where: { sessionId: controlRound.roundId } }), 3); // Includes removed bot.
+  const controlsNext = await expireControlsPhase();
+  assert(!controlsNext.seats.some(seat => seat.id === 'bot2'));
+  assert.equal(controlsNext.botCount, 0);
+  // A new bot gets a fresh identity; removed bots cannot be resurrected by a retry.
+  const replacement = (await host.post(`${controlsPath}/bots`).send({ requestId: 'host-controls-replacement' }).expect(200)).body;
+  assert.equal(replacement.seats.find(seat => seat.bot).id, 'bot3');
+  await host.post(`${controlsPath}/remove-bot`).send({ seatId: 'bot2' }).expect(200);
+  assert.equal((await host.post(`${controlsPath}/state`).send({}).expect(200)).body.botCount, 1);
+  // An absent host hands control to a connected human without changing the round.
+  const stale = await TableGame.findByPk(controlsId);
+  const absent = structuredClone(stale.state);
+  absent.seats.find(seat => seat.userId === users[0].userId).lastSeen = Date.now() - 16000;
+  await stale.update({ state: absent });
+  const reconnectHost = (await alice.post(`${controlsPath}/state`).send({}).expect(200)).body;
+  assert.equal(reconnectHost.isHost, true);
+  assert.equal(reconnectHost.roundId, controlsNext.roundId);
+  assert.equal((await host.post(`${controlsPath}/state`).send({}).expect(200)).body.isHost, false);
+  console.log('Passed multiplayer story: real independent logins, solo and late join, shared dealer/deadline, private hands, identity isolation, independent payouts, idempotent tabs, history, automatic next round, safe bot removal, manual and automatic host transfer.');
 } finally {
   if (server) await new Promise(resolve => { server.close(resolve); server.closeAllConnections?.(); });
   await sequelize.dropSchema(schema, { cascade: true });

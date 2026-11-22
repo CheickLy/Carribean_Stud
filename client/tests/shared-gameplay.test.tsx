@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import SharedGameplay from '../src/pages/SharedGameplay';
 import { TableRequestError, type SharedTable } from '../src/services/sharedGame';
-const api = vi.hoisted(() => ({ syncTable: vi.fn(), placeAnte: vi.fn(), decide: vi.fn(), leaveTable: vi.fn(), loadHistory: vi.fn(), addBot: vi.fn() }));
+const api = vi.hoisted(() => ({ syncTable: vi.fn(), placeAnte: vi.fn(), decide: vi.fn(), leaveTable: vi.fn(), loadHistory: vi.fn(), addBot: vi.fn(), removeBot: vi.fn(), transferHost: vi.fn() }));
 vi.mock('../src/services/sharedGame', async original => ({ ...await original<typeof import('../src/services/sharedGame')>(), ...api }));
 const NativeRequest = Request;
 const base: SharedTable = {
@@ -117,6 +117,36 @@ describe('shared table screen', () => {
     expect(screen.getByRole('button', { name: 'Options' })).toBeTruthy();
     expect(screen.queryByRole('region', { name: 'Open seat' })).toBeNull();
     expect(screen.getByRole('timer', { name: 'Round timer' })).toBeTruthy();
+  });
+  it('lets only the host queue bot removal without disturbing the current hand', async () => {
+    api.syncTable.mockResolvedValue(deciding);
+    api.removeBot.mockResolvedValue({ ...deciding, seats: deciding.seats.map(seat => ({ ...seat, removalPending: seat.bot })) });
+    show(); await screen.findByRole('button', { name: 'Fold' });
+    fireEvent.click(screen.getByRole('button', { name: 'Options' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Reef Bot 1' }));
+    await screen.findByText('Bot removal saved. Any current hand will finish before its seat is freed.');
+    expect(api.removeBot).toHaveBeenCalledWith('7', 'bot1');
+    expect(screen.getByRole('button', { name: 'Remove Reef Bot 1' }).hasAttribute('disabled')).toBe(true);
+    expect(screen.getByRole('img', { name: 'Ace of spades' })).toBeTruthy();
+    expect(api.decide).not.toHaveBeenCalled();
+    cleanup(); api.syncTable.mockResolvedValue({ ...deciding, isHost: false }); show();
+    await screen.findByRole('button', { name: 'Fold' });
+    fireEvent.click(screen.getByRole('button', { name: 'Options' }));
+    expect(screen.queryByRole('list', { name: 'Host controls' })).toBeNull();
+  });
+  it('confirms transferring host controls and hides them once ownership changes', async () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    api.transferHost.mockResolvedValue({ ...base, isHost: false, seats: base.seats.map(seat => ({ ...seat, isHost: seat.id === 'u2' })) });
+    show(); await screen.findByRole('heading', { name: 'Ocean crew' });
+    fireEvent.click(screen.getByRole('button', { name: 'Options' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Make Bob host' }));
+    expect(api.transferHost).not.toHaveBeenCalled();
+    confirm.mockReturnValue(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Make Bob host' }));
+    await screen.findByText('Hosting transferred to Bob.');
+    expect(api.transferHost).toHaveBeenCalledWith('7', 'u2');
+    expect(screen.queryByRole('list', { name: 'Host controls' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Add bot' })).toBeNull();
   });
   it('lets the host add a bot from Options and queues it for the next hand', async () => {
     api.addBot.mockResolvedValue({ ...base, botCount: 2 });

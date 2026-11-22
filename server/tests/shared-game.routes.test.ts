@@ -68,4 +68,15 @@ describe('shared-game HTTP boundary', () => {
     expect(response.status).toBe(200);
     expect(service.sharedTable).toHaveBeenLastCalledWith(1, 7, { kind: 'add-bot', requestId: 'bot-request-123' });
   });
+  it('validates host-control targets and takes authorization from the session', async () => {
+    for (const [operation, seatId] of [['remove-bot', 'u7'], ['remove-bot', '../bot1'], ['transfer-host', 3]]) {
+      expect((await request(app(7)).post(`/api/lobbies/1/game/${operation}`).send({ seatId })).status).toBe(400);
+    }
+    expect(service.sharedTable).not.toHaveBeenCalled();
+    await request(app(7)).post('/api/lobbies/1/game/remove-bot').send({ seatId: 'bot2', userId: 99 }).expect(200);
+    expect(service.sharedTable).toHaveBeenLastCalledWith(1, 7, { kind: 'remove-bot', seatId: 'bot2' });
+    await request(app(7)).post('/api/lobbies/1/game/transfer-host').send({ seatId: 'u8' }).expect(200);
+    expect(service.sharedTable).toHaveBeenLastCalledWith(1, 7, { kind: 'transfer-host', seatId: 'u8' });
+  });
+
 });

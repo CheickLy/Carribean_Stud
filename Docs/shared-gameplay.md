@@ -60,3 +60,11 @@ Player actions wait for an in-flight background refresh rather than being discar
 - Independent tables keep separate membership, rounds, chips and histories.
 
 For a manual check, sign in to two different accounts in a normal and a private browser window, then join the same table. Two ordinary tabs usually share one account's cookies and therefore represent the same player.
+
+### Host controls
+
+Options lists Remove bot and Make host controls for the current host. Other players can see who hosts the table but cannot perform these operations; the server checks ownership under the same lobby lock used for bets and settlement.
+
+A bot outside the current hand is removed immediately. A bot already in the hand is marked “leaving after hand,” finishes its locked action, and has its result saved before the next hand frees its seat. Removal retries are safe, and replacement bots receive fresh IDs so an old retry cannot remove a replacement.
+
+Hosting can be handed to another connected human with confirmation. It also transfers automatically to the first connected human in seat order when the host leaves or has not sent a heartbeat for 15 seconds. Bots cannot host. If no connected human is available, ownership stays in place until one becomes available. Returning former hosts keep their membership, balance, and hand, without taking ownership back.

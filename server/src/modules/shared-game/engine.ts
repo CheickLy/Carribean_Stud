@@ -12,7 +12,7 @@ export type Seat = { id: string; userId: number | null; name: string; bot: boole
 export type RoundPlayer = { id: string; cards: string[]; ante: number; action: 'raise' | 'fold' | null; skipped: boolean; timedOut: boolean; result?: Result };
 export type Result = { anteNet: number; raiseNet: number; returned: number; net: number; message: string };
 export type Round = { id: number; number: number; phase: 'betting' | 'deciding' | 'completed'; deadline: number; dealer: string[]; players: RoundPlayer[]; min: number; max: number };
-export type Table = { seats: Seat[]; round: Round | null; handsPlayed: number; botCount?: number; botRequests?: string[] };
+export type Table = { seats: Seat[]; round: Round | null; handsPlayed: number; botCount?: number; botRequests?: string[]; pendingBotRemovals?: string[]; nextBotNumber?: number };
 export class GameError extends Error { constructor(public status: number, message: string) { super(message); } }
 export const money = (cents: number) => cents / 100;
 export function cents(value: unknown): number {

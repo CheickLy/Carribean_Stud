@@ -6,8 +6,8 @@ import { User } from '../../models/user.js';
 import { Session } from '../../models/session.js';
 import { GameHand } from '../../models/gameHand.js';
 import { TableGame } from '../../models/tableGame.js';
-import { advance, applyCommand, cents, GameError, money, newRound, tableView, type Command, type Settings, type Table } from './engine.js';
-export type TableCommand = Command | { kind: 'add-bot'; requestId: string };
+import { OFFLINE_MS, advance, applyCommand, cents, GameError, money, newRound, tableView, type Command, type Settings, type Table } from './engine.js';
+export type TableCommand = Command | { kind: 'add-bot'; requestId: string } | { kind: 'remove-bot'; seatId: string } | { kind: 'transfer-host'; seatId: string };
 
 function settingsFor(lobby: Lobby): Settings {
   const settings = { name: lobby.name, min: cents(lobby.minBet), max: cents(lobby.maxBet), starting: cents(lobby.startingMoney), maxPlayers: lobby.maxPlayers, bots: lobby.botsEnabled, allowBets: lobby.allowBets, autoIncr: lobby.autoIncr, increase: cents(lobby.increaseAmount), every: lobby.increaseEveryHands };
@@ -43,6 +43,13 @@ export async function sharedTable(lobbyId: number, userId: number | null, comman
     const table: Table = stored ? structuredClone(stored.state) : { seats: [], round: null, handsPlayed: 0 };
     table.botCount ??= table.seats.filter(seat => seat.bot).length;
     table.botRequests ??= [];
+    table.pendingBotRemovals ??= [];
+    table.nextBotNumber ??= Math.max(0, ...table.seats.filter(seat => seat.bot).map(seat => Number(seat.id.replace('bot', '')) || 0)) + 1;
+    const transferHost = async (nextHostId: number) => {
+      // Keep the former host's membership and bankroll when ownership changes.
+      await LobbyMember.findOrCreate({ where: { lobbyId, userId: lobby.hostId }, transaction });
+      await lobby.update({ hostId: nextHostId }, { transaction });
+    };
     for (const user of users.filter(user => !user.isBanned)) {
       const seat = table.seats.find(seat => seat.userId === user.userId);
       if (seat) seat.name = user.isGuest ? 'Guest' : user.username;
@@ -71,30 +78,46 @@ export async function sharedTable(lobbyId: number, userId: number | null, comman
             table.botCount++;
             table.botRequests.push(command.requestId);
             table.botRequests = table.botRequests.slice(-100);
-            const botId = `bot${table.botCount}`;
-            if (!table.seats.some(seat => seat.id === botId)) table.seats.push({ id: botId, userId: null, name: `Reef Bot ${table.botCount}`, bot: true, balance: settings.starting, lastSeen: now, active: true });
+            const botNumber = table.nextBotNumber++;
+            const botId = `bot${botNumber}`;
+            table.seats.push({ id: botId, userId: null, name: `Reef Bot ${botNumber}`, bot: true, balance: settings.starting, lastSeen: now, active: true });
           }
+          own.lastSeen = now;
+        } else if (command.kind === 'remove-bot') {
+          if (userId !== lobby.hostId) throw new GameError(403, 'Only the host can remove bots.');
+          const bot = table.seats.find(seat => seat.id === command.seatId);
+          if (bot && !bot.bot) throw new GameError(400, 'Only bots can be removed.');
+          if (bot && !table.pendingBotRemovals.includes(bot.id)) table.pendingBotRemovals.push(bot.id);
+          own.lastSeen = now;
+        } else if (command.kind === 'transfer-host') {
+          if (userId !== lobby.hostId) throw new GameError(403, 'Only the host can transfer hosting.');
+          const target = table.seats.find(seat => seat.id === command.seatId);
+          if (!target || target.bot || target.id === own.id || !target.active || now - target.lastSeen >= OFFLINE_MS || !allowed.has(target.userId!)) throw new GameError(409, 'Choose another connected player.');
+          await transferHost(target.userId!);
           own.lastSeen = now;
         } else applyCommand(table, own, command, now);
       }
       catch (cause) { if (cause instanceof GameError) error = cause; else throw cause; }
     }
+    const hostSeat = table.seats.find(seat => seat.userId === lobby.hostId);
+    if (hostSeat && (!allowed.has(lobby.hostId) || (hostSeat.lastSeen > 0 && (!hostSeat.active || now - hostSeat.lastSeen >= OFFLINE_MS)))) {
+      const successor = table.seats.find(seat => !seat.bot && seat.userId !== lobby.hostId && allowed.has(seat.userId!) && seat.active && now - seat.lastSeen < OFFLINE_MS);
+      if (successor) await transferHost(successor.userId!);
+    }
+    // A bot already dealt into a hand must finish it before its seat is freed.
+    table.seats = table.seats.filter(seat => !table.pendingBotRemovals!.includes(seat.id) || Boolean(table.round?.players.some(player => player.id === seat.id)));
+    table.botCount = table.seats.filter(seat => seat.bot).length;
     const phaseBefore = table.round?.phase;
     changed = advance(table, now);
     if (changed || table.round?.phase !== phaseBefore) await saveProgress(table, transaction);
     if (!table.round || (table.round.phase === 'completed' && now >= table.round.deadline)) {
       // Bots occupy only seats not reserved for human lobby members.
       const humans = table.seats.filter(seat => !seat.bot && allowed.has(seat.userId!));
-      const previousBots = table.seats.filter(seat => seat.bot);
-      table.seats = humans;
-      table.botCount = settings.bots ? Math.min(table.botCount, Math.max(0, settings.maxPlayers - ids.length)) : 0;
-      // Preserve bankrolls, including bots just added during this request.
-      const savedBots = stored?.state.seats.filter(seat => seat.bot) ?? [];
-      for (let index = 0; index < table.botCount; index++) {
-        const id = `bot${index + 1}`;
-        const previous = previousBots.find(seat => seat.id === id) ?? savedBots.find(seat => seat.id === id);
-        table.seats.push(previous ?? { id, userId: null, name: `Reef Bot ${index + 1}`, bot: true, balance: settings.starting, lastSeen: now, active: true });
-      }
+      const previousBots = table.seats.filter(seat => seat.bot && !table.pendingBotRemovals!.includes(seat.id));
+      const bots = settings.bots ? previousBots.slice(0, Math.max(0, settings.maxPlayers - ids.length)) : [];
+      table.seats = [...humans, ...bots];
+      table.botCount = bots.length;
+      table.pendingBotRemovals = [];
       const round = newRound(table, settings, 0, now);
       if (round) {
         const session = await Session.create({ lobbyId, status: 'betting', dealerCards: null }, { transaction });
@@ -103,7 +126,8 @@ export async function sharedTable(lobbyId: number, userId: number | null, comman
     }
     if (stored) await stored.update({ state: table }, { transaction });
     else await TableGame.create({ lobbyId, state: table }, { transaction });
-    const view = userId !== null ? { ...tableView(table, settings, userId, now), isHost: userId === lobby.hostId, botCount: table.botCount, canAddBot: settings.bots && userId === lobby.hostId && ids.length + table.botCount < settings.maxPlayers } : null;
+    const publicView = userId !== null ? tableView(table, settings, userId, now) : null;
+    const view = publicView ? { ...publicView, seats: publicView.seats.map(seat => ({ ...seat, isHost: seat.id === `u${lobby.hostId}`, removalPending: table.pendingBotRemovals!.includes(seat.id) })), isHost: userId === lobby.hostId, botCount: table.botCount, canAddBot: settings.bots && userId === lobby.hostId && ids.length + table.botCount < settings.maxPlayers } : null;
     return { view, error };
   });
   // Commit timer advancement even when a late or duplicate conflicting action is rejected.

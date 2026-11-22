@@ -35,3 +35,10 @@
 .shared-roster li { display: grid; gap: 5px; padding: 10px 0; border-bottom: 1px solid #e0edf0; line-height: 1.4; }
 .shared-roster li:last-child { border-bottom: 0; }
 .shared-roster strong { color: #133f50; font-size: 12px; }
+.shared-host-controls { list-style: none; margin: 12px 0; padding: 0; }
+.shared-host-controls li { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 0; font-size: 12px; }
+.shared-host-controls li > span { min-width: 0; overflow-wrap: anywhere; }
+.shared-host-controls button { flex-shrink: 0; min-height: 36px; padding: 6px 8px; border: 1px solid #729aa8; border-radius: 8px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.shared-host-controls button:disabled { opacity: .65; cursor: default; }
+.shared-gameplay .gameplay-preferences { max-height: 650px; overflow-y: auto; }
+@media (max-width: 900px) { .shared-gameplay .gameplay-preferences { max-height: calc(100dvh - 24px); } }
