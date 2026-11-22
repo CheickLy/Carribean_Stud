@@ -40,7 +40,7 @@ Run `npm run db:migrate` in `server/` before starting the API. Run the normal se
 
 For a manual multiplayer check, use two distinct authenticated browser profiles. Join the same lobby, open the table in both, and place antes in the same round. A second tab in the same profile intentionally represents the same player. Verify matching dealer up-cards, different private hands, locked decisions, shared countdowns and saved results. A player who enters during a round waits until the next betting phase.
 
-The shared screen combines the compact card-screen design with live multiplayer state: explicit hand labels, a prominent chip balance, a single lobby return link, real occupied seats, shared countdowns, and collapsible payout details. Options also contains saved sound/motion/deal-speed preferences; Rules & hands uses the shared guide.
+The shared screen combines the compact card-screen design with live multiplayer state: explicit hand labels, a prominent chip balance, a single lobby return link, real occupied seats, shared countdowns, and collapsible payout details. Options also contains saved light/dark appearance, sound, motion and deal-speed preferences; Rules & hands uses the shared guide. Light remains the default, and choosing an appearance does not change the hand or timing. Dark mode keeps the same typography, spacing, keyboard controls and white card faces, with teal surfaces and contrasting text/focus indicators. Preferences are saved in the current browser profile, and older saved sound/motion settings remain compatible.
 
 ## Multi-player Gameplay acceptance
 
@@ -60,6 +60,17 @@ Player actions wait for an in-flight background refresh rather than being discar
 - Independent tables keep separate membership, rounds, chips and histories.
 
 For a manual check, sign in to two different accounts in a normal and a private browser window, then join the same table. Two ordinary tabs usually share one account's cookies and therefore represent the same player.
+
+### Table quality of life
+
+- Going offline immediately disables ante and decision buttons and shows reconnect status. Returning online or bringing the tab back into view refreshes the authoritative server state. Recovery restores the current hand and seat without replaying a bet or restarting its deadline.
+- Late arrivals see “You’re seated—joining the next hand.” They cannot place an ante in an already active hand.
+- Round details show ante and raise stakes, total payout returned (including returned stakes), each bet’s net outcome, and total net change. History retains the server settlement.
+- Options includes Copy invite link and a selectable lobby URL when clipboard access fails. Invite links do not include passwords; private-lobby access checks still apply. A localhost link requires access to the same machine/server.
+- Pending antes and decisions have a visible turn callout and countdown. Sound effects remain opt-in and unlock when enabled or during a player action. Each new action phase sounds once; background polling does not repeat alerts. The callout has no flashing or motion.
+- At widths up to 900px, the shared table uses a scrolling layout with readable text, wrapped controls, and 44px touch targets. Cards stay in a five-card row, and Options and History have scrollable panels that fit the viewport. Light/dark and reduced-motion choices remain available.
+
+Validation covers offline recovery without replayed decisions, clipboard failure, phase alert deduplication/muting, and two independent login sessions sharing one round. The PostgreSQL acceptance test also simulates a disconnected player refreshing mid-decision and checks that cards, stakes, balance, and deadline survive.
 
 ### Host controls
 

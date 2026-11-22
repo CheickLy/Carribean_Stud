@@ -9,6 +9,7 @@ import suitSpade from "../assets/gameplay/suit-spade.svg";
 import { dealTable, getGame, heartbeat, playAction, resetGame, type GameState } from "../services/game";
 import HandGuide from "../components/HandGuide";
 import useTablePreferences from "../components/useTablePreferences";
+import TableAppearance from "../components/TableAppearance";
 import "../styles/Gameplay.css";
 
 type FaceCard = { rank: string; suit: string; red?: boolean; name: string };
@@ -230,7 +231,7 @@ export default function Gameplay() {
   }, [connection]);
 
   return (
-    <main className={`gameplay${guideOpen ? " gameplay-guide-open" : ""}${guideExpanded ? " gameplay-guide-expanded" : ""}${preferences.reducedMotion ? " gameplay-reduced-motion" : ""}${preferences.fastDeal ? " gameplay-fast-deal" : ""}`}>
+    <main data-theme={preferences.theme} className={`gameplay${guideOpen ? " gameplay-guide-open" : ""}${guideExpanded ? " gameplay-guide-expanded" : ""}${preferences.reducedMotion ? " gameplay-reduced-motion" : ""}${preferences.fastDeal ? " gameplay-fast-deal" : ""}`}>
       <div className="gameplay-fit">
         <div className="gameplay-board">
           <Link className="gameplay-lobbies" to={lobbyId ? `/lobbies/${lobbyId}` : "/lobbies"}>
@@ -247,6 +248,7 @@ export default function Gameplay() {
           </div>
           {settingsOpen && <section className="gameplay-preferences" id="table-preferences" aria-label="Table preferences">
             <header><strong>Table preferences</strong><button type="button" aria-label="Close table preferences" onClick={() => setSettingsOpen(false)}>×</button></header>
+            <TableAppearance theme={preferences.theme} onChange={theme => setPreferences(value => ({ ...value, theme }))} />
             <label><input type="checkbox" checked={preferences.sound} onChange={event => setPreferences(value => ({ ...value, sound: event.target.checked }))} />Sound effects</label>
             <label><input type="checkbox" checked={preferences.reducedMotion} onChange={event => setPreferences(value => ({ ...value, reducedMotion: event.target.checked }))} />Reduce motion</label>
             <label><input type="checkbox" checked={preferences.fastDeal} onChange={event => setPreferences(value => ({ ...value, fastDeal: event.target.checked }))} />Faster dealing</label>

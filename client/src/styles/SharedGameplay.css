@@ -13,16 +13,6 @@
 .shared-player-seat { width: 220px; }
 .shared-player-seat small { white-space: normal; line-height: 1.4; }
 .shared-player-seat strong { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.shared-waiting { padding: 12px 20px; color: #526f7a; font-size: 14px; }
-.shared-history { position: fixed; z-index: 12; top: 100px; right: 24px; width: min(350px, calc(100vw - 48px)); max-height: calc(100dvh - 140px); overflow: auto; box-sizing: border-box; padding: 20px; border: 1px solid #a8c5d0; border-radius: 18px; background: white; color: #133f50; box-shadow: 0 16px 60px #13526c26; }
-.shared-history header { display: flex; justify-content: space-between; align-items: center; }
-.shared-history h2 { margin: 0; font-size: 18px; }
-.shared-history header button { background: none; border: 0; font-size: 26px; color: inherit; cursor: pointer; }
-.shared-history p { font-size: 12px; line-height: 1.5; }
-.shared-history ol { padding: 0; list-style: none; }
-.shared-history li { display: grid; gap: 7px; padding: 14px 0; border-top: 1px solid #d0e6ec; font-size: 12px; }
-.shared-history li small { color: #526f7a; line-height: 1.5; }
-.shared-player-seat strong { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .shared-player-seat > span:last-child { min-width: 0; flex: 1; }
 .shared-player-seat small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .shared-private-cards { position: absolute; left: 12px; bottom: -6px; display: flex; gap: 1px; }
@@ -35,6 +25,71 @@
 .shared-roster li { display: grid; gap: 5px; padding: 10px 0; border-bottom: 1px solid #e0edf0; line-height: 1.4; }
 .shared-roster li:last-child { border-bottom: 0; }
 .shared-roster strong { color: #133f50; font-size: 12px; }
+.shared-waiting { padding: 12px 20px; color: #526f7a; font-size: 14px; }
+.shared-history { position: fixed; z-index: 12; top: 100px; right: 24px; width: min(350px, calc(100vw - 48px)); max-height: calc(100dvh - 140px); overflow: auto; box-sizing: border-box; padding: 20px; border: 1px solid #a8c5d0; border-radius: 18px; background: white; color: #133f50; box-shadow: 0 16px 60px #13526c26; }
+.shared-history header { display: flex; justify-content: space-between; align-items: center; }
+.shared-history h2 { margin: 0; font-size: 18px; }
+.shared-history header button { background: none; border: 0; font-size: 26px; color: inherit; cursor: pointer; }
+.shared-history p { font-size: 12px; line-height: 1.5; }
+.shared-history ol { padding: 0; list-style: none; }
+.shared-history li { display: grid; gap: 7px; padding: 14px 0; border-top: 1px solid #d0e6ec; font-size: 12px; }
+.shared-history li small { color: #526f7a; line-height: 1.5; }
+
+.shared-invite { padding-bottom: 12px; border-bottom: 1px solid #a8c5d0; }
+.shared-invite button { min-height: 44px; padding: 8px 12px; border: 1px solid #729aa8; border-radius: 9px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.shared-invite label { flex-direction: column; align-items: stretch; gap: 6px; }
+.shared-invite input { box-sizing: border-box; width: 100%; height: 38px; padding: 6px; color: inherit; background: transparent; border: 1px solid #729aa8; border-radius: 6px; font: inherit; font-size: 12px; }
+.shared-turn-alert { position: absolute; top: 280px; left: 50%; transform: translateX(-50%); margin: 0; padding: 5px 14px; border: 2px solid #087f9b; border-radius: 20px; background: #fff; color: #133f50; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.shared-gameplay .gameplay-connection { top: 314px; max-width: 600px; white-space: normal; text-align: center; }
+.shared-gameplay .gameplay-connection-restored { top: 314px; font-size: 12px; }
+.shared-gameplay .gameplay-breakdown[open] { z-index: 8; }
+.shared-gameplay .gameplay-breakdown dl { display: grid; gap: 10px; min-width: 230px; }
+.shared-gameplay .gameplay-breakdown dl > div { justify-content: space-between; }
+.shared-gameplay .gameplay-breakdown-total { padding: 8px 0 0; border-left: 0; border-top: 1px solid #a8c5d0; }
+.shared-gameplay .shared-game-error { top: 246px; }
+.shared-gameplay[data-theme="dark"] .shared-turn-alert { background: #193d4b; color: #edf8fb; border-color: #75d5e6; }
+
+/* Use natural document flow on small screens instead of scaling text and targets. */
+@media (max-width: 900px) {
+  .shared-gameplay { display: block; padding: 16px 12px 28px; box-sizing: border-box; }
+  .shared-gameplay .gameplay-fit { width: 100%; height: auto; overflow: visible; }
+  .shared-gameplay .gameplay-board { display: flex; flex-direction: column; align-items: center; gap: 18px; width: 100%; height: auto; transform: none; }
+  .shared-gameplay .gameplay-board > * { position: static; left: auto; right: auto; top: auto; bottom: auto; transform: none; margin: 0; box-sizing: border-box; max-width: 100%; }
+  .shared-gameplay .gameplay-lobbies { align-self: flex-start; min-height: 44px; font-size: 14px; }
+  .shared-gameplay .gameplay-table-identity { width: 100%; text-align: center; }
+  .shared-gameplay .gameplay-table-identity h1 { font-size: 22px; white-space: normal; }
+  .shared-gameplay .shared-roster summary { margin-inline: auto; min-height: 44px; }
+  .shared-gameplay .shared-roster ul { left: 50%; transform: translateX(-50%); text-align: left; }
+  .shared-gameplay .gameplay-tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .shared-gameplay .gameplay-tools button { min-height: 44px; font-size: 14px; }
+  .shared-gameplay .gameplay-wordmark { font-size: 28px; }
+  .shared-gameplay .gameplay-table-caption { font-size: 10px; text-align: center; }
+  .shared-gameplay .gameplay-rail, .shared-gameplay .gameplay-inset, .shared-gameplay .gameplay-bet-spots { display: none; }
+  .shared-gameplay .gameplay-dealer, .shared-gameplay .gameplay-player-hand { position: relative; display: flex; justify-content: center; gap: 5px; width: 100%; padding-bottom: 35px; min-height: 60px; }
+  .shared-gameplay .gameplay-card { box-sizing: border-box; flex: 0 1 76px; width: calc((100vw - 60px) / 5); height: 110px; min-width: 0; padding: 6px; }
+  .shared-gameplay .gameplay-preferences button { min-height: 44px; min-width: 44px; }
+  .shared-gameplay .gameplay-dealing > .gameplay-card { animation-name: shared-mobile-deal; }
+  .shared-gameplay .gameplay-rank { font-size: 20px; }
+  .shared-gameplay .gameplay-card > img { width: 28px; height: 28px; }
+  .shared-gameplay .gameplay-hand-rank { position: absolute; bottom: 0; top: auto; left: 50%; right: auto; transform: translateX(-50%); width: max-content; max-width: 100%; text-align: center; margin: 0; font-size: 13px; }
+  .shared-gameplay .gameplay-open-seats { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; width: 100%; }
+  .shared-gameplay .gameplay-open-seat { position: relative; inset: auto; width: min(100%, 260px); transform: none; padding: 10px; }
+  .shared-gameplay .gameplay-open-seat strong { font-size: 14px; }
+  .shared-gameplay .gameplay-open-seat small { font-size: 12px; }
+  .shared-gameplay .gameplay-seat { min-width: 0; width: auto; padding: 12px 24px; }
+  .shared-gameplay .gameplay-result { width: 100%; padding: 6px; font-size: 16px; text-align: center; }
+  .shared-gameplay .gameplay-bets { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; width: 100%; border-radius: 20px; padding: 12px; }
+  .shared-gameplay .gameplay-bets button { min-width: 44px; min-height: 44px; font-size: 15px; }
+  .shared-gameplay .gameplay-ante-presets { flex-wrap: wrap; justify-content: center; }
+  .shared-gameplay .gameplay-ante-help { width: 100%; text-align: center; font-size: 12px; line-height: 1.5; }
+  .shared-gameplay .gameplay-preferences { position: fixed; inset: 12px 12px auto; width: auto; max-height: calc(100dvh - 24px); overflow-y: auto; z-index: 15; }
+  .shared-gameplay .gameplay-breakdown { width: 100%; text-align: center; }
+  .shared-gameplay .gameplay-breakdown dl { position: static; width: 100%; transform: none; }
+  .shared-gameplay .shared-turn-alert { white-space: normal; text-align: center; }
+  .shared-gameplay .shared-history { top: 12px; right: 12px; width: calc(100vw - 24px); max-height: calc(100dvh - 24px); }
+}
+
+@keyframes shared-mobile-deal { from { opacity: 0; } to { opacity: 1; } }
 .shared-host-controls { list-style: none; margin: 12px 0; padding: 0; }
 .shared-host-controls li { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 0; font-size: 12px; }
 .shared-host-controls li > span { min-width: 0; overflow-wrap: anywhere; }

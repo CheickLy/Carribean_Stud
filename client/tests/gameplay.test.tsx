@@ -51,7 +51,7 @@ describe('player versus dealer', () => {
       await userEvent.click(input);
       expect(input.checked).toBe(true);
     }
-    expect(JSON.parse(localStorage.getItem('reefroyale.tablePreferences')!)).toEqual({ sound: true, reducedMotion: true, fastDeal: true });
+    expect(JSON.parse(localStorage.getItem('reefroyale.tablePreferences')!)).toEqual({ sound: true, reducedMotion: true, fastDeal: true, theme: 'light' });
     expect(screen.getByRole('main').className).toContain('gameplay-reduced-motion');
     expect(screen.getByRole('main').className).toContain('gameplay-fast-deal');
     await userEvent.click(screen.getByRole('button', { name: 'Close table preferences' }));

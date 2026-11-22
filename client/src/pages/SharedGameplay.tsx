@@ -3,6 +3,7 @@ import { Link, useBlocker, useParams } from 'react-router-dom';
 import { PlayingCard, faceCard, handLabel } from './Gameplay';
 import HandGuide from '../components/HandGuide';
 import useTablePreferences from '../components/useTablePreferences';
+import TableAppearance from '../components/TableAppearance';
 import { removeBot, transferHost, addBot, decide, leaveTable, loadHistory, placeAnte, syncTable, TableRequestError, type SavedHand, type SharedTable } from '../services/sharedGame';
 import '../styles/Gameplay.css';
 import '../styles/SharedGameplay.css';
@@ -25,6 +26,7 @@ export default function SharedGameplay() {
   const [connected, setConnected] = useState(true);
   const [recoveryNotice, setRecoveryNotice] = useState('');
   const disconnected = useRef(false);
+  const [inviteNotice, setInviteNotice] = useState('');
   const [clock, setClock] = useState(Date.now());
   const clockOffset = useRef(0);
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -87,6 +89,14 @@ export default function SharedGameplay() {
   const hasHand = Boolean(table?.own.ante && table.phase !== 'completed');
   const isBetting = table?.phase === 'betting' && self?.status === 'betting';
   const isDeciding = table?.phase === 'deciding' && table.own.ante && !table.own.action;
+  const needsAction = Boolean(isBetting || isDeciding);
+  const turnKey = table && needsAction ? `${table.roundId}:${table.phase}` : '';
+  const alertedTurn = useRef('');
+  useEffect(() => {
+    if (!turnKey || !connected || alertedTurn.current === turnKey) return;
+    alertedTurn.current = turnKey;
+    playSound('turn');
+  }, [turnKey, connected, playSound]);
   const blocked = useBlocker(({ currentLocation, nextLocation }) => Boolean(current.current) && currentLocation.pathname !== nextLocation.pathname);
   useEffect(() => {
     if (blocked.state !== 'blocked' || leaving.current) return;
@@ -157,7 +167,7 @@ export default function SharedGameplay() {
     : self?.inRound === false || self?.status === 'waiting for next hand' || self?.status === 'missed betting' ? 'Your seat is reserved for the next hand.'
     : table.phase === 'betting' ? table.own.ante ? 'Ante placed. Waiting for the other players.' : 'Place your ante before betting closes.'
     : table.own.action ? 'Decision locked. Waiting for the other players.' : 'Raise twice your ante or fold before time runs out.';
-  return <main className={`gameplay shared-gameplay${guideOpen ? ' gameplay-guide-open' : ''}${guideExpanded ? ' gameplay-guide-expanded' : ''}${preferences.reducedMotion ? ' gameplay-reduced-motion' : ''}${preferences.fastDeal ? ' gameplay-fast-deal' : ''}`}>
+  return <main data-theme={preferences.theme} className={`gameplay shared-gameplay${guideOpen ? ' gameplay-guide-open' : ''}${guideExpanded ? ' gameplay-guide-expanded' : ''}${preferences.reducedMotion ? ' gameplay-reduced-motion' : ''}${preferences.fastDeal ? ' gameplay-fast-deal' : ''}`}>
     <div className="gameplay-fit"><div className="gameplay-board">
       <Link className="gameplay-lobbies" to={`/lobbies/${lobbyId}`}>← Back to lobby</Link>
       <div className="gameplay-table-identity"><h1 title={table?.name}>{table?.name ?? 'Your table'}</h1><small>{table ? `${format(table.minBet)}–${format(table.maxBet)} chip ante · Starting chips ${format(table.startingChips)}` : 'Connecting…'}</small>
@@ -170,7 +180,13 @@ export default function SharedGameplay() {
         <button ref={guideButton} className="gameplay-guide-button" aria-expanded={guideOpen} aria-controls="hand-guide" onClick={() => guideOpen ? closeGuide() : setGuideOpen(true)}>Rules &amp; hands</button>
       </div>
       {optionsOpen && <section className="gameplay-preferences" id="table-options" aria-label="Table options"><header><strong>Table options</strong><button aria-label="Close table options" onClick={() => setOptionsOpen(false)}>×</button></header>
-        <label><input type="checkbox" checked={preferences.sound} onChange={event => setPreferences(value => ({ ...value, sound: event.target.checked }))} />Sound effects</label>
+        <div className="shared-invite"><button type="button" onClick={() => {
+          const url = new URL(`/lobbies/${encodeURIComponent(lobbyId)}`, window.location.origin).href;
+          if (!navigator.clipboard?.writeText) { setInviteNotice('Copy the lobby link below.'); return; }
+          void navigator.clipboard.writeText(url).then(() => setInviteNotice('Invite link copied. Share it with another player.'), () => setInviteNotice('Copy the lobby link below.'));
+        }}>Copy invite link</button><label>Lobby invite link<input readOnly value={new URL(`/lobbies/${encodeURIComponent(lobbyId)}`, window.location.origin).href} onFocus={event => event.target.select()} /></label>{inviteNotice && <p role="status">{inviteNotice}</p>}<p>Players need access to this server. Private lobbies still require their password.</p></div>
+        <TableAppearance theme={preferences.theme} onChange={theme => setPreferences(value => ({ ...value, theme }))} />
+        <label><input type="checkbox" checked={preferences.sound} onChange={event => { prepareSound(true); setPreferences(value => ({ ...value, sound: event.target.checked })); }} />Sound effects</label>
         <label><input type="checkbox" checked={preferences.reducedMotion} onChange={event => setPreferences(value => ({ ...value, reducedMotion: event.target.checked }))} />Reduce motion</label>
         <label><input type="checkbox" checked={preferences.fastDeal} onChange={event => setPreferences(value => ({ ...value, fastDeal: event.target.checked }))} />Faster dealing</label><p>Saved on this device. System reduced motion is respected.</p>
         <div className="shared-bot-options"><strong>Players &amp; bots</strong><p>{!table ? 'Loading table controls…' : !table.botsEnabled ? 'Bots are disabled for this lobby.' : !table.isHost ? 'Only the host can add bots.' : table.canAddBot ? 'Add one bot to an open seat. It joins the next hand.' : 'All seats are reserved. No room for another bot.'}</p>
@@ -213,8 +229,9 @@ export default function SharedGameplay() {
         {table?.own.cards.rank && <p className="gameplay-hand-rank gameplay-player-rank">{handLabel('You', table.own.cards.rank, table.own.cards.cards)}</p>}
       </div>
       <section className="gameplay-seat" aria-label="Your seat"><span className="gameplay-identity"><span className="gameplay-player-name">{self?.name ?? 'You'}{self ? ` · ${self.status}` : ''}</span><strong className="gameplay-player-balance">{table ? format(table.balance) : '—'} <span>chips</span></strong><span className="game-sr-only">{table ? `${format(table.balance)} table chips` : 'Loading balance…'}</span></span></section>
+      {needsAction && connected && <p className="shared-turn-alert" role="status">{isDeciding ? 'Your turn — raise or fold' : 'Your turn — place your ante'}{seconds !== null && <span aria-hidden="true"> · {seconds}s</span>}</p>}
       <p className={`gameplay-result${ownResult && ownResult.net > 0 ? ' gameplay-payout-win' : ''}`} role="status">{resultText}</p>
-      {ownResult && <details key={table?.roundId} className="gameplay-breakdown" aria-label="Payout breakdown"><summary>Details</summary><dl><div><dt>Ante</dt><dd>{net(ownResult.anteNet)}</dd></div><div><dt>Raise</dt><dd>{table?.own.action === 'fold' ? 'Not placed' : ownResult.raiseNet === 0 ? 'Returned' : net(ownResult.raiseNet)}</dd></div><div className="gameplay-breakdown-total"><dt>Net change</dt><dd>{net(ownResult.net)}</dd></div></dl></details>}
+      {ownResult && <details key={table?.roundId} className="gameplay-breakdown" aria-label="Payout breakdown"><summary>Details</summary><dl><div><dt>Ante placed</dt><dd>{format(table!.own.ante)} chips</dd></div><div><dt>Raise placed</dt><dd>{format(table?.own.action === 'raise' ? table.own.ante * 2 : 0)} chips</dd></div><div><dt>Payout returned</dt><dd>{format(ownResult.returned)} chips</dd></div><div><dt>Ante</dt><dd>{net(ownResult.anteNet)}</dd></div><div><dt>Raise</dt><dd>{table?.own.action === 'fold' ? 'Not placed' : ownResult.raiseNet === 0 ? 'Returned' : net(ownResult.raiseNet)}</dd></div><div className="gameplay-breakdown-total"><dt>Net change</dt><dd>{net(ownResult.net)}</dd></div></dl></details>}
       <div className="gameplay-bets" aria-label="Bet controls">
         {isBetting && <><div className="gameplay-ante-presets" role="group" aria-label="Quick ante">{[...new Set([table!.minBet, 5, 10, 25, 50].filter(value => value >= table!.minBet && value <= table!.maxBet))].sort((a, b) => a - b).map(value => <button key={value} aria-label={`Set ante to ${value} chips`} aria-pressed={ante === value} disabled={busy || value * 3 > table!.balance} onClick={() => setAnte(value)}>{format(value)}</button>)}</div><label>Ante <input aria-label="Ante chips" type="number" step="0.01" min={table!.minBet} max={table!.maxBet} value={ante ?? ''} onChange={event => setAnte(Number(event.target.value))} /></label><button disabled={busy || !connected || !ante || ante < table!.minBet || ante > table!.maxBet || Math.round(ante * 100) * 3 > Math.round(table!.balance * 100) || seconds === 0} onClick={() => void action(() => placeAnte(lobbyId, table!.roundId!, ante!))}>Place ante</button></>}
         {!!isDeciding && <><button disabled={busy || !connected || seconds === 0} onClick={() => void action(() => decide(lobbyId, table!.roundId!, 'fold'))}>Fold</button><button className="gameplay-raise" disabled={busy || !connected || seconds === 0} onClick={() => void action(() => decide(lobbyId, table!.roundId!, 'raise'))}>Raise · {format(table!.own.ante * 2)} chips</button></>}

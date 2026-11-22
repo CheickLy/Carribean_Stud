@@ -1,0 +1,45 @@
+.table-appearance { display: flex; gap: 18px; margin: 12px 0; padding: 0 0 12px; border: 0; border-bottom: 1px solid #d0e6ec; }
+.table-appearance legend { margin-bottom: 6px; padding: 0; font-size: 13px; font-weight: 600; }
+.gameplay-preferences .table-appearance label { padding: 6px 0; font-size: 13px; }
+
+/* The table keeps its layout, type scale and card faces in both appearances. */
+.gameplay[data-theme="dark"] {
+  color-scheme: dark;
+  --table-text: #edf8fb;
+  --table-muted: #b4cdd4;
+  --table-surface: #132e3b;
+  --table-raised: #193d4b;
+  --table-border: #729aa8;
+  --table-accent: #75d5e6;
+  color: var(--table-text);
+  background: radial-gradient(ellipse at 50% 30%, #163b49, #0c202b);
+}
+.gameplay[data-theme="dark"] .gameplay-rail { background: #102f3b; border-color: #2e5260; box-shadow: 0 0 0 1px #537b89, 0 12px 32px #0003; }
+.gameplay[data-theme="dark"] .gameplay-inset { background: radial-gradient(ellipse at 50% 30%, #1d5260, #123d49); border-color: #729aa8; box-shadow: inset 0 3px 14px #0002; }
+.gameplay[data-theme="dark"] :is(.gameplay-wordmark, .gameplay-table-identity, .gameplay-hand-rank, .gameplay-result, .gameplay-bets label, .gameplay-identity strong, .gameplay-identity .gameplay-player-balance) { color: var(--table-text); }
+.gameplay[data-theme="dark"] :is(.gameplay-table-caption, .gameplay-table-identity small, .gameplay-dealer-rank, .gameplay-player-name, .gameplay-player-balance span, .gameplay-identity small, .gameplay-ante-help, .shared-waiting, .shared-roster, .gameplay-table-rule, .gameplay-table-rule span) { color: var(--table-muted); }
+.gameplay[data-theme="dark"] :is(.gameplay-tools button, .gameplay-lobbies, .gameplay-bets, .gameplay-bets button, .gameplay-preferences, .gameplay-breakdown dl, .shared-roster ul, .shared-round-clock, .shared-history, .gameplay-connection) { color: var(--table-text); background: var(--table-surface); border-color: var(--table-border); box-shadow: 0 8px 24px #0002; }
+.gameplay[data-theme="dark"] :is(.gameplay-seat, .gameplay-open-seat, .gameplay-player-rank) { color: var(--table-text); background: var(--table-raised); border: 1px solid var(--table-border); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.gameplay[data-theme="dark"] :is(.gameplay-open-avatar, .gameplay-avatar) { color: var(--table-muted); background: var(--table-surface); border-color: var(--table-border); }
+.gameplay[data-theme="dark"] :is(.gameplay-open-seat small, .gameplay-preferences p, .shared-history p, .shared-history li small, .gameplay-breakdown summary, .hand-guide-header span, .hand-guide-example, .hand-guide-rules, .hand-guide-columns) { color: var(--table-muted); }
+.gameplay[data-theme="dark"] :is(.gameplay-open-seat strong, .shared-player-seat .shared-player-result, .shared-roster strong, .shared-history h2) { color: var(--table-text); }
+.gameplay[data-theme="dark"] :is(.shared-bot-options, .table-appearance, .shared-roster li, .shared-history li, .gameplay-breakdown-total) { border-color: var(--table-border); }
+.gameplay[data-theme="dark"] .gameplay-bets input { background: var(--table-raised); color: var(--table-text); border-color: var(--table-border); }
+.gameplay[data-theme="dark"] :is(.shared-bot-options > button, .shared-game-error button) { background: var(--table-raised); color: var(--table-text); border-color: var(--table-border); }
+.gameplay[data-theme="dark"] .gameplay-preferences a { color: var(--table-accent); text-underline-offset: 3px; }
+.gameplay[data-theme="dark"] :is(.gameplay-bets .gameplay-raise, .gameplay-ante-presets button[aria-pressed="true"]) { background: var(--table-accent); color: #0c2733; border-color: var(--table-accent); }
+.gameplay[data-theme="dark"] .gameplay-ante { color: white; background: #9a4838; border-color: #f1b29f; }
+.gameplay[data-theme="dark"] .gameplay-bet-spots span { color: var(--table-muted); border-color: var(--table-border); }
+.gameplay[data-theme="dark"] .gameplay-lobbies img { filter: brightness(0) invert(1); }
+.gameplay[data-theme="dark"] .hand-guide { color: var(--table-text); background: var(--table-surface); border-color: var(--table-border); }
+.gameplay[data-theme="dark"] .hand-guide-header { color: var(--table-text); background: var(--table-surface); border-color: var(--table-border); }
+.gameplay[data-theme="dark"] :is(.hand-guide-header button, .shared-history header button) { color: var(--table-text); }
+.gameplay[data-theme="dark"] .hand-guide-list li { border-color: #355763; }
+.gameplay[data-theme="dark"] .hand-guide-current { background: var(--table-raised); }
+.gameplay[data-theme="dark"] .hand-guide-badge { color: var(--table-text); background: #285868; }
+.gameplay[data-theme="dark"] :is(.hand-guide-payout, .hand-guide-rules summary) { color: var(--table-accent); }
+.gameplay[data-theme="dark"] .hand-guide-list li::before { color: var(--table-muted); }
+.gameplay[data-theme="dark"] .hand-guide-header button:hover { background: var(--table-raised); }
+.gameplay[data-theme="dark"] :is(.shared-game-error, .gameplay-connection-reconnecting) { color: #ffe7cf; background: #4b3029; border-color: #c39b7b; }
+.gameplay[data-theme="dark"] :is(button, input, a, summary):focus-visible { outline: 3px solid var(--table-accent); outline-offset: 3px; }
+.gameplay[data-theme="dark"] input { accent-color: var(--table-accent); }

@@ -31,6 +31,29 @@ beforeEach(() => {
 });
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 describe('shared table screen', () => {
+  it('switches table appearance without changing a hand and restores the choice on reload', async () => {
+    show(); await screen.findByRole('heading', { name: 'Ocean crew' });
+    await userEvent.click(screen.getByRole('button', { name: 'Options' }));
+    expect(screen.getByRole('main').getAttribute('data-theme')).toBe('light');
+    expect((screen.getByRole('radio', { name: 'Light' }) as HTMLInputElement).checked).toBe(true);
+    await userEvent.click(screen.getByRole('radio', { name: 'Dark' }));
+    expect(screen.getByRole('main').getAttribute('data-theme')).toBe('dark');
+    expect(JSON.parse(localStorage.getItem('reefroyale.tablePreferences')!).theme).toBe('dark');
+    expect(api.placeAnte).not.toHaveBeenCalled(); expect(api.decide).not.toHaveBeenCalled();
+    cleanup(); show(); await screen.findByRole('heading', { name: 'Ocean crew' });
+    expect(screen.getByRole('main').getAttribute('data-theme')).toBe('dark');
+    await userEvent.click(screen.getByRole('button', { name: 'Options' }));
+    expect((screen.getByRole('radio', { name: 'Dark' }) as HTMLInputElement).checked).toBe(true);
+    await userEvent.click(screen.getByRole('radio', { name: 'Light' }));
+    expect(screen.getByRole('main').getAttribute('data-theme')).toBe('light');
+  });
+  it('keeps older saved sound and motion choices when adding an appearance preference', async () => {
+    localStorage.setItem('reefroyale.tablePreferences', JSON.stringify({ sound: true, reducedMotion: true, fastDeal: true }));
+    show(); await screen.findByRole('heading', { name: 'Ocean crew' });
+    await userEvent.click(screen.getByRole('button', { name: 'Options' }));
+    expect(screen.getByRole('main').getAttribute('data-theme')).toBe('light');
+    for (const name of ['Sound effects', 'Reduce motion', 'Faster dealing']) expect((screen.getByRole('checkbox', { name }) as HTMLInputElement).checked).toBe(true);
+  });
   it('queues an ante behind an in-flight heartbeat instead of losing the click', async () => {
     let finish!: (table: SharedTable) => void;
     const refreshing = new Promise<SharedTable>(resolve => { finish = resolve; });
@@ -218,6 +241,8 @@ describe('shared table screen', () => {
     await userEvent.click(screen.getByText('Details'));
     expect(details.hasAttribute('open')).toBe(true);
     expect(screen.getByText('Next hand starts automatically')).toBeTruthy();
+    expect(within(details).getByText('Payout returned')).toBeTruthy();
+    expect(within(details).getByText('20 chips')).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: 'History' }));
     expect(await screen.findByText('Hand 42 · +5 chips')).toBeTruthy();
     expect(api.loadHistory).toHaveBeenCalledWith('7');
@@ -246,6 +271,48 @@ describe('shared table screen', () => {
     expect(confirm).toHaveBeenCalledWith(expect.stringContaining('will not cancel it'));
     expect(api.leaveTable).not.toHaveBeenCalled();
   });
+  it('sounds a turn alert once per decision phase and stays silent when muted', async () => {
+    const start = vi.fn();
+    const disconnect = vi.fn();
+    class FakeAudioContext {
+      state = 'running'; currentTime = 0;
+      resume = async () => {};
+      close = async () => {};
+      destination = {};
+      createOscillator = () => ({ type: '', frequency: { setValueAtTime: vi.fn() }, connect: () => ({ connect: vi.fn() }), start, stop: vi.fn(), disconnect, onended: null });
+      createGain = () => ({ gain: { setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() }, connect: () => ({ connect: vi.fn() }), disconnect });
+    }
+    vi.stubGlobal('AudioContext', FakeAudioContext);
+    show(); await screen.findByRole('button', { name: 'Place ante' });
+    fireEvent.click(screen.getByRole('button', { name: 'Options' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Sound effects' }));
+    api.syncTable.mockResolvedValue(deciding);
+    fireEvent(window, new Event('online'));
+    await screen.findByRole('button', { name: 'Fold' });
+    expect(start).toHaveBeenCalledTimes(2); // Deal and the player's decision alert.
+    fireEvent(window, new Event('online'));
+    await waitFor(() => expect(api.syncTable).toHaveBeenCalledTimes(3));
+    expect(start).toHaveBeenCalledTimes(2);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Sound effects' }));
+    api.syncTable.mockResolvedValue({ ...base, roundId: 43 });
+    fireEvent(window, new Event('online'));
+    await screen.findByRole('button', { name: 'Place ante' });
+    expect(start).toHaveBeenCalledTimes(2);
+  });
+  it('copies the specific lobby invite and offers a selectable fallback', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    show(); await screen.findByRole('heading', { name: 'Ocean crew' });
+    fireEvent.click(screen.getByRole('button', { name: 'Options' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy invite link' }));
+    await screen.findByText('Invite link copied. Share it with another player.');
+    expect(writeText).toHaveBeenCalledWith(new URL('/lobbies/7', window.location.origin).href);
+    writeText.mockRejectedValueOnce(new Error('Denied'));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy invite link' }));
+    await screen.findByText('Copy the lobby link below.');
+    expect((screen.getByLabelText('Lobby invite link') as HTMLInputElement).value).toContain('/lobbies/7');
+    expect(api.leaveTable).not.toHaveBeenCalled();
+  });
   it('restores the server hand after going offline without replaying an action', async () => {
     api.syncTable.mockResolvedValue(deciding);
     show(); await screen.findByRole('button', { name: 'Fold' });
@@ -258,6 +325,14 @@ describe('shared table screen', () => {
     expect(screen.getByText('Decision locked. Waiting for the other players.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Fold' })).toBeNull();
     expect(api.decide).not.toHaveBeenCalled();
+  });
+  it('highlights only a pending player decision and clears it after acting', async () => {
+    api.syncTable.mockResolvedValue(deciding);
+    api.decide.mockResolvedValue({ ...deciding, own: { ...deciding.own, action: 'fold' } });
+    show(); await screen.findByText(/Your turn — raise or fold/);
+    await userEvent.click(screen.getByRole('button', { name: 'Fold' }));
+    await screen.findByText('Decision locked. Waiting for the other players.');
+    expect(screen.queryByText(/Your turn —/)).toBeNull();
   });
   it('recovers polling after a connection failure', async () => {
     api.syncTable.mockRejectedValueOnce(new Error('Network failed'));
