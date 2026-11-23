@@ -12,6 +12,7 @@ import { Advert } from './advert.js';
 import { AdvertWatchSession } from './advertWatchSession.js';
 import { AdvertRewardClaim } from './advertRewardClaim.js';
 import { AdvertClickClaim } from './advertClickClaim.js';
+import { TableMessage } from './tableMessage.js';
 
 User.hasMany(Lobby, { foreignKey: 'hostId', as: 'hostedLobbies' });
 Lobby.belongsTo(User, { foreignKey: 'hostId', as: 'host' });
@@ -104,4 +105,5 @@ export {
   AdvertWatchSession,
   AdvertRewardClaim,
   AdvertClickClaim,
+  TableMessage,
 };

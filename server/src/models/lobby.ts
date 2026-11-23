@@ -16,6 +16,7 @@ export class Lobby extends Model {
   declare maxPlayers: number;
   declare startingMoney: string;
   declare botsEnabled: boolean;
+  declare startingBots: number;
   declare increaseAmount: string;
   declare increaseEveryHands: number;
 }
@@ -93,6 +94,7 @@ Lobby.init(
       allowNull: false,
       defaultValue: false,
     },
+    startingBots: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     increaseAmount: {
       type: DataTypes.DECIMAL(12, 2),
       allowNull: false,

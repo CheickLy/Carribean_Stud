@@ -17,6 +17,7 @@ import { advertsRouter } from './modules/adverts/adverts.routes.js';
 import { watchRouter } from './modules/adverts/watch.routes.js';
 import { clickRouter } from './modules/adverts/click.routes.js';
 import { sharedGameRouter } from './modules/shared-game/routes.js';
+import { recordRouter } from './modules/game/record.routes.js';
 
 const SequelizeStore = connectionSessionSequelize(session.Store);
 
@@ -63,6 +64,7 @@ app.use("/api/invitations", invitationsRouter);
 app.use('/api/messages', messagesRouter);
 app.use('/api/support-tickets', supportRouter);
 app.use('/api/game', gameRouter);
+app.use('/api/record', recordRouter);
 app.use('/api/admin/adverts', advertsRouter);
 app.use('/api/adverts/watch', watchRouter);
 app.use('/api/adverts/click', clickRouter);

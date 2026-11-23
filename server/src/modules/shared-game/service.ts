@@ -1,4 +1,5 @@
 import { Op, type Transaction } from 'sequelize';
+import bcrypt from 'bcryptjs';
 import { sequelize } from '../../db/sequelize.js';
 import { Lobby } from '../../models/lobby.js';
 import { LobbyMember } from '../../models/lobbyMember.js';
@@ -42,6 +43,7 @@ export async function sharedTable(lobbyId: number, userId: number | null, comman
     const stored = await TableGame.findByPk(lobbyId, { transaction });
     const table: Table = stored ? structuredClone(stored.state) : { seats: [], round: null, handsPlayed: 0 };
     table.botCount ??= table.seats.filter(seat => seat.bot).length;
+    table.parkedBalances ??= {};
     table.botRequests ??= [];
     table.pendingBotRemovals ??= [];
     table.nextBotNumber ??= Math.max(0, ...table.seats.filter(seat => seat.bot).map(seat => Number(seat.id.replace('bot', '')) || 0)) + 1;
@@ -53,7 +55,18 @@ export async function sharedTable(lobbyId: number, userId: number | null, comman
     for (const user of users.filter(user => !user.isBanned)) {
       const seat = table.seats.find(seat => seat.userId === user.userId);
       if (seat) seat.name = user.isGuest ? 'Guest' : user.username;
-      else table.seats.push({ id: `u${user.userId}`, userId: user.userId, name: user.isGuest ? 'Guest' : user.username, bot: false, balance: settings.starting, lastSeen: 0, active: false });
+      else {
+        const savedBalance = table.parkedBalances[String(user.userId)];
+        table.seats.push({ id: `u${user.userId}`, userId: user.userId, name: user.isGuest ? 'Guest' : user.username, bot: false, balance: savedBalance ?? settings.starting, lastSeen: 0, active: false });
+        delete table.parkedBalances[String(user.userId)];
+      }
+    }
+    if (!stored && settings.bots) {
+      for (let number = 1; number <= Math.min(lobby.startingBots ?? 0, settings.maxPlayers - ids.length); number++) {
+        table.seats.push({ id: `bot${number}`, userId: null, name: `Reef Bot ${number}`, bot: true, balance: settings.starting, lastSeen: now, active: true });
+      }
+      table.botCount = table.seats.filter(seat => seat.bot).length;
+      table.nextBotNumber = table.botCount + 1;
     }
     // Removed/banned users cannot continue a round or keep the table waiting.
     const allowed = new Set(users.filter(user => !user.isBanned).map(user => user.userId));
@@ -110,6 +123,18 @@ export async function sharedTable(lobbyId: number, userId: number | null, comman
     const phaseBefore = table.round?.phase;
     changed = advance(table, now);
     if (changed || table.round?.phase !== phaseBefore) await saveProgress(table, transaction);
+    // A player exits after the current hand settles. Save their table chips for a later rejoin.
+    for (const seat of [...table.seats].filter(seat => seat.leaving && (!table.round || table.round.phase === 'completed' || !table.round.players.some(player => player.id === seat.id)))) {
+      if (seat.userId === null) continue;
+      table.parkedBalances[String(seat.userId)] = seat.balance;
+      table.seats = table.seats.filter(other => other.id !== seat.id);
+      if (seat.userId === lobby.hostId) {
+        const next = table.seats.find(other => !other.bot && other.userId !== null && allowed.has(other.userId));
+        if (next) await transferHost(next.userId!);
+        else await lobby.update({ isActive: false }, { transaction });
+      }
+      await LobbyMember.destroy({ where: { lobbyId, userId: seat.userId }, transaction });
+    }
     if (!table.round || (table.round.phase === 'completed' && now >= table.round.deadline)) {
       // Bots occupy only seats not reserved for human lobby members.
       const humans = table.seats.filter(seat => !seat.bot && allowed.has(seat.userId!));
@@ -126,7 +151,7 @@ export async function sharedTable(lobbyId: number, userId: number | null, comman
     }
     if (stored) await stored.update({ state: table }, { transaction });
     else await TableGame.create({ lobbyId, state: table }, { transaction });
-    const publicView = userId !== null ? tableView(table, settings, userId, now) : null;
+    const publicView = userId !== null && table.seats.some(seat => seat.userId === userId) ? tableView(table, settings, userId, now) : null;
     const view = publicView ? { ...publicView, seats: publicView.seats.map(seat => ({ ...seat, isHost: seat.id === `u${lobby.hostId}`, removalPending: table.pendingBotRemovals!.includes(seat.id) })), isHost: userId === lobby.hostId, botCount: table.botCount, canAddBot: settings.bots && userId === lobby.hostId && ids.length + table.botCount < settings.maxPlayers } : null;
     return { view, error };
   });
@@ -145,6 +170,27 @@ export async function handHistory(lobbyId: number, userId: number) {
     const session = sessions.find(session => session.sessionId === hand.sessionId)!;
     return { handId: hand.handId, roundId: hand.sessionId, playedAt: session.createdAt, playerCards: JSON.parse(hand.playerCards!), dealerCards: JSON.parse(session.dealerCards!), ante: Number(hand.anteBet), raise: Number(hand.callBet), returned: Number(hand.payout), net: Number(hand.netChange), message: hand.outcome };
   });
+}
+
+export async function spectateTable(lobbyId: number, userId: number | null, passcode?: string) {
+  const lobby = await Lobby.findByPk(lobbyId);
+  if (!lobby || !lobby.isActive) throw new GameError(404, 'Table not found.');
+  const user = userId === null ? null : await User.findByPk(userId);
+  if (userId !== null && (!user || user.isBanned)) throw new GameError(403, 'This account cannot spectate.');
+  const member = userId !== null && (userId === lobby.hostId || Boolean(await LobbyMember.findOne({ where: { lobbyId, userId } })));
+  if (lobby.isPrivate && !member && (!lobby.passcode || !passcode || !(await bcrypt.compare(passcode, lobby.passcode)))) throw new GameError(403, 'Enter the private table password to spectate.');
+  await sharedTable(lobbyId, null);
+  const stored = await TableGame.findByPk(lobbyId);
+  const table = stored?.state;
+  const round = table?.round;
+  const complete = round?.phase === 'completed';
+  return { name: lobby.name, isPrivate: lobby.isPrivate, roundNumber: round?.number ?? 0, phase: round?.phase ?? 'waiting', deadline: round?.deadline ?? null,
+    dealer: round && round.phase !== 'betting' ? complete ? round.dealer : [round.dealer[0]] : [],
+    seats: (table?.seats ?? []).map(seat => { const player = round?.players.find(player => player.id === seat.id); return {
+      name: seat.name, bot: seat.bot, status: player?.timedOut ? 'timed out' : player?.action ?? (player?.ante ? 'betting' : 'waiting'),
+      ante: player?.ante ? money(player.ante) : 0, net: complete && player?.result ? money(player.result.net) : null,
+    }; }),
+  };
 }
 
 export function startTableClock() {

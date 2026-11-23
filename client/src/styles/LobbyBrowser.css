@@ -297,3 +297,4 @@
 .tutorial-invite a { color: #087f9b; font-size: 13px; white-space: nowrap; }
 .tutorial-invite button { flex-shrink: 0; border: 0; background: transparent; color: #527987; font-size: 22px; cursor: pointer; }
 @media (max-width: 600px) { .tutorial-invite { flex-wrap: wrap; gap: 12px; } .tutorial-invite > div { flex-basis: calc(100% - 45px); } .tutorial-invite button { order: -1; margin-left: auto; } .tutorial-invite a { order: 2; } }
+.reef-table-action a{display:inline-block;margin-left:8px;padding:8px 10px;border:1px solid #8ab9c6;border-radius:7px;color:#075f76;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap}.reef-table-action a:hover,.reef-table-action a:focus-visible{background:#eaf7fa;outline-color:#087f9b}

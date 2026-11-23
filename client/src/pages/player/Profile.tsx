@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCurrentUser } from "../../services/auth";
 import { AVATARS } from "../../services/users";
-import { sampleHands, sampleSummary } from "./sampleHands";
+import { loadRecordHistory, loadStats, type RecordHand, type RecordHistory, type RecordStats } from "../../services/record";
 import WatchAdvertModal from "../../components/WatchAdvertModal";
 import { startWatchAdvert, type WatchSession } from "../../services/watchAd";
 import "./Profile.css";
@@ -64,9 +64,17 @@ export default function Profile() {
   </main>;
 }
 
-export function ProfileComingSoon({ title }: { title: string }) {
+export function PlayerRecord({ title }: { title: string }) {
   const navigate = useNavigate();
   const [allowed, setAllowed] = useState(false);
+  const [stats, setStats] = useState<RecordStats | null>(null);
+  const [historyData, setHistoryData] = useState<RecordHistory | null>(null);
+  const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [sessionId, setSessionId] = useState('');
+  const [filters, setFilters] = useState({ from: '', to: '', sessionId: '' });
   useEffect(() => {
     let active = true;
     getCurrentUser().then((user) => {
@@ -76,25 +84,37 @@ export function ProfileComingSoon({ title }: { title: string }) {
     }).catch(() => navigate("/", { replace: true }));
     return () => { active = false; };
   }, [navigate]);
+  useEffect(() => {
+    if (!allowed) return;
+    let active = true;
+    Promise.all([loadStats(), loadRecordHistory(page, filters.from, filters.to, filters.sessionId)])
+      .then(([summary, hands]) => { if (active) { setStats(summary); setHistoryData(hands); setError(''); } })
+      .catch(problem => { if (active) setError(problem instanceof Error ? problem.message : 'Could not load your record.'); });
+    return () => { active = false; };
+  }, [allowed, page, filters]);
   if (!allowed) return <main className="profile-page"><p>Loading...</p></main>;
   const history = title === "Game History";
-  const winRate = Math.round((sampleSummary.wins / sampleSummary.hands) * 100);
-  const formatNet = (net: number) => `${net > 0 ? "+" : ""}${net}`;
+  const formatNet = (net: number) => `${net > 0 ? "+" : ""}${net.toFixed(2)}`;
+  const recent = historyData?.hands ?? [];
+  const handName = (hand: RecordHand) => { try { return JSON.parse(hand.hand).join(', '); } catch { return hand.hand || 'Cards unavailable'; } };
   return <main className="profile-page">
     <header className="profile-header"><div><p className="profile-eyebrow">REEF ROYALE / PLAYER RECORD</p><h1>{title}</h1><p className="profile-page-subtitle">{history ? "A hand-by-hand look at your table sessions." : "Your results at a glance."}</p></div><button type="button" className="profile-play" onClick={() => navigate("/profile")}>Back to Profile</button></header>
-    <p className="profile-demo-note">Preview only — these are sample hands, not your saved game results.</p>
+    {error && <p role="alert">{error}</p>}
+    {!stats && !error && <p>Loading your results...</p>}
     <nav className="profile-tabs" aria-label="Player record"><button type="button" className={!history ? "active" : ""} onClick={() => navigate("/profile/statistics")}>Statistics</button><button type="button" className={history ? "active" : ""} onClick={() => navigate("/profile/history")}>Game History</button></nav>
-    {history ? <>
-      <div className="profile-history-summary"><span><strong>{sampleSummary.hands}</strong> hands</span><span><strong>{sampleSummary.wins}</strong> wins</span><span><strong>{formatNet(sampleSummary.net)}</strong> net chips</span></div>
-      <section className="profile-data-panel"><div className="profile-panel-heading"><div><small>RECENT ACTIVITY</small><h2>Hand history</h2></div><span>Newest first</span></div><div className="profile-history-list">{sampleHands.map((hand) => <article className="profile-match" key={hand.id}><span className={`profile-match-mark ${hand.result.toLowerCase()}`}>{hand.result === "Win" ? "W" : hand.result === "Loss" ? "L" : "T"}</span><div className="profile-match-main"><small>{hand.date}</small><h3>{hand.table}</h3><span>{hand.hand} · {hand.choice}</span></div><div><small>Ante</small><strong>{hand.ante} chips</strong></div><div className="profile-match-net"><small>Net change</small><strong className={`profile-result ${hand.result.toLowerCase()}`}>{formatNet(hand.net)} chips</strong></div></article>)}</div></section>
+    {stats && (history ? <>
+      <div className="profile-history-summary"><span><strong>{stats.hands}</strong> hands</span><span><strong>{stats.wins}</strong> wins</span><span><strong>{formatNet(stats.net)}</strong> net chips</span></div>
+      <form className="profile-history-filters" onSubmit={event => { event.preventDefault(); setPage(1); setFilters({ from, to, sessionId }); }}><label>From <input type="date" value={from} onChange={event => setFrom(event.target.value)} /></label><label>To <input type="date" value={to} onChange={event => setTo(event.target.value)} /></label><label>Session ID <input type="number" min="1" value={sessionId} onChange={event => setSessionId(event.target.value)} placeholder="Any session" /></label><button type="submit">Filter</button><button type="button" onClick={() => { setFrom(''); setTo(''); setSessionId(''); setPage(1); setFilters({ from: '', to: '', sessionId: '' }); }}>Clear</button></form>
+      <section className="profile-data-panel"><div className="profile-panel-heading"><div><small>RECENT ACTIVITY</small><h2>Hand history</h2></div><span>Newest first</span></div><div className="profile-history-list">{recent.length ? recent.map((hand) => <article className="profile-match" key={hand.id}><span className={`profile-match-mark ${hand.result.toLowerCase()}`}>{hand.result[0]}</span><div className="profile-match-main"><small>{new Date(hand.date).toLocaleString()} · Session {hand.sessionId}</small><h3>{hand.table}</h3><span>{handName(hand)} · {hand.choice}</span></div><div><small>Ante</small><strong>{hand.ante.toFixed(2)} chips</strong></div><div className="profile-match-net"><small>Net change</small><strong className={`profile-result ${hand.result.toLowerCase()}`}>{formatNet(hand.net)} chips</strong></div></article>) : <p>No saved hands match these filters.</p>}</div></section>
+      {historyData && historyData.pages > 1 && <div className="profile-history-pages"><button type="button" disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</button><span>Page {page} of {historyData.pages}</span><button type="button" disabled={page >= historyData.pages} onClick={() => setPage(page + 1)}>Next</button></div>}
     </> : <>
       <div className="profile-stat-grid">{[
-        { label: "Hands played", value: String(sampleSummary.hands), note: "Completed hands" },
-        { label: "Win rate", value: `${winRate}%`, note: "Wins ÷ hands played" },
-        { label: "Net chips", value: formatNet(sampleSummary.net), note: "Total chip change" },
+        { label: "Hands played", value: String(stats.hands), note: "Completed hands" },
+        { label: "Win rate", value: `${stats.winRate}%`, note: "Wins ÷ hands played" },
+        { label: "Net chips", value: formatNet(stats.net), note: "Total chip change" },
       ].map((stat) => <article className="profile-stat profile-stat-feature" key={stat.label}><small>{stat.label}</small><strong>{stat.value}</strong><span>{stat.note}</span></article>)}</div>
-      <div className="profile-insight-grid"><section className="profile-data-panel"><div className="profile-panel-heading"><div><small>RESULTS</small><h2>How your hands ended</h2></div></div><div className="profile-outcome-bar" aria-label={`${sampleSummary.wins} wins, ${sampleSummary.losses} losses, ${sampleSummary.ties} ties`}><span className="wins" style={{ width: `${sampleSummary.wins / sampleSummary.hands * 100}%` }} /><span className="losses" style={{ width: `${sampleSummary.losses / sampleSummary.hands * 100}%` }} /><span className="ties" style={{ width: `${sampleSummary.ties / sampleSummary.hands * 100}%` }} /></div><div className="profile-outcome-legend"><span>● Wins <strong>{sampleSummary.wins}</strong></span><span>● Losses <strong>{sampleSummary.losses}</strong></span><span>● Ties <strong>{sampleSummary.ties}</strong></span></div></section><section className="profile-data-panel"><div className="profile-panel-heading"><div><small>PLAY STYLE</small><h2>Decisions made</h2></div></div><div className="profile-decision"><span>Raised</span><strong>{sampleHands.filter((hand) => hand.choice === "Raise").length} hands</strong></div><div className="profile-decision"><span>Folded</span><strong>{sampleHands.filter((hand) => hand.choice === "Fold").length} hands</strong></div><p>Raising continues a hand; folding ends it and loses the ante.</p></section></div>
-      <section className="profile-data-panel"><div className="profile-panel-heading"><div><small>QUICK LOOK</small><h2>Latest hands</h2></div><button type="button" onClick={() => navigate("/profile/history")}>View all history →</button></div><div className="profile-recent-list">{sampleHands.slice(0, 3).map((hand) => <div key={hand.id}><span className={`profile-match-mark ${hand.result.toLowerCase()}`}>{hand.result[0]}</span><span>{hand.table}<small>{hand.date}</small></span><strong className={`profile-result ${hand.result.toLowerCase()}`}>{formatNet(hand.net)} chips</strong></div>)}</div></section>
-    </>}
+      <div className="profile-insight-grid"><section className="profile-data-panel"><div className="profile-panel-heading"><div><small>RESULTS</small><h2>How your hands ended</h2></div></div><div className="profile-outcome-bar" aria-label={`${stats.wins} wins, ${stats.losses} losses, ${stats.ties} ties`}><span className="wins" style={{ width: `${stats.hands ? stats.wins / stats.hands * 100 : 0}%` }} /><span className="losses" style={{ width: `${stats.hands ? stats.losses / stats.hands * 100 : 0}%` }} /><span className="ties" style={{ width: `${stats.hands ? stats.ties / stats.hands * 100 : 0}%` }} /></div><div className="profile-outcome-legend"><span>● Wins <strong>{stats.wins}</strong></span><span>● Losses <strong>{stats.losses}</strong></span><span>● Ties <strong>{stats.ties}</strong></span></div></section><section className="profile-data-panel"><div className="profile-panel-heading"><div><small>PLAY STYLE</small><h2>Decisions made</h2></div></div><div className="profile-decision"><span>Raised</span><strong>{stats.raised} hands</strong></div><div className="profile-decision"><span>Folded</span><strong>{stats.folded} hands</strong></div><p>Raising continues a hand; folding ends it and loses the ante.</p></section></div>
+      <section className="profile-data-panel"><div className="profile-panel-heading"><div><small>QUICK LOOK</small><h2>Latest hands</h2></div><button type="button" onClick={() => navigate("/profile/history")}>View all history →</button></div><div className="profile-recent-list">{recent.slice(0, 3).length ? recent.slice(0, 3).map((hand) => <div key={hand.id}><span className={`profile-match-mark ${hand.result.toLowerCase()}`}>{hand.result[0]}</span><span>{hand.table}<small>{new Date(hand.date).toLocaleString()}</small></span><strong className={`profile-result ${hand.result.toLowerCase()}`}>{formatNet(hand.net)} chips</strong></div>) : <p>No hands played yet.</p>}</div></section>
+    </>)}
   </main>;
 }

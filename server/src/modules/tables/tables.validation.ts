@@ -3,6 +3,7 @@ export interface CreateLobbyInput {
     maxPlayers: number;
     startingMoney: number;
     botsEnabled: boolean;
+    startingBots?: number;
     increaseAmount: number;
     increaseEveryHands: number;
     minBet: number;
@@ -63,6 +64,10 @@ export function validateLobby(input: unknown): string[] {
     }
     if (typeof lobby.botsEnabled !== "boolean") {
         errors.push("Bots setting must be true or false");
+    }
+    if (lobby.startingBots !== undefined && (!Number.isInteger(lobby.startingBots) || (lobby.startingBots as number) < 0 ||
+        (lobby.startingBots as number) >= (lobby.maxPlayers as number) || (lobby.botsEnabled === false && lobby.startingBots !== 0))) {
+        errors.push("Choose a bot count that leaves room for the host.");
     }
     if (typeof lobby.autoIncr !== "boolean") {
         errors.push("Auto increment setting must be true or false");

@@ -1,8 +1,22 @@
 import { Router } from 'express';
 import { GameError } from './engine.js';
-import { handHistory, sharedTable, type TableCommand } from './service.js';
+import { handHistory, sharedTable, spectateTable, type TableCommand } from './service.js';
+import { TableMessage } from '../../models/tableMessage.js';
+import { User } from '../../models/user.js';
 
 export const sharedGameRouter = Router();
+sharedGameRouter.post('/:lobbyId/game/spectate', async (req, res, next) => {
+  const lobbyId = Number(req.params.lobbyId);
+  const passcode = req.body?.passcode;
+  if (!Number.isSafeInteger(lobbyId) || lobbyId <= 0 || (passcode !== undefined && (typeof passcode !== 'string' || passcode.length > 72))) { res.status(400).json({ error: 'Use a valid table ID and password.' }); return; }
+  try {
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(await spectateTable(lobbyId, req.session?.userId ?? null, passcode));
+  } catch (error) {
+    if (error instanceof GameError) { res.status(error.status).json({ error: error.message }); return; }
+    next(error);
+  }
+});
 sharedGameRouter.all('/:lobbyId/game/:operation', async (req, res, next) => {
   const userId = req.session?.userId;
   if (!userId || !Number.isSafeInteger(userId)) { res.status(401).json({ error: 'Authentication required.' }); return; }
@@ -11,6 +25,21 @@ sharedGameRouter.all('/:lobbyId/game/:operation', async (req, res, next) => {
   res.setHeader('Cache-Control', 'no-store');
   const operation = req.params.operation;
   try {
+    if (operation === 'chat') {
+      const table = await sharedTable(lobbyId, userId);
+      const seat = table?.seats.find(seat => seat.isYou);
+      if (!seat || !seat.online) throw new GameError(403, 'Reconnect to your seat before using table chat.');
+      if (req.method === 'POST') {
+        const body = req.body?.message;
+        if (typeof body !== 'string' || !body.trim() || body.trim().length > 300) throw new GameError(400, 'Write a message of 1 to 300 characters.');
+        await TableMessage.create({ lobbyId, userId, body: body.trim() });
+      } else if (req.method !== 'GET') { res.status(405).json({ error: 'Use GET or POST for chat.' }); return; }
+      const messages = (await TableMessage.findAll({ where: { lobbyId }, order: [['messageId', 'DESC']], limit: 50 })).reverse();
+      const users = await User.findAll({ where: { userId: messages.map(message => message.userId) }, attributes: ['userId', 'username'] });
+      const names = new Map(users.map(user => [user.userId, user.username]));
+      res.json(messages.map(message => ({ id: message.messageId, userId: message.userId, name: names.get(message.userId) ?? 'Player', message: message.body, createdAt: message.createdAt })));
+      return;
+    }
     if (operation === 'history' && req.method === 'GET') { res.json(await handHistory(lobbyId, userId)); return; }
     if (req.method !== 'POST') { res.status(405).json({ error: 'Use POST for table actions.' }); return; }
     const { roundId, ante, action, requestId, seatId } = req.body ?? {};

@@ -5,12 +5,13 @@ import RegistrationSection from "./components/RegistrationSection";
 import CreateLobby from "./pages/CreateLobby";
 import LobbyBrowser from "./pages/LobbyBrowser";
 import SharedGameplay from "./pages/SharedGameplay";
+import SpectateTable from "./pages/SpectateTable";
 import GameTutorial from "./pages/GameTutorial";
 import Friends from "./pages/player/Friends";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import LobbyRoom from "./pages/LobbyRoom";
 import Avatar from "./pages/player/Avatar";
-import Profile, { ProfileComingSoon } from "./pages/player/Profile";
+import Profile, { PlayerRecord } from "./pages/player/Profile";
 import GameRules from "./pages/GameRules";
 import GamePreview from "./pages/GamePreview";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -151,13 +152,14 @@ const router = createBrowserRouter([{
     { path: "/rules", element: <GameRules /> },
     { path: "/game-preview", element: <GamePreview /> },
     { path: "/tutorial", element: <GameTutorial /> },
+    { path: "/lobbies/:lobbyId/spectate", element: <SpectateTable /> },
     { path: "/lobbies", element: <LobbyBrowser /> },
     { element: <RequireSession />, children: [
       { path: "/play", element: <Navigate to="/lobbies" replace /> },
       { path: "/friends", element: <Friends /> },
       { path: "/profile", element: <Profile /> },
-      { path: "/profile/statistics", element: <ProfileComingSoon title="Statistics" /> },
-      { path: "/profile/history", element: <ProfileComingSoon title="Game History" /> },
+      { path: "/profile/statistics", element: <PlayerRecord title="Statistics" /> },
+      { path: "/profile/history", element: <PlayerRecord title="Game History" /> },
       { path: "/profile/avatar", element: <Avatar /> },
       { path: "/friends/:friendId/messages", element: <Messages /> },
       { path: "/create-lobby", element: <CreateLobby /> },

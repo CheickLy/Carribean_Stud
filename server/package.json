@@ -12,7 +12,7 @@
     "test:join:postgres": "npm run build && node tests/join.postgres.mjs",
     "test:shared:postgres": "npm run build && node tests/shared-game.postgres.mjs",
     "test:multiplayer:postgres": "npm run build && node tests/multiplayer.postgres.mjs",
-    "test:coverage": "TEST_POSTGRES=1 vitest run --coverage",
+    "test:coverage": "node tests/run-coverage.mjs",
     "test:coverage:postgres": "npm run test:coverage",
     "db:migrate": "sequelize-cli db:migrate",
     "db:seed": "sequelize-cli db:seed:all"

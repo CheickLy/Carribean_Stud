@@ -14,6 +14,7 @@ type LobbySettings = {
   minBet: number;
   maxBet: number;
   botsEnabled: boolean;
+  startingBots: number;
   autoIncrease: boolean;
   increaseAmount: number;
   increaseEveryHands: number;
@@ -28,6 +29,7 @@ const initialSettings: LobbySettings = {
   minBet: 10,
   maxBet: 250,
   botsEnabled: false,
+  startingBots: 0,
   autoIncrease: false,
   increaseAmount: 10,
   increaseEveryHands: 15,
@@ -104,6 +106,11 @@ export default function CreateLobby() {
       return;
     }
 
+    if (settings.botsEnabled && (!Number.isInteger(settings.startingBots) || settings.startingBots < 0 || settings.startingBots >= settings.maxPlayers)) {
+      setError("Choose a bot count that leaves a seat for you.");
+      return;
+    }
+
    setSubmitting(true);
    setError("");
    try {
@@ -122,6 +129,7 @@ export default function CreateLobby() {
       isPrivate: settings.visibility === "private",
       passcode: settings.visibility === "private" ? settings.password : undefined,
       botsEnabled: settings.botsEnabled,
+      startingBots: settings.botsEnabled ? settings.startingBots : 0,
       autoIncr: settings.autoIncrease,
       increaseAmount: settings.increaseAmount,
       increaseEveryHands: settings.increaseEveryHands,
@@ -319,6 +327,7 @@ navigate(`/lobbies/${data.lobbyId}`, { state: { created: true } });
                     />
                     <span className="reef-switch-track" />
                   </label>
+                  {settings.botsEnabled && <label className="reef-bot-count">Bots to start with <input type="number" min="0" max={settings.maxPlayers - 1} value={settings.startingBots} onChange={event => update("startingBots", Number(event.target.value))} /><small>You can still invite players to fill open seats.</small></label>}
                 </div>
               </div>
             </section>

@@ -31,6 +31,7 @@ export async function createLobby(
     maxPlayers: input.maxPlayers,
     startingMoney: input.startingMoney,
     botsEnabled: input.botsEnabled,
+    startingBots: input.botsEnabled ? input.startingBots ?? 0 : 0,
     autoIncr: input.autoIncr,
     increaseAmount: input.increaseAmount ?? 10,
     increaseEveryHands: input.increaseEveryHands ?? 15,

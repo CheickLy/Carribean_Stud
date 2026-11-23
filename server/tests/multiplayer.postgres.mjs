@@ -15,14 +15,17 @@ const { Lobby } = await import(`${source}/models/lobby.${extension}`);
 const { LobbyMember } = await import(`${source}/models/lobbyMember.${extension}`);
 const { Session } = await import(`${source}/models/session.${extension}`);
 const { GameHand } = await import(`${source}/models/gameHand.${extension}`);
+const { TableMessage } = await import(`${source}/models/tableMessage.${extension}`);
 const { TableGame } = await import(`${source}/models/tableGame.${extension}`);
 const { authRouter } = await import(`${source}/modules/auth/auth.routes.${extension}`);
 const { tablesRouter } = await import(`${source}/modules/tables/tables.routes.${extension}`);
 const { sharedGameRouter } = await import(`${source}/modules/shared-game/routes.${extension}`);
+const { recordRouter } = await import(`${source}/modules/game/record.routes.${extension}`);
+const { sharedTable } = await import(`${source}/modules/shared-game/service.${extension}`);
 let server;
 try {
   await sequelize.createSchema(schema);
-  for (const model of [User, Lobby, LobbyMember, Session, GameHand, TableGame]) {
+  for (const model of [User, Lobby, LobbyMember, Session, GameHand, TableGame, TableMessage]) {
     assert.equal(model.getTableName().schema, schema);
     await model.sync();
   }
@@ -34,6 +37,7 @@ try {
   app.use(session({ secret: 'isolated-multiplayer-test-secret', resave: false, saveUninitialized: false }));
   app.use('/api/auth', authRouter);
   app.use('/api/lobbies', tablesRouter, sharedGameRouter);
+  app.use('/api/record', recordRouter);
   app.use((error, _req, res, _next) => res.status(500).json({ error: error.message }));
   server = app.listen(0, '127.0.0.1');
   await new Promise((resolve, reject) => { server.once('listening', resolve); server.once('error', reject); });
@@ -60,7 +64,18 @@ try {
   assert.equal(waiting.roundId, solo.roundId);
   assert.equal(waiting.seats.find(seat => seat.isYou).inRound, false);
   assert.deepEqual(waiting.own.cards.cards, []);
-  await host.post(`${endpoint}/leave`).send({ roundId: solo.roundId }).expect(200);
+  const watch = (await late.post(`${endpoint}/spectate`).send({}).expect(200)).body;
+  assert.equal(watch.name, 'Multiplayer acceptance');
+  assert(!JSON.stringify(watch).includes('own'));
+  await request(server).post(`${endpoint}/spectate`).send({}).expect(200);
+  await late.get(`${endpoint}/chat`).expect(403);
+  await host.post(`${endpoint}/chat`).send({ message: 'Good luck!' }).expect(200);
+  await alice.post(`${endpoint}/chat`).send({ message: 'Thanks!' }).expect(200);
+  const chat = (await host.get(`${endpoint}/chat`).expect(200)).body;
+  assert.deepEqual(chat.map(message => message.message), ['Good luck!', 'Thanks!']);
+  await host.post(`${endpoint}/chat`).send({ message: '   ' }).expect(400);
+  await host.post(`${endpoint}/chat`).send({ message: 'x'.repeat(301) }).expect(400);
+  await sharedTable(id, null, undefined, Date.now() + 60000);
   async function finishResultsPause() {
     const saved = await TableGame.findByPk(id);
     const state = structuredClone(saved.state);
@@ -139,6 +154,18 @@ try {
   const aliceHistory = (await alice.get(`${endpoint}/history`).expect(200)).body;
   assert.equal(hostHistory.length, 1); assert.equal(aliceHistory.length, 1);
   assert.deepEqual(hostHistory[0].playerCards, hostCards); assert.deepEqual(aliceHistory[0].playerCards, aliceCards);
+  const hostStats = (await host.get('/api/record/stats').expect(200)).body;
+  assert.deepEqual([hostStats.hands, hostStats.wins, hostStats.losses, hostStats.ties, hostStats.winRate], [1, 1, 0, 0, 100]);
+  const emptyStats = (await late.get('/api/record/stats').expect(200)).body;
+  assert.deepEqual([emptyStats.hands, emptyStats.winRate], [0, 0]);
+  const ownHistory = (await host.get('/api/record/history?page=1').expect(200)).body;
+  assert.equal(ownHistory.hands[0].sessionId, roundId);
+  assert.equal(ownHistory.hands[0].result, 'Win');
+  assert(!ownHistory.hands.some(hand => hand.result === 'Loss' && hand.sessionId === roundId));
+  assert.equal((await alice.get(`/api/record/history?sessionId=${roundId}`).expect(200)).body.hands[0].result, 'Loss');
+  assert.equal((await host.get('/api/record/history?sessionId=999999').expect(200)).body.total, 0);
+  await host.get('/api/record/history?from=not-a-date').expect(400);
+  await request(server).get('/api/record/stats').expect(401);
   await hostTab.post(`${endpoint}/action`).send({ roundId, action: 'raise' }).expect(200);
   assert.equal(await GameHand.count({ where: { sessionId: roundId } }), 2);
   for (const user of users) { await user.reload(); assert.equal(user.balance, '5000.00'); }
@@ -207,6 +234,22 @@ try {
   assert.equal(replacement.seats.find(seat => seat.bot).id, 'bot3');
   await host.post(`${controlsPath}/remove-bot`).send({ seatId: 'bot2' }).expect(200);
   assert.equal((await host.post(`${controlsPath}/state`).send({}).expect(200)).body.botCount, 1);
+  await alice.post(`/api/lobbies/${controlsId}/join`).send({}).expect(200);
+  const rejoined = (await alice.post(`${controlsPath}/state`).send({}).expect(200)).body;
+  assert.equal(rejoined.balance, 495);
+  const preset = (await host.post('/api/lobbies').send({ ...settings, name: 'Preset bots', maxPlayers: 4, botsEnabled: true, startingBots: 2 }).expect(201)).body;
+  const presetView = (await host.post(`/api/lobbies/${preset.lobbyId}/game/state`).send({}).expect(200)).body;
+  assert.equal(presetView.botCount, 2);
+  assert.equal(presetView.seats.filter(seat => seat.bot).length, 2);
+  const privateTable = (await host.post('/api/lobbies').send({ ...settings, name: 'Private viewing', isPrivate: true, passcode: 'reef-password' }).expect(201)).body;
+  const privatePath = `/api/lobbies/${privateTable.lobbyId}/game`;
+  await host.post(`${privatePath}/state`).send({}).expect(200);
+  await late.post(`${privatePath}/spectate`).send({ passcode: 'wrong' }).expect(403);
+  await request(server).post(`${privatePath}/spectate`).send({}).expect(403);
+  const privateView = (await late.post(`${privatePath}/spectate`).send({ passcode: 'reef-password' }).expect(200)).body;
+  assert.equal(privateView.name, 'Private viewing');
+  assert(!JSON.stringify(privateView).includes('own'));
+  await late.post(`${privatePath}/ante`).send({ roundId: privateView.roundNumber, ante: 5 }).expect(403);
   // An absent host hands control to a connected human without changing the round.
   const stale = await TableGame.findByPk(controlsId);
   const absent = structuredClone(stale.state);
