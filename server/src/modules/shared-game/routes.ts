@@ -35,8 +35,8 @@ sharedGameRouter.all('/:lobbyId/game/:operation', async (req, res, next) => {
         await TableMessage.create({ lobbyId, userId, body: body.trim() });
       } else if (req.method !== 'GET') { res.status(405).json({ error: 'Use GET or POST for chat.' }); return; }
       const messages = (await TableMessage.findAll({ where: { lobbyId }, order: [['messageId', 'DESC']], limit: 50 })).reverse();
-      const users = await User.findAll({ where: { userId: messages.map(message => message.userId) }, attributes: ['userId', 'username'] });
-      const names = new Map(users.map(user => [user.userId, user.username]));
+      const users = await User.findAll({ where: { userId: messages.map(message => message.userId) }, attributes: ['userId', 'username', 'isGuest'] });
+      const names = new Map(users.map(user => [user.userId, user.isGuest ? 'Guest' : user.username]));
       res.json(messages.map(message => ({ id: message.messageId, userId: message.userId, name: names.get(message.userId) ?? 'Player', message: message.body, createdAt: message.createdAt })));
       return;
     }

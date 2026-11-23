@@ -1,1 +1,41 @@
-.spectate-page{min-height:100vh;padding:42px 24px;background:var(--color-page);color:var(--color-text)}.spectate-wrap{max-width:1000px;margin:auto}.spectate-wrap>a{color:var(--color-primary)}.spectate-wrap header{margin:24px 0}.spectate-wrap header small{color:var(--color-primary);font-weight:700;letter-spacing:.12em}.spectate-wrap h1{font-size:36px;margin:8px 0}.spectate-wrap header p{color:var(--color-muted)}.spectate-wrap form,.spectate-round,.spectate-seats{padding:24px;margin:16px 0;border:1px solid var(--color-border);border-radius:16px;background:var(--color-surface)}.spectate-wrap form{display:flex;align-items:end;gap:12px}.spectate-wrap form label{display:grid;gap:8px}.spectate-wrap form input{padding:10px;border:1px solid var(--color-border);border-radius:8px}.spectate-wrap form button{padding:11px 16px;border:0;border-radius:8px;background:var(--color-primary);color:white;cursor:pointer}.spectate-round{display:grid;gap:12px}.spectate-cards{display:flex;gap:8px;flex-wrap:wrap}.spectate-cards span{display:grid;place-items:center;width:48px;height:68px;border:1px solid var(--color-border);border-radius:8px;background:white;font-weight:700}.spectate-seats>div{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}.spectate-seats article{display:grid;gap:6px;padding:16px;border:1px solid var(--color-border);border-radius:10px}.spectate-seats article span{color:var(--color-muted)}
+.spectate-page { min-height: 100vh; padding: 42px 24px 70px; background: linear-gradient(145deg, var(--color-page), var(--color-surface) 58%, var(--color-cream)); color: var(--color-text); }
+.spectate-wrap { max-width: 1080px; margin: auto; }
+.spectate-back { color: var(--color-primary); font-weight: 700; text-decoration: none; }
+.spectate-back:hover { text-decoration: underline; }
+.spectate-header { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin: 30px 0 26px; }
+.spectate-header small, .spectate-board-top small, .spectate-section-heading small { color: var(--color-primary); font-size: 11px; font-weight: 800; letter-spacing: .13em; }
+.spectate-header h1 { margin: 8px 0; font-size: clamp(32px, 4vw, 44px); }
+.spectate-header p { margin: 0; color: var(--color-muted); }
+.spectate-live { display: inline-flex; align-items: center; gap: 9px; padding: 10px 14px; border: 1px solid var(--color-border); border-radius: 30px; background: white; color: var(--color-primary); font-size: 13px; font-weight: 700; white-space: nowrap; }
+.spectate-live i { width: 8px; height: 8px; border-radius: 50%; background: #31a887; }
+.spectate-password, .spectate-board, .spectate-seats { margin: 18px 0; border: 1px solid var(--color-border); border-radius: 18px; background: var(--color-surface); box-shadow: 0 12px 30px #24465714; }
+.spectate-password { display: flex; align-items: end; gap: 12px; padding: 24px; }
+.spectate-password label { display: grid; gap: 8px; font-size: 13px; font-weight: 700; }
+.spectate-password input { min-height: 42px; padding: 8px 10px; border: 1px solid var(--color-border); border-radius: 8px; }
+.spectate-password button { min-height: 42px; padding: 10px 16px; border: 0; border-radius: 8px; background: var(--color-primary); color: white; font-weight: 700; cursor: pointer; }
+.spectate-error { color: #a24b35; }
+.spectate-board { overflow: hidden; }
+.spectate-board-top { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 22px 26px; }
+.spectate-board-top h2 { margin: 5px 0 0; font-size: 22px; }
+.spectate-timer { padding: 8px 12px; border-radius: 20px; background: var(--color-warm); color: var(--color-text); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.spectate-felt { display: grid; place-content: center; gap: 18px; min-height: 230px; margin: 0 24px; padding: 26px; border: 8px solid #e5f3f4; border-radius: 50% / 42%; background: radial-gradient(ellipse, #ddf5f6, #b9e7eb); text-align: center; }
+.spectate-dealer-label { color: #315e6b; font-size: 11px; font-weight: 800; letter-spacing: .2em; }
+.spectate-cards { display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; }
+.spectate-cards span { display: grid; place-items: center; width: 48px; height: 66px; border: 1px solid #a8c5d0; border-radius: 7px; background: white; color: var(--color-text); font-size: 16px; font-weight: 700; box-shadow: 0 4px 9px #24465722; }
+.spectate-cards .spectate-hidden { background: #0c5264; color: #d5f3f5; }
+.spectate-cards p { margin: 0; color: #315e6b; font-size: 14px; }
+.spectate-note { margin: 0; padding: 15px 26px 20px; color: var(--color-muted); font-size: 12px; text-align: center; }
+.spectate-seats { padding: 26px; }
+.spectate-section-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+.spectate-section-heading h2 { margin: 5px 0 0; font-size: 22px; }
+.spectate-section-heading > span { color: var(--color-muted); font-size: 13px; }
+.spectate-seat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.spectate-seat-grid article { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 16px; border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-page); }
+.spectate-seat-avatar { display: grid; place-items: center; width: 42px; height: 42px; flex: none; border-radius: 50%; background: var(--color-primary-soft); color: var(--color-primary); font-weight: 800; }
+.spectate-seat-grid article div { display: grid; gap: 3px; min-width: 0; }
+.spectate-seat-grid article strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.spectate-seat-grid article div span, .spectate-seat-grid article small { color: var(--color-muted); font-size: 12px; }
+.spectate-seat-grid article b { margin-left: auto; font-size: 13px; white-space: nowrap; }
+.spectate-seat-grid article b.positive { color: #27876f; }
+.spectate-seat-grid article b.negative { color: #b37155; }
+@media (max-width: 600px) { .spectate-page { padding: 24px 16px 50px; } .spectate-header { align-items: flex-start; flex-direction: column; } .spectate-felt { min-height: 180px; margin: 0 12px; padding: 20px 10px; border-radius: 35% / 25%; } .spectate-cards span { width: 38px; height: 54px; font-size: 13px; } .spectate-password { align-items: stretch; flex-direction: column; } }

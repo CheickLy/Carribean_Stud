@@ -50,6 +50,7 @@ export default function CreateLobby() {
     setSettings((previous) => ({
       ...previous,
       [key]: value,
+      ...(key === "maxPlayers" ? { startingBots: Math.min(previous.startingBots, Number(value) - 1) } : {}),
     }));
     setError("");
     setSuccess("");
@@ -327,7 +328,7 @@ navigate(`/lobbies/${data.lobbyId}`, { state: { created: true } });
                     />
                     <span className="reef-switch-track" />
                   </label>
-                  {settings.botsEnabled && <label className="reef-bot-count">Bots to start with <input type="number" min="0" max={settings.maxPlayers - 1} value={settings.startingBots} onChange={event => update("startingBots", Number(event.target.value))} /><small>You can still invite players to fill open seats.</small></label>}
+                  {settings.botsEnabled && <label className="reef-bot-count">Bots to start with <select value={settings.startingBots} onChange={event => update("startingBots", Number(event.target.value))}>{Array.from({ length: settings.maxPlayers }, (_, count) => <option key={count} value={count}>{count}</option>)}</select><small>You can still invite players to fill open seats.</small></label>}
                 </div>
               </div>
             </section>

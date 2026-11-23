@@ -623,4 +623,4 @@
     padding: 22px 20px;
   }
 }
-.reef-bot-count{display:grid;gap:7px;margin:14px 0 0;color:#133f50;font-size:13px;font-weight:600}.reef-bot-count input{width:90px;min-height:38px;padding:6px 10px;border:1px solid #a8c5d0;border-radius:8px;background:white;color:#133f50}.reef-bot-count small{font-weight:400;color:#526f7a}
+.reef-bot-count{display:grid;gap:7px;margin:14px 0 0;color:#133f50;font-size:13px;font-weight:600}.reef-bot-count select{width:90px;min-height:38px;padding:6px 10px;border:1px solid #a8c5d0;border-radius:8px;background:white;color:#133f50}.reef-bot-count small{font-weight:400;color:#526f7a}

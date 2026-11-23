@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type Message = { id: number; userId: number; name: string; message: string; createdAt: string };
 
@@ -7,6 +7,9 @@ export default function TableChat({ lobbyId, connected, onClose }: { lobbyId: st
   const [draft, setDraft] = useState('');
   const [error, setError] = useState('');
   const [sending, setSending] = useState(false);
+  const messageList = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { if (messageList.current) messageList.current.scrollTop = messageList.current.scrollHeight; }, [messages.length]);
 
   async function load() {
     const response = await fetch(`/api/lobbies/${lobbyId}/game/chat`, { credentials: 'include' });
@@ -39,5 +42,5 @@ export default function TableChat({ lobbyId, connected, onClose }: { lobbyId: st
     } catch (problem) { setError(problem instanceof Error ? problem.message : 'Message was not sent.'); }
     finally { setSending(false); }
   }
-  return <aside className="shared-chat" id="table-chat" aria-label="Table chat"><header><h2>Table chat</h2><button type="button" aria-label="Close table chat" onClick={onClose}>×</button></header><p>Only players seated at this table can read and send messages.</p><div className="shared-chat-list" role="log" aria-live="polite">{messages.length ? messages.map(item => <div key={item.id}><small>{item.name} · {new Date(item.createdAt).toLocaleTimeString()}</small><span>{item.message}</span></div>) : <p>No messages yet.</p>}</div>{error && <p role="alert">{error}</p>}<form onSubmit={send}><label htmlFor="table-chat-message">Message</label><div><input id="table-chat-message" maxLength={300} value={draft} onChange={event => setDraft(event.target.value)} placeholder="Write a message" disabled={!connected || sending} /><button type="submit" disabled={!connected || sending || !draft.trim()}>Send</button></div></form></aside>;
+  return <aside className="shared-chat" id="table-chat" aria-label="Table chat"><header><h2>Table chat</h2><button type="button" aria-label="Close table chat" onClick={onClose}>×</button></header><p>Only players seated at this table can read and send messages.</p><div ref={messageList} className="shared-chat-list" role="log" aria-live="polite">{messages.length ? messages.map(item => <div key={item.id}><small>{item.name} · {new Date(item.createdAt).toLocaleTimeString()}</small><span>{item.message}</span></div>) : <p>No messages yet. Say hello to the table.</p>}</div>{error && <p role="alert">{error}</p>}<form onSubmit={send}><label htmlFor="table-chat-message">Message</label><div><input id="table-chat-message" maxLength={300} value={draft} onChange={event => setDraft(event.target.value)} placeholder="Write a message" disabled={!connected || sending} /><button type="submit" disabled={!connected || sending || !draft.trim()}>Send</button></div></form></aside>;
 }

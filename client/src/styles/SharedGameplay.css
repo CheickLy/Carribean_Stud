@@ -98,3 +98,15 @@
 .shared-gameplay .gameplay-preferences { max-height: 650px; overflow-y: auto; }
 @media (max-width: 900px) { .shared-gameplay .gameplay-preferences { max-height: calc(100dvh - 24px); } }
 .shared-chat{position:fixed;z-index:15;top:100px;right:24px;width:min(340px,calc(100vw - 48px));height:min(520px,calc(100dvh - 120px));display:flex;flex-direction:column;padding:18px;box-sizing:border-box;border:1px solid #a8c5d0;border-radius:16px;background:white;color:#133f50;box-shadow:0 16px 60px #13526c26}.shared-chat header{display:flex;justify-content:space-between;align-items:center}.shared-chat h2{font-size:18px;margin:0}.shared-chat header button{border:0;background:none;font-size:26px;cursor:pointer}.shared-chat>p{font-size:12px}.shared-chat-list{flex:1;overflow:auto;border-block:1px solid #d0e6ec;padding:10px 0}.shared-chat-list>div{display:grid;gap:4px;padding:8px 0}.shared-chat-list small{color:#526f7a}.shared-chat-list span{overflow-wrap:anywhere}.shared-chat form{padding-top:10px}.shared-chat form>div{display:flex;gap:6px}.shared-chat input{flex:1;min-width:0;padding:9px;border:1px solid #a8c5d0;border-radius:8px}.shared-chat form button{border:0;border-radius:8px;background:#0c5264;color:white;padding:8px 12px;cursor:pointer}.shared-chat form button:disabled{opacity:.5;cursor:default}@media(max-width:900px){.shared-chat{top:12px;right:12px;width:calc(100vw - 24px);height:min(520px,calc(100dvh - 24px))}}
+.shared-chat { padding: 0; overflow: hidden; }
+.shared-chat header { padding: 14px 18px; background: #0c5264; color: white; }
+.shared-chat header button { color: white; }
+.shared-chat > p { margin: 0; padding: 11px 18px; color: #526f7a; background: #f4fafb; line-height: 1.4; }
+.shared-chat-list { padding: 14px; border-block: 1px solid #d0e6ec; background: #fbfdfd; }
+.shared-chat-list > div { max-width: 90%; margin-bottom: 10px; padding: 10px 12px; border: 1px solid #d0e6ec; border-radius: 12px 12px 12px 3px; background: white; line-height: 1.4; }
+.shared-chat-list small { overflow-wrap: anywhere; font-size: 10px; }
+.shared-chat-list span { font-size: 13px; }
+.shared-chat form { padding: 12px 14px 14px; }
+.shared-chat form label { display: block; margin-bottom: 6px; font-size: 11px; font-weight: 700; }
+.shared-chat input { min-height: 40px; }
+.shared-chat form button { min-width: 58px; font-weight: 700; }
