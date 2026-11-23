@@ -19,7 +19,11 @@ Planned total: **20 points**. Record actual hours for each story in the team rep
 - Backend: 358 tests pass with PostgreSQL enabled. The separate multiplayer acceptance check also passes. The checks cover table chat access and ordering, spectator privacy and private-table passwords, account-specific results/history, rejoining after leaving, and starting bot counts.
 - Frontend: 113 tests pass. New checks cover starting bot setup, empty statistics, session history navigation, message failure and retry, and the spectator screen.
 - Current statement coverage: server **93.12%**, client **76.92%**. Current branch coverage: server **88.47%**, client **83.30%**. The weighted combined statement coverage is **81.62%** and combined branch coverage is **85.72%**. The tool-generated JSON summaries are in `Docs/iteration3-server-coverage-summary.json` and `Docs/iteration3-client-coverage-summary.json`.
-- The simplified gameplay class diagram is `Docs/iteration-3-gameplay-class-diagram.png`. Upload it to Overleaf and place it under System Design / Diagrams.
+- Upload the gameplay class diagram below to Overleaf and place it under System Design / Diagrams.
+
+## Simplified gameplay class diagram
+
+![Simplified gameplay class diagram](iteration-3-gameplay-class-diagram.png)
 
 ## Team decisions and report follow-up
 
