@@ -39,7 +39,15 @@
 .gameplay[data-theme="dark"] .hand-guide-badge { color: var(--table-text); background: #285868; }
 .gameplay[data-theme="dark"] :is(.hand-guide-payout, .hand-guide-rules summary) { color: var(--table-accent); }
 .gameplay[data-theme="dark"] .hand-guide-list li::before { color: var(--table-muted); }
-.gameplay[data-theme="dark"] .hand-guide-header button:hover { background: var(--table-raised); }
+.gameplay[data-theme="dark"] .hand-guide-header button:hover,
+.gameplay[data-theme="dark"] .table-sheet .table-sheet-header button:hover { background: var(--table-raised); }
+.gameplay[data-theme="dark"] .table-sheet .table-sheet-header { color: var(--table-text); background: var(--table-surface); border-color: var(--table-border); }
+.gameplay[data-theme="dark"] .table-sheet .table-sheet-header span,
+.gameplay[data-theme="dark"] .shared-history li span { color: var(--table-muted); }
+.gameplay[data-theme="dark"] .shared-history li,
+.gameplay[data-theme="dark"] .shared-invite,
+.gameplay[data-theme="dark"] .shared-gameplay .table-appearance { border-color: var(--table-border); }
+.gameplay[data-theme="dark"] .shared-invite button { background: var(--table-raised); color: var(--table-text); border-color: var(--table-border); }
 .gameplay[data-theme="dark"] :is(.shared-game-error, .gameplay-connection-reconnecting) { color: #ffe7cf; background: #4b3029; border-color: #c39b7b; }
 .gameplay[data-theme="dark"] :is(button, input, a, summary):focus-visible { outline: 3px solid var(--table-accent); outline-offset: 3px; }
 .gameplay[data-theme="dark"] input { accent-color: var(--table-accent); }

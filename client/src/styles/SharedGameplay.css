@@ -2,7 +2,7 @@
 .shared-gameplay .gameplay-table-identity small { line-height: 1.5; }
 .shared-gameplay .gameplay-breakdown { top: 746px; }
 .shared-gameplay .gameplay-breakdown summary { display: inline-block; padding: 5px 12px; border-radius: 8px; }
-.shared-bot-options { margin-top: 14px; padding-top: 14px; border-top: 1px solid #d0e6ec; }
+.shared-bot-options { margin: 0; padding: 12px 10px; border-top: 1px solid #edf2f3; }
 .shared-bot-options > strong { font-size: 13px; }
 .shared-bot-options > button { margin-top: 12px; padding: 9px 14px; border: 1px solid #a8c5d0; border-radius: 9px; background: #eef7f8; color: #133f50; font: inherit; font-size: 13px; cursor: pointer; }
 .shared-bot-options > button:disabled { opacity: .5; cursor: default; }
@@ -26,17 +26,14 @@
 .shared-roster li:last-child { border-bottom: 0; }
 .shared-roster strong { color: #133f50; font-size: 12px; }
 .shared-waiting { padding: 12px 20px; color: #526f7a; font-size: 14px; }
-.shared-history { position: fixed; z-index: 12; top: 100px; right: 24px; width: min(350px, calc(100vw - 48px)); max-height: calc(100dvh - 140px); overflow: auto; box-sizing: border-box; padding: 20px; border: 1px solid #a8c5d0; border-radius: 18px; background: white; color: #133f50; box-shadow: 0 16px 60px #13526c26; }
-.shared-history header { display: flex; justify-content: space-between; align-items: center; }
-.shared-history h2 { margin: 0; font-size: 18px; }
-.shared-history header button { background: none; border: 0; font-size: 26px; color: inherit; cursor: pointer; }
-.shared-history p { font-size: 12px; line-height: 1.5; }
-.shared-history ol { padding: 0; list-style: none; }
-.shared-history li { display: grid; gap: 7px; padding: 14px 0; border-top: 1px solid #d0e6ec; font-size: 12px; }
-.shared-history li small { color: #526f7a; line-height: 1.5; }
+.shared-history ol { padding: 0; margin: 0; list-style: none; }
+.shared-history li { display: grid; gap: 3px; padding: 10px; border-bottom: 1px solid #edf2f3; font-size: 13px; }
+.shared-history li:last-child { border-bottom: 0; }
+.shared-history li strong { font-size: 13px; font-weight: 600; }
+.shared-history li small, .shared-history li span { color: #647f89; font-size: 12px; line-height: 1.4; }
 
-.shared-invite { padding-bottom: 12px; border-bottom: 1px solid #a8c5d0; }
-.shared-invite button { min-height: 44px; padding: 8px 12px; border: 1px solid #729aa8; border-radius: 9px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.shared-invite { padding: 8px 10px 12px; border-bottom: 1px solid #edf2f3; }
+.shared-invite button { min-height: 36px; padding: 8px 12px; border: 1px solid #cbdde2; border-radius: 8px; background: #fff; color: inherit; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 .shared-invite label { flex-direction: column; align-items: stretch; gap: 6px; }
 .shared-invite input { box-sizing: border-box; width: 100%; height: 38px; padding: 6px; color: inherit; background: transparent; border: 1px solid #729aa8; border-radius: 6px; font: inherit; font-size: 12px; }
 .shared-turn-alert { position: absolute; top: 280px; left: 50%; transform: translateX(-50%); margin: 0; padding: 5px 14px; border: 2px solid #087f9b; border-radius: 20px; background: #fff; color: #133f50; font-size: 13px; font-weight: 700; white-space: nowrap; }
@@ -82,11 +79,10 @@
   .shared-gameplay .gameplay-bets button { min-width: 44px; min-height: 44px; font-size: 15px; }
   .shared-gameplay .gameplay-ante-presets { flex-wrap: wrap; justify-content: center; }
   .shared-gameplay .gameplay-ante-help { width: 100%; text-align: center; font-size: 12px; line-height: 1.5; }
-  .shared-gameplay .gameplay-preferences { position: fixed; inset: 12px 12px auto; width: auto; max-height: calc(100dvh - 24px); overflow-y: auto; z-index: 15; }
+  .shared-gameplay .gameplay-preferences { z-index: 15; }
   .shared-gameplay .gameplay-breakdown { width: 100%; text-align: center; }
   .shared-gameplay .gameplay-breakdown dl { position: static; width: 100%; transform: none; }
   .shared-gameplay .shared-turn-alert { white-space: normal; text-align: center; }
-  .shared-gameplay .shared-history { top: 12px; right: 12px; width: calc(100vw - 24px); max-height: calc(100dvh - 24px); }
 }
 
 @keyframes shared-mobile-deal { from { opacity: 0; } to { opacity: 1; } }
@@ -95,5 +91,68 @@
 .shared-host-controls li > span { min-width: 0; overflow-wrap: anywhere; }
 .shared-host-controls button { flex-shrink: 0; min-height: 36px; padding: 6px 8px; border: 1px solid #729aa8; border-radius: 8px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
 .shared-host-controls button:disabled { opacity: .65; cursor: default; }
-.shared-gameplay .gameplay-preferences { max-height: 650px; overflow-y: auto; }
-@media (max-width: 900px) { .shared-gameplay .gameplay-preferences { max-height: calc(100dvh - 24px); } }
+.shared-gameplay .table-sheet {
+  position: fixed;
+  z-index: 12;
+  top: 120px;
+  right: 16px;
+  width: 320px;
+  max-height: min(520px, calc(100dvh - 140px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
+  padding: 0;
+  border: 1px solid #cbdde2;
+  border-radius: 14px;
+  background: #fff;
+  color: #133f50;
+  box-shadow: 0 16px 48px #123c4d24;
+  animation: gameplay-guide-enter 220ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.table-sheet .table-sheet-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  padding: 18px 18px 14px;
+  background: #fff;
+  border-bottom: 1px solid #e4edf0;
+}
+.table-sheet .table-sheet-header h2 { margin: 0 0 4px; font-size: 17px; line-height: 1.25; font-weight: 700; }
+.table-sheet .table-sheet-header span { color: #64808a; font-size: 12px; }
+.table-sheet .table-sheet-header button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #526f7a;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1), background-color 140ms ease;
+}
+.table-sheet .table-sheet-header button:active { transform: scale(0.97); }
+@media (hover: hover) and (pointer: fine) {
+  .table-sheet .table-sheet-header button:hover { background: #eff6f7; }
+}
+.table-sheet-body { padding: 4px 8px 12px; }
+.table-sheet label { font-size: 13px; }
+.shared-gameplay .table-sheet label { padding: 10px; }
+.shared-gameplay .table-sheet p { margin: 8px 10px 0; color: #64808a; font-size: 12px; line-height: 1.4; }
+.table-sheet button:not(:disabled) { transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1), background-color 140ms ease; }
+.table-sheet button:not(:disabled):active { transform: scale(0.97); }
+.shared-gameplay .table-appearance { margin: 0; padding: 10px; border-bottom: 1px solid #edf2f3; }
+@media (prefers-reduced-motion: reduce) {
+  .table-sheet { animation: none; }
+  .table-sheet button { transition: none; }
+}
+@media (max-width: 900px) {
+  .shared-gameplay .table-sheet { top: 12px; right: 12px; width: min(320px, calc(100vw - 24px)); max-height: min(60dvh, calc(100dvh - 24px)); }
+  .shared-gameplay .table-sheet .table-sheet-header button { width: 44px; height: 44px; }
+}

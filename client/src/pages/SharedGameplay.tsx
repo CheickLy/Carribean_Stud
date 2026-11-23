@@ -157,10 +157,34 @@ export default function SharedGameplay() {
     return () => { active = false; };
   }, [historyOpen, lobbyId, table?.roundId, table?.phase]);
   function closeGuide() { setGuideOpen(false); setGuideExpanded(false); guideButton.current?.focus(); }
+  function toggleOptions() {
+    setHistoryOpen(false);
+    setGuideOpen(false);
+    setGuideExpanded(false);
+    setOptionsOpen(value => !value);
+  }
+  function toggleHistory() {
+    setOptionsOpen(false);
+    setGuideOpen(false);
+    setGuideExpanded(false);
+    setHistoryOpen(value => !value);
+  }
+  useEffect(() => {
+    if (!optionsOpen && !historyOpen) return;
+    function handleKey(event: KeyboardEvent) {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      setOptionsOpen(false);
+      setHistoryOpen(false);
+    }
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [optionsOpen, historyOpen]);
   const ownResult = table?.own.result;
   const humanCount = table?.seats.filter(seat => !seat.bot).length ?? 0;
   const botCount = table?.seats.filter(seat => seat.bot).length ?? 0;
   const others = table?.seats.filter(seat => !seat.isYou).sort((left, right) => Number(right.inRound) - Number(left.inRound) || left.seatNumber - right.seatNumber) ?? [];
+  const botNote = !table ? 'Loading table controls…' : !table.botsEnabled ? 'Bots are disabled for this lobby.' : !table.isHost ? 'Only the host can add bots.' : table.canAddBot ? '' : 'All seats are reserved. No room for another bot.';
   const resultText = !table ? 'Loading shared table…' : table.phase === 'waiting' ? 'Waiting for a connected player with enough chips for the minimum ante and raise.'
     : table.phase === 'completed' ? ownResult ? `${ownResult.message.startsWith('Dealer does not qualify.') ? 'Dealer doesn’t qualify' : ownResult.message.replace(/[.!]$/, '')} · ${net(ownResult.net)}` : 'Hand finished. You will join the next hand.'
     : self?.status === 'out of chips' ? `You need ${format(table.minBet * 3)} table chips to cover the minimum ante and raise.`
@@ -175,32 +199,10 @@ export default function SharedGameplay() {
       {table && <details className="shared-roster"><summary>{humanCount} {humanCount === 1 ? 'player' : 'players'} · {botCount} {botCount === 1 ? 'bot' : 'bots'}</summary><ul aria-label="Table roster">{table.seats.map(seat => <li key={seat.id}><strong>Seat {seat.seatNumber} · {seat.name}{seat.isYou ? ' (You)' : seat.bot ? ' (Bot)' : ''}{seat.isHost ? ' · Host' : ''}</strong><span>{seat.online ? seat.status : `Disconnected · ${seat.status}`} · {format(seat.balance)} chips</span></li>)}</ul></details>}
       </div>
       <div className="gameplay-tools">
-        <button className="gameplay-settings-button" aria-expanded={optionsOpen} aria-controls="table-options" onClick={() => setOptionsOpen(value => !value)}>Options</button>
-        <button className="gameplay-settings-button" aria-expanded={historyOpen} aria-controls="table-history" onClick={() => setHistoryOpen(value => !value)}>History</button>
-        <button ref={guideButton} className="gameplay-guide-button" aria-expanded={guideOpen} aria-controls="hand-guide" onClick={() => guideOpen ? closeGuide() : setGuideOpen(true)}>Rules &amp; hands</button>
+        <button className="gameplay-settings-button" aria-expanded={optionsOpen} aria-controls="table-options" onClick={toggleOptions}>Options</button>
+        <button className="gameplay-settings-button" aria-expanded={historyOpen} aria-controls="table-history" onClick={toggleHistory}>History</button>
+        <button ref={guideButton} className="gameplay-guide-button" aria-expanded={guideOpen} aria-controls="hand-guide" onClick={() => { if (guideOpen) closeGuide(); else { setOptionsOpen(false); setHistoryOpen(false); setGuideOpen(true); } }}>Rules &amp; hands</button>
       </div>
-      {optionsOpen && <section className="gameplay-preferences" id="table-options" aria-label="Table options"><header><strong>Table options</strong><button aria-label="Close table options" onClick={() => setOptionsOpen(false)}>×</button></header>
-        <div className="shared-invite"><button type="button" onClick={() => {
-          const url = new URL(`/lobbies/${encodeURIComponent(lobbyId)}`, window.location.origin).href;
-          if (!navigator.clipboard?.writeText) { setInviteNotice('Copy the lobby link below.'); return; }
-          void navigator.clipboard.writeText(url).then(() => setInviteNotice('Invite link copied. Share it with another player.'), () => setInviteNotice('Copy the lobby link below.'));
-        }}>Copy invite link</button><label>Lobby invite link<input readOnly value={new URL(`/lobbies/${encodeURIComponent(lobbyId)}`, window.location.origin).href} onFocus={event => event.target.select()} /></label>{inviteNotice && <p role="status">{inviteNotice}</p>}<p>Players need access to this server. Private lobbies still require their password.</p></div>
-        <TableAppearance theme={preferences.theme} onChange={theme => setPreferences(value => ({ ...value, theme }))} />
-        <label><input type="checkbox" checked={preferences.sound} onChange={event => { prepareSound(true); setPreferences(value => ({ ...value, sound: event.target.checked })); }} />Sound effects</label>
-        <label><input type="checkbox" checked={preferences.reducedMotion} onChange={event => setPreferences(value => ({ ...value, reducedMotion: event.target.checked }))} />Reduce motion</label>
-        <label><input type="checkbox" checked={preferences.fastDeal} onChange={event => setPreferences(value => ({ ...value, fastDeal: event.target.checked }))} />Faster dealing</label><p>Saved on this device. System reduced motion is respected.</p>
-        <div className="shared-bot-options"><strong>Players &amp; bots</strong><p>{!table ? 'Loading table controls…' : !table.botsEnabled ? 'Bots are disabled for this lobby.' : !table.isHost ? 'Only the host can add bots.' : table.canAddBot ? 'Add one bot to an open seat. It joins the next hand.' : 'All seats are reserved. No room for another bot.'}</p>
-          {table?.botsEnabled && table.isHost && <button type="button" disabled={!table.canAddBot || busy || !connected} onClick={() => {
-            botRequest.current ??= crypto.randomUUID();
-            void action(() => addBot(lobbyId, botRequest.current!).then(next => { botRequest.current = null; setBotNotice('Bot added. It will join the next hand.'); return next; }));
-          }}>{busy ? 'Adding…' : 'Add bot'}</button>}
-          {table?.isHost && <ul className="shared-host-controls" aria-label="Host controls">{table.seats.filter(seat => seat.bot || (!seat.isYou && seat.online && seat.status !== 'sitting out')).map(seat => <li key={seat.id}><span>{seat.name}</span><button type="button" disabled={busy || !connected || seat.removalPending} onClick={() => {
-            if (seat.bot) void action(() => removeBot(lobbyId, seat.id).then(next => { setBotNotice('Bot removal saved. Any current hand will finish before its seat is freed.'); return next; }));
-            else if (window.confirm(`Make ${seat.name} the host? You will hand over the host controls.`)) void action(() => transferHost(lobbyId, seat.id).then(next => { setBotNotice(`Hosting transferred to ${seat.name}.`); return next; }));
-          }} aria-label={seat.bot ? `Remove ${seat.name}` : `Make ${seat.name} host`}>{seat.removalPending ? 'Leaving after hand' : seat.bot ? 'Remove bot' : 'Make host'}</button></li>)}</ul>}
-          <p>Hosting passes to another connected player when the host leaves or stays disconnected for 15 seconds.</p>
-          {botNotice && <p role="status">{botNotice}</p>}
-        </div><div className="shared-bot-options"><Link to="/tutorial" state={{ lobbyId }}>How to play →</Link><p>Play a guided practice hand. Leaving an active hand still requires confirmation.</p></div></section>}
       <p className="gameplay-wordmark">Reef Royale</p><p className="gameplay-table-caption">CARIBBEAN STUD · SHARED TABLE</p>
       {!connected && <p className="gameplay-connection gameplay-connection-reconnecting" role="status">Reconnecting… The server timer continues; an undecided hand folds at the deadline.</p>}
       {connected && recoveryNotice && <p className="gameplay-connection gameplay-connection-restored" role="status">{recoveryNotice}</p>}
@@ -240,6 +242,40 @@ export default function SharedGameplay() {
       <p className="gameplay-ante-help">{isBetting ? 'Keep 3× your ante available for the ante and raise. Antes lock when placed.' : 'The server controls the clock. Missed betting sits out; an unanswered decision folds automatically.'}</p>
     </div></div>
     <HandGuide currentRank={table?.own.cards.rank} open={guideOpen} onClose={closeGuide} expanded={guideExpanded} onToggleExpanded={() => setGuideExpanded(value => !value)} />
-    {historyOpen && <aside className="shared-history" id="table-history" aria-label="Your hand history"><header><h2>Your hand history</h2><button aria-label="Close hand history" onClick={() => setHistoryOpen(false)}>×</button></header><p>Your last 20 saved hands at this table. Other players’ cards stay private.</p>{historyBusy && <p role="status">Loading hands…</p>}{historyError && <p role="alert">{historyError}</p>}{!historyBusy && !historyError && history.length === 0 && <p>No completed hands yet.</p>}<ol>{history.map(hand => <li key={hand.handId}><strong>Hand {hand.roundId} · {net(hand.net)}</strong><small>{hand.message}</small><span>Your cards: {hand.playerCards.join(' ')}</span><span>Dealer: {hand.dealerCards.join(' ')}</span><small>Ante {format(hand.ante)} · Raise {format(hand.raise)} · Returned {format(hand.returned)}</small></li>)}</ol></aside>}
+    {optionsOpen && <section className="table-sheet gameplay-preferences" id="table-options" aria-labelledby="table-options-title">
+      <header className="table-sheet-header"><div><h2 id="table-options-title">Table options</h2><span>On this device</span></div><button type="button" aria-label="Close table options" onClick={() => setOptionsOpen(false)}>×</button></header>
+      <div className="table-sheet-body">
+        <div className="shared-invite"><button type="button" onClick={() => {
+          const url = new URL(`/lobbies/${encodeURIComponent(lobbyId)}`, window.location.origin).href;
+          if (!navigator.clipboard?.writeText) { setInviteNotice('Copy the lobby link below.'); return; }
+          void navigator.clipboard.writeText(url).then(() => setInviteNotice('Invite link copied. Share it with another player.'), () => setInviteNotice('Copy the lobby link below.'));
+        }}>Copy invite link</button>{inviteNotice === 'Copy the lobby link below.' && <label>Lobby invite link<input readOnly value={new URL(`/lobbies/${encodeURIComponent(lobbyId)}`, window.location.origin).href} onFocus={event => event.target.select()} /></label>}{inviteNotice && <p role="status">{inviteNotice}</p>}</div>
+        <TableAppearance theme={preferences.theme} onChange={theme => setPreferences(value => ({ ...value, theme }))} />
+        <label><input type="checkbox" checked={preferences.sound} onChange={event => { prepareSound(true); setPreferences(value => ({ ...value, sound: event.target.checked })); }} />Sound effects</label>
+        <label><input type="checkbox" checked={preferences.reducedMotion} onChange={event => setPreferences(value => ({ ...value, reducedMotion: event.target.checked }))} />Reduce motion</label>
+        <label><input type="checkbox" checked={preferences.fastDeal} onChange={event => setPreferences(value => ({ ...value, fastDeal: event.target.checked }))} />Faster dealing</label>
+        <div className="shared-bot-options"><strong>Players &amp; bots</strong>{botNote && <p>{botNote}</p>}
+          {table?.botsEnabled && table.isHost && <button type="button" disabled={!table.canAddBot || busy || !connected} onClick={() => {
+            botRequest.current ??= crypto.randomUUID();
+            void action(() => addBot(lobbyId, botRequest.current!).then(next => { botRequest.current = null; setBotNotice('Bot added. It will join the next hand.'); return next; }));
+          }}>{busy ? 'Adding…' : 'Add bot'}</button>}
+          {table?.isHost && <ul className="shared-host-controls" aria-label="Host controls">{table.seats.filter(seat => seat.bot || (!seat.isYou && seat.online && seat.status !== 'sitting out')).map(seat => <li key={seat.id}><span>{seat.name}</span><button type="button" disabled={busy || !connected || seat.removalPending} onClick={() => {
+            if (seat.bot) void action(() => removeBot(lobbyId, seat.id).then(next => { setBotNotice('Bot removal saved. Any current hand will finish before its seat is freed.'); return next; }));
+            else if (window.confirm(`Make ${seat.name} the host? You will hand over the host controls.`)) void action(() => transferHost(lobbyId, seat.id).then(next => { setBotNotice(`Hosting transferred to ${seat.name}.`); return next; }));
+          }} aria-label={seat.bot ? `Remove ${seat.name}` : `Make ${seat.name} host`}>{seat.removalPending ? 'Leaving after hand' : seat.bot ? 'Remove bot' : 'Make host'}</button></li>)}</ul>}
+          {botNotice && <p role="status">{botNotice}</p>}
+        </div>
+        <div className="shared-bot-options"><Link to="/tutorial" state={{ lobbyId }}>How to play →</Link></div>
+      </div>
+    </section>}
+    {historyOpen && <aside className="table-sheet shared-history" id="table-history" aria-labelledby="table-history-title">
+      <header className="table-sheet-header"><div><h2 id="table-history-title">History</h2><span>Your hands only</span></div><button type="button" aria-label="Close hand history" onClick={() => setHistoryOpen(false)}>×</button></header>
+      <div className="table-sheet-body">
+        {historyBusy && <p role="status">Loading…</p>}
+        {historyError && <p role="alert">{historyError}</p>}
+        {!historyBusy && !historyError && history.length === 0 && <p>No hands yet.</p>}
+        <ol>{history.map(hand => <li key={hand.handId}><strong>Hand {hand.roundId} · {net(hand.net)}</strong><small>{hand.message}</small><span>You {hand.playerCards.join(' ')}</span><span>Dealer {hand.dealerCards.join(' ')}</span></li>)}</ol>
+      </div>
+    </aside>}
   </main>;
 }
