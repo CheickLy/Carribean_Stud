@@ -4,7 +4,7 @@ import { PlayingCard, faceCard, handLabel } from './Gameplay';
 import HandGuide from '../components/HandGuide';
 import useTablePreferences from '../components/useTablePreferences';
 import TableAppearance from '../components/TableAppearance';
-import { removeBot, transferHost, addBot, decide, leaveTable, loadHistory, placeAnte, syncTable, TableRequestError, type SavedHand, type SharedTable } from '../services/sharedGame';
+import { removeBot, transferHost, addBot, decide, leaveTable, loadHistory, placeAnte, syncTable, TableRequestError, type SavedHand, type SharedTable, type TableCashOut } from '../services/sharedGame';
 import '../styles/Gameplay.css';
 import '../styles/SharedGameplay.css';
 
@@ -19,7 +19,7 @@ export default function SharedGameplay() {
   const [ante, setAnte] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const pending = useRef(false);
-  const pollRequest = useRef<Promise<SharedTable> | null>(null);
+  const pollRequest = useRef<Promise<SharedTable | TableCashOut> | null>(null);
   const leaving = useRef(false);
   const mounted = useRef(true);
   const [error, setError] = useState('');
@@ -42,7 +42,8 @@ export default function SharedGameplay() {
   const botRequest = useRef<string | null>(null);
   const [botNotice, setBotNotice] = useState('');
   useEffect(() => setBotNotice(''), [table?.roundId]);
-  function receive(next: SharedTable) {
+  function receive(next: SharedTable | TableCashOut) {
+    if ('cashedOut' in next) return;
     const nextSignature = `${next.roundId}:${next.phase}`;
     if (signature.current && signature.current !== nextSignature) {
       if (next.phase === 'deciding') playSound('deal');
@@ -63,9 +64,9 @@ export default function SharedGameplay() {
   useEffect(() => {
     mounted.current = true;
     let active = true;
-    async function refresh() {
+    async function refresh(buyIn = false) {
       if (!active || pending.current || leaving.current || pollRequest.current) return;
-      const request = syncTable(lobbyId);
+      const request = syncTable(lobbyId, buyIn);
       pollRequest.current = request;
       try {
         const next = await request;
@@ -74,15 +75,16 @@ export default function SharedGameplay() {
         if (active) { disconnected.current = true; setConnected(false); setError(cause instanceof Error ? cause.message : 'Unable to load the table.'); }
       } finally { if (pollRequest.current === request) pollRequest.current = null; }
     }
-    void refresh();
-    const poll = window.setInterval(() => void refresh(), 2000);
+    void refresh(true);
+    const poll = window.setInterval(() => void refresh(false), 2000);
     const ticker = window.setInterval(() => setClock(Date.now()), 250);
     const offline = () => { disconnected.current = true; setConnected(false); setRecoveryNotice(''); };
     const visible = () => { if (document.visibilityState === 'visible') void refresh(); };
     window.addEventListener('offline', offline);
     document.addEventListener('visibilitychange', visible);
-    window.addEventListener('online', refresh);
-    return () => { active = false; mounted.current = false; window.clearInterval(poll); window.clearInterval(ticker); window.removeEventListener('online', refresh); window.removeEventListener('offline', offline); document.removeEventListener('visibilitychange', visible); };
+    const online = () => void refresh();
+    window.addEventListener('online', online);
+    return () => { active = false; mounted.current = false; window.clearInterval(poll); window.clearInterval(ticker); window.removeEventListener('online', online); window.removeEventListener('offline', offline); document.removeEventListener('visibilitychange', visible); };
   }, [lobbyId]);
   const seconds = table?.deadline ? Math.max(0, Math.ceil((table.deadline - clock - clockOffset.current) / 1000)) : null;
   const self = table?.seats.find(seat => seat.isYou);
@@ -107,7 +109,7 @@ export default function SharedGameplay() {
         ? 'Your raise is already locked. Leaving will not cancel it. Your result will be saved when the hand finishes.'
         : state.own.action === 'fold' ? 'Your hand is already folded. Your result will be saved when the hand finishes.'
         : `Leaving will fold your hand and lose your ${format(state.own.ante)} chip ante. No raise will be placed.`;
-      if (!window.confirm(`Leave table?\n\n${warning}\n\nChoose Cancel to stay.`)) { blocked.reset(); return; }
+      if (!window.confirm(`Leave table?\n\n${warning}\n\nThe chips you still have return to your account once. Reconnecting will not add them again.\n\nChoose Cancel to stay.`)) { blocked.reset(); return; }
     }
     leaving.current = true;
     pending.current = true;

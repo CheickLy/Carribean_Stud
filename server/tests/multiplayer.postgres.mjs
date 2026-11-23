@@ -60,7 +60,9 @@ try {
   assert.equal(waiting.roundId, solo.roundId);
   assert.equal(waiting.seats.find(seat => seat.isYou).inRound, false);
   assert.deepEqual(waiting.own.cards.cards, []);
-  await host.post(`${endpoint}/leave`).send({ roundId: solo.roundId }).expect(200);
+  const leftSolo = await host.post(`${endpoint}/leave`).send({ roundId: solo.roundId }).expect(200);
+  assert.equal(leftSolo.body.cashedOut, true);
+  assert.equal(leftSolo.body.returned, 500);
   async function finishResultsPause() {
     const saved = await TableGame.findByPk(id);
     const state = structuredClone(saved.state);
@@ -69,7 +71,8 @@ try {
     await saved.update({ state });
   }
   await finishResultsPause();
-  const shared = (await host.post(`${endpoint}/state`).send({}).expect(200)).body;
+  await host.post(`/api/lobbies/${id}/join`).send({}).expect(200);
+  const shared = (await host.post(`${endpoint}/state`).send({ buyIn: true }).expect(200)).body;
   const roundId = shared.roundId;
   assert.notEqual(roundId, solo.roundId);
   assert.equal(shared.seats.filter(seat => seat.inRound).length, 2);
@@ -141,7 +144,7 @@ try {
   assert.deepEqual(hostHistory[0].playerCards, hostCards); assert.deepEqual(aliceHistory[0].playerCards, aliceCards);
   await hostTab.post(`${endpoint}/action`).send({ roundId, action: 'raise' }).expect(200);
   assert.equal(await GameHand.count({ where: { sessionId: roundId } }), 2);
-  for (const user of users) { await user.reload(); assert.equal(user.balance, '5000.00'); }
+  for (const user of users) { await user.reload(); assert.equal(user.balance, '4500.00'); }
   await finishResultsPause();
   const next = (await late.post(`${endpoint}/state`).send({}).expect(200)).body;
   assert.notEqual(next.roundId, roundId);
@@ -207,6 +210,8 @@ try {
   assert.equal(replacement.seats.find(seat => seat.bot).id, 'bot3');
   await host.post(`${controlsPath}/remove-bot`).send({ seatId: 'bot2' }).expect(200);
   assert.equal((await host.post(`${controlsPath}/state`).send({}).expect(200)).body.botCount, 1);
+  await alice.post(`/api/lobbies/${controlsId}/join`).send({}).expect(200);
+  await alice.post(`${controlsPath}/state`).send({ buyIn: true }).expect(200);
   // An absent host hands control to a connected human without changing the round.
   const stale = await TableGame.findByPk(controlsId);
   const absent = structuredClone(stale.state);

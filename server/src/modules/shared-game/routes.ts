@@ -15,7 +15,7 @@ sharedGameRouter.all('/:lobbyId/game/:operation', async (req, res, next) => {
     if (req.method !== 'POST') { res.status(405).json({ error: 'Use POST for table actions.' }); return; }
     const { roundId, ante, action, requestId, seatId } = req.body ?? {};
     let command: TableCommand;
-    if (operation === 'state') command = { kind: 'heartbeat' };
+    if (operation === 'state') command = { kind: 'heartbeat', buyIn: req.body?.buyIn === true };
     else if (operation === 'bots') {
       if (typeof requestId !== 'string' || !/^[a-zA-Z0-9-]{8,80}$/.test(requestId)) throw new GameError(400, 'A valid bot request ID is required.');
       command = { kind: 'add-bot', requestId };

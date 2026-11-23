@@ -90,7 +90,7 @@ export default function LobbyRoom() {
         </section>
         <aside className="room-card room-settings"><span className="room-eyebrow">THE GAME PLAN</span><h2>Table settings</h2>
           <dl><div><dt>Starting chips</dt><dd>{Number(room.startingMoney).toLocaleString()}</dd></div><div><dt>Bet range</dt><dd>{Number(room.minBet).toLocaleString()}–{Number(room.maxBet).toLocaleString()} chips</dd></div><div><dt>Available seats</dt><dd>{room.seatsAvailable}</dd></div><div><dt>Bots</dt><dd>{room.botsEnabled ? "Allowed" : "Off"}</dd></div></dl>
-          <Link className="room-primary room-start room-preview-link" to={`/lobbies/${lobbyId}/game`} state={{ tableName: room.name }}>Join table →</Link><p className="room-note">Play shared rounds against one dealer. Your table chips start at the lobby’s starting amount and stay separate from your account balance. Antes and decisions use a shared timer.</p>
+          <Link className="room-primary room-start room-preview-link" to={`/lobbies/${lobbyId}/game`} state={{ tableName: room.name }}>Join table →</Link><p className="room-note">Play shared rounds against one dealer. Opening the table spends the lobby’s starting amount from your account. Leaving returns the chips you still have, once. Antes and decisions use a shared timer.</p>
         </aside>
       </div>
     </>}

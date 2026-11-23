@@ -35,7 +35,9 @@ describe('shared-game HTTP boundary', () => {
   });
   it('supports heartbeat, leave, and private history', async () => {
     await request(app(7)).post('/api/lobbies/1/game/state').send({});
-    expect(service.sharedTable).toHaveBeenLastCalledWith(1, 7, { kind: 'heartbeat' });
+    expect(service.sharedTable).toHaveBeenLastCalledWith(1, 7, { kind: 'heartbeat', buyIn: false });
+    await request(app(7)).post('/api/lobbies/1/game/state').send({ buyIn: true });
+    expect(service.sharedTable).toHaveBeenLastCalledWith(1, 7, { kind: 'heartbeat', buyIn: true });
     await request(app(7)).post('/api/lobbies/1/game/leave').send({ roundId: null });
     expect(service.sharedTable).toHaveBeenLastCalledWith(1, 7, { kind: 'leave', roundId: null });
     const response = await request(app(7)).get('/api/lobbies/1/game/history?userId=99');
@@ -47,7 +49,7 @@ describe('shared-game HTTP boundary', () => {
     bare.use((req, _res, next) => { req.session = { userId: 7 } as any; next(); });
     bare.use('/api/lobbies', sharedGameRouter);
     expect((await request(bare).post('/api/lobbies/1/game/state')).status).toBe(200);
-    expect(service.sharedTable).toHaveBeenCalledWith(1, 7, { kind: 'heartbeat' });
+    expect(service.sharedTable).toHaveBeenCalledWith(1, 7, { kind: 'heartbeat', buyIn: false });
   });
   it('returns service authorization and stale-round errors', async () => {
     service.sharedTable.mockRejectedValueOnce(new GameError(403, 'Join first'));

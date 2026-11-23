@@ -2,7 +2,7 @@
 
 Players choose Join Table in the browser, confirm the chip requirement, and enter a password for private tables. A successful join opens the table room. A full table disables the browser button; the server still checks capacity because availability can change after browsing. Expired sessions return to login and then the browser.
 
-`POST /api/lobbies/:lobbyId/join` accepts an optional `passcode`. Identity comes from the session. Starting balance is the required buy-in: a player must have at least that many chips, but joining does not debit their account. Existing members and the host can rejoin without another seat or buy-in check. Disabled or deleted accounts cannot join. Password hashes never appear in join responses.
+`POST /api/lobbies/:lobbyId/join` accepts an optional `passcode`. Identity comes from the session. Starting balance is the required buy-in: a player must have at least that many chips to join. Joining itself does not debit the account. The debit happens when that player opens the table and receives a seat. Existing members and the host can rejoin without another seat or buy-in check. Disabled or deleted accounts cannot join. Password hashes never appear in join responses.
 
 Direct joins and invitation acceptance use the same admission function. A host invitation grants private-table access without a password. Both paths lock the lobby row inside a PostgreSQL transaction before checking membership and counting seats; the host occupies one seat even without a membership record. The account is also locked while its balance is checked. Repeated joins return the existing seat. Invitations do not bypass account, capacity, or buy-in checks.
 

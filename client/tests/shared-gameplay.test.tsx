@@ -130,6 +130,7 @@ describe('shared table screen', () => {
     expect(link.getAttribute('href')).toBe('/tutorial');
     await userEvent.click(link);
     expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('lose your 5 chip ante'));
+    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('return to your account once'));
     expect(api.leaveTable).not.toHaveBeenCalled();
   });
   it('combines the quieter card screen with shared controls and no empty placeholder seats', async () => {

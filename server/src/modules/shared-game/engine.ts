@@ -8,11 +8,11 @@ export const DECISION_MS = 30_000;
 export const RESULT_MS = 7_000;
 export const OFFLINE_MS = 15_000;
 export type Settings = { name: string; min: number; max: number; starting: number; maxPlayers: number; bots: boolean; allowBets: boolean; autoIncr: boolean; increase: number; every: number };
-export type Seat = { id: string; userId: number | null; name: string; bot: boolean; balance: number; lastSeen: number; active: boolean };
+export type Seat = { id: string; userId: number | null; name: string; bot: boolean; balance: number; lastSeen: number; active: boolean; pendingCashOut?: boolean; cashedOut?: boolean };
 export type RoundPlayer = { id: string; cards: string[]; ante: number; action: 'raise' | 'fold' | null; skipped: boolean; timedOut: boolean; result?: Result };
 export type Result = { anteNet: number; raiseNet: number; returned: number; net: number; message: string };
 export type Round = { id: number; number: number; phase: 'betting' | 'deciding' | 'completed'; deadline: number; dealer: string[]; players: RoundPlayer[]; min: number; max: number };
-export type Table = { seats: Seat[]; round: Round | null; handsPlayed: number; botCount?: number; botRequests?: string[]; pendingBotRemovals?: string[]; nextBotNumber?: number };
+export type Table = { seats: Seat[]; round: Round | null; handsPlayed: number; botCount?: number; botRequests?: string[]; pendingBotRemovals?: string[]; nextBotNumber?: number; cashedOutUserIds?: number[] };
 export class GameError extends Error { constructor(public status: number, message: string) { super(message); } }
 export const money = (cents: number) => cents / 100;
 export function cents(value: unknown): number {
@@ -89,7 +89,7 @@ export function advance(table: Table, now: number): boolean {
   }
   return false;
 }
-export type Command = { kind: 'heartbeat' } | { kind: 'ante'; roundId: number; amount: unknown } | { kind: 'action'; roundId: number; action: 'fold' | 'raise' } | { kind: 'leave'; roundId: number | null };
+export type Command = { kind: 'heartbeat'; buyIn?: boolean } | { kind: 'ante'; roundId: number; amount: unknown } | { kind: 'action'; roundId: number; action: 'fold' | 'raise' } | { kind: 'leave'; roundId: number | null };
 export function applyCommand(table: Table, seat: Seat, command: Command, now: number) {
   const round = table.round;
   if (command.kind === 'heartbeat') { seat.lastSeen = now; seat.active = true; return; }

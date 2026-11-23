@@ -4,13 +4,13 @@
 
 ## Rules and table chips
 
-- Each lobby member receives the configured starting chips once per table. These are persistent table chips, separate from their account balance. Reopening the table or opening another tab does not refill them. Joining retains the existing account-balance eligibility check and does not charge that balance.
+- Opening the table debits the lobby’s starting chips from the player’s account once and puts that amount on the seat. An existing seat is not charged again. The clock and other players cannot create that seat. Leaving between hands, or after a skipped or settled hand, credits the remaining seat chips back to the account once, releases the seat, and removes lobby membership. Leaving during a hand folds an undecided action, keeps a locked raise, and returns the settled remainder once when the hand ends. A repeated leave or a later heartbeat does not credit or debit again. Reopening the table sends `buyIn: true` and buys in again. A player who cannot cover the buy-in is not seated.
 - The server enforces the configured minimum and maximum ante. A player must cover the ante plus a possible 2× raise. Decimal chip amounts use integer cents internally.
 - Automatic bet increases apply to both limits after the configured number of completed rounds.
 - When bots are enabled, the host can use **Options → Add bot** to add one bot to a seat not reserved for a human member. New tables start without bots; existing tables retain their previously seated bots. A bot added during a hand waits for the next one. Duplicate requests are idempotent, and full tables/non-host requests are rejected by the server. Bots ante the minimum and raise a pair or better. They use the same deck, chip accounting, timing and settlement as humans and do not inspect other players' hands.
 - Connected players with enough chips enter the next round automatically. Betting lasts at most 20 seconds; missing betting sits out without a charge. Once all antes are placed or betting expires, players have up to 30 seconds to raise/fold. Unanswered decisions fold at the deadline. After settlement, results remain for 7 seconds before the next eligible round.
 - New arrivals during a round wait for the next one. Disconnected players are marked offline after 15 seconds without a heartbeat. Heartbeats do not extend the shared decision deadline.
-- Leaving through the UI folds an undecided hand before navigating. A raise already submitted remains locked and settles normally even if that player leaves. Closing/refreshing uses a browser warning; the round's deadline continues on the server.
+- Leaving through the UI folds an undecided hand before navigating. A raise already submitted remains locked and settles normally even if that player leaves. The remaining chips return to the account once after settlement. Closing/refreshing uses a browser warning; the round's deadline continues on the server and does not cash the seat out.
 - Dealer cards remain hidden until every decision is finished. Opponents' cards are never returned, including after settlement. Players can view their own last 20 saved hands from History at the table.
 
 ## Persistence and concurrency
@@ -27,7 +27,7 @@ All under `/api/lobbies/:lobbyId/game/`:
 
 | Method | Endpoint | Body |
 | --- | --- | --- |
-| POST | `state` | `{}` (heartbeat) |
+| POST | `state` | `{}` heartbeat, or `{ buyIn: true }` to sit again after cashing out |
 | POST | `ante` | `{ roundId, ante }` |
 | POST | `action` | `{ roundId, action: "raise" \| "fold" }` |
 | POST | `leave` | `{ roundId }` (null before a round exists) |

@@ -6,8 +6,15 @@ import { User } from '../../models/user.js';
 import { Session } from '../../models/session.js';
 import { GameHand } from '../../models/gameHand.js';
 import { TableGame } from '../../models/tableGame.js';
-import { OFFLINE_MS, advance, applyCommand, cents, GameError, money, newRound, tableView, type Command, type Settings, type Table } from './engine.js';
+import { OFFLINE_MS, advance, applyCommand, cents, GameError, money, newRound, tableView, type Command, type Seat, type Settings, type Table } from './engine.js';
 export type TableCommand = Command | { kind: 'add-bot'; requestId: string } | { kind: 'remove-bot'; seatId: string } | { kind: 'transfer-host'; seatId: string };
+export type TableCashOut = { cashedOut: true; returned: number; accountBalance: number };
+
+function handOpen(table: Table, seat: Seat) {
+  const round = table.round;
+  const player = round?.players.find(player => player.id === seat.id);
+  return Boolean(round && round.phase !== 'completed' && player && !player.skipped && player.ante && !player.result);
+}
 
 function settingsFor(lobby: Lobby): Settings {
   const settings = { name: lobby.name, min: cents(lobby.minBet), max: cents(lobby.maxBet), starting: cents(lobby.startingMoney), maxPlayers: lobby.maxPlayers, bots: lobby.botsEnabled, allowBets: lobby.allowBets, autoIncr: lobby.autoIncr, increase: cents(lobby.increaseAmount), every: lobby.increaseEveryHands };
@@ -44,7 +51,27 @@ export async function sharedTable(lobbyId: number, userId: number | null, comman
     table.botCount ??= table.seats.filter(seat => seat.bot).length;
     table.botRequests ??= [];
     table.pendingBotRemovals ??= [];
+    table.cashedOutUserIds ??= [];
     table.nextBotNumber ??= Math.max(0, ...table.seats.filter(seat => seat.bot).map(seat => Number(seat.id.replace('bot', '')) || 0)) + 1;
+    const credited = new Map<number, number>();
+    const cashOutSeat = async (seat: Seat) => {
+      if (seat.bot || seat.userId == null || seat.cashedOut) return;
+      const locked = await User.findByPk(seat.userId, { transaction, lock: transaction.LOCK.UPDATE });
+      if (!locked) throw new GameError(403, 'This account cannot play.');
+      const returned = seat.balance;
+      const next = cents(locked.balance) + returned;
+      await locked.update({ balance: (next / 100).toFixed(2) }, { transaction });
+      seat.balance = 0;
+      seat.pendingCashOut = false;
+      seat.cashedOut = true;
+      credited.set(seat.userId, (credited.get(seat.userId) ?? 0) + returned);
+      if (!table.cashedOutUserIds!.includes(seat.userId)) table.cashedOutUserIds!.push(seat.userId);
+      await LobbyMember.destroy({ where: { lobbyId, userId: seat.userId }, transaction });
+    };
+    const dropCashedSeats = () => {
+      table.seats = table.seats.filter(seat => !seat.cashedOut);
+      table.botCount = table.seats.filter(seat => seat.bot).length;
+    };
     const transferHost = async (nextHostId: number) => {
       // Keep the former host's membership and bankroll when ownership changes.
       await LobbyMember.findOrCreate({ where: { lobbyId, userId: lobby.hostId }, transaction });
@@ -53,7 +80,19 @@ export async function sharedTable(lobbyId: number, userId: number | null, comman
     for (const user of users.filter(user => !user.isBanned)) {
       const seat = table.seats.find(seat => seat.userId === user.userId);
       if (seat) seat.name = user.isGuest ? 'Guest' : user.username;
-      else table.seats.push({ id: `u${user.userId}`, userId: user.userId, name: user.isGuest ? 'Guest' : user.username, bot: false, balance: settings.starting, lastSeen: 0, active: false });
+    }
+    if (caller && userId !== null) {
+      const existing = table.seats.find(seat => seat.userId === userId);
+      const rebuy = command?.kind === 'heartbeat' && command.buyIn === true;
+      if (existing) existing.name = caller.isGuest ? 'Guest' : caller.username;
+      else if (rebuy || !table.cashedOutUserIds.includes(userId)) {
+        const locked = await User.findByPk(userId, { transaction, lock: transaction.LOCK.UPDATE });
+        if (!locked) throw new GameError(403, 'This account cannot play.');
+        if (cents(locked.balance) < settings.starting) throw new GameError(403, `You need ${money(settings.starting).toLocaleString()} chips to play at this table.`);
+        await locked.update({ balance: ((cents(locked.balance) - settings.starting) / 100).toFixed(2) }, { transaction });
+        table.cashedOutUserIds = table.cashedOutUserIds.filter(id => id !== userId);
+        table.seats.push({ id: `u${userId}`, userId, name: locked.isGuest ? 'Guest' : locked.username, bot: false, balance: settings.starting, lastSeen: 0, active: false });
+      }
     }
     // Removed/banned users cannot continue a round or keep the table waiting.
     const allowed = new Set(users.filter(user => !user.isBanned).map(user => user.userId));
@@ -67,6 +106,7 @@ export async function sharedTable(lobbyId: number, userId: number | null, comman
     let changed = advance(table, now);
     if (changed || table.round?.phase !== oldPhase) await saveProgress(table, transaction);
     let error: GameError | undefined;
+    let leaveSettled = false;
     const own = table.seats.find(seat => seat.userId === userId);
     if (command && own) {
       try {
@@ -96,6 +136,10 @@ export async function sharedTable(lobbyId: number, userId: number | null, comman
           await transferHost(target.userId!);
           own.lastSeen = now;
         } else applyCommand(table, own, command, now);
+        if (command.kind === 'leave') {
+          if (handOpen(table, own)) own.pendingCashOut = true;
+          else leaveSettled = true;
+        }
       }
       catch (cause) { if (cause instanceof GameError) error = cause; else throw cause; }
     }
@@ -104,13 +148,18 @@ export async function sharedTable(lobbyId: number, userId: number | null, comman
       const successor = table.seats.find(seat => !seat.bot && seat.userId !== lobby.hostId && allowed.has(seat.userId!) && seat.active && now - seat.lastSeen < OFFLINE_MS);
       if (successor) await transferHost(successor.userId!);
     }
+    if (leaveSettled && own && !error) await cashOutSeat(own);
     // A bot already dealt into a hand must finish it before its seat is freed.
     table.seats = table.seats.filter(seat => !table.pendingBotRemovals!.includes(seat.id) || Boolean(table.round?.players.some(player => player.id === seat.id)));
     table.botCount = table.seats.filter(seat => seat.bot).length;
     const phaseBefore = table.round?.phase;
     changed = advance(table, now);
     if (changed || table.round?.phase !== phaseBefore) await saveProgress(table, transaction);
+    for (const seat of [...table.seats]) if (seat.pendingCashOut && !handOpen(table, seat)) await cashOutSeat(seat);
+    dropCashedSeats();
     if (!table.round || (table.round.phase === 'completed' && now >= table.round.deadline)) {
+      for (const seat of [...table.seats]) if (!seat.bot && seat.userId != null && !allowed.has(seat.userId)) await cashOutSeat(seat);
+      dropCashedSeats();
       // Bots occupy only seats not reserved for human lobby members.
       const humans = table.seats.filter(seat => !seat.bot && allowed.has(seat.userId!));
       const previousBots = table.seats.filter(seat => seat.bot && !table.pendingBotRemovals!.includes(seat.id));
@@ -126,8 +175,14 @@ export async function sharedTable(lobbyId: number, userId: number | null, comman
     }
     if (stored) await stored.update({ state: table }, { transaction });
     else await TableGame.create({ lobbyId, state: table }, { transaction });
-    const publicView = userId !== null ? tableView(table, settings, userId, now) : null;
-    const view = publicView ? { ...publicView, seats: publicView.seats.map(seat => ({ ...seat, isHost: seat.id === `u${lobby.hostId}`, removalPending: table.pendingBotRemovals!.includes(seat.id) })), isHost: userId === lobby.hostId, botCount: table.botCount, canAddBot: settings.bots && userId === lobby.hostId && ids.length + table.botCount < settings.maxPlayers } : null;
+    const callerSeat = userId == null ? undefined : table.seats.find(seat => seat.userId === userId);
+    if (userId != null && !callerSeat) {
+      const account = await User.findByPk(userId, { transaction });
+      const view: TableCashOut = { cashedOut: true, returned: money(credited.get(userId) ?? 0), accountBalance: money(cents(account!.balance)) };
+      return { view, error };
+    }
+    const publicView = callerSeat ? tableView(table, settings, userId!, now) : null;
+    const view = publicView ? { ...publicView, cashOutPending: Boolean(callerSeat?.pendingCashOut), seats: publicView.seats.map(seat => ({ ...seat, isHost: seat.id === `u${lobby.hostId}`, removalPending: table.pendingBotRemovals!.includes(seat.id) })), isHost: userId === lobby.hostId, botCount: table.botCount, canAddBot: settings.bots && userId === lobby.hostId && ids.length + table.botCount < settings.maxPlayers } : null;
     return { view, error };
   });
   // Commit timer advancement even when a late or duplicate conflicting action is rejected.

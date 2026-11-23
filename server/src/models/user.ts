@@ -12,6 +12,7 @@ export class User extends Model {
   declare isBanned: boolean;
   declare balance: string;
   declare avatar: string;
+  declare guestTokenHash: string | null;
   declare createdAt: Date;
 }
 
@@ -64,6 +65,11 @@ User.init(
       type: DataTypes.TEXT,
       allowNull: false,
       defaultValue: 'wave',
+    },
+    guestTokenHash: {
+      type: DataTypes.STRING(64),
+      allowNull: true,
+      unique: true,
     },
   },
   {

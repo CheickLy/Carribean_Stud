@@ -21,7 +21,11 @@ beforeEach(() => {
   users.clear();
   nextId = 10;
   vi.spyOn(User, 'findByPk').mockImplementation(async (id) => users.get(Number(id)) ?? null);
-  vi.spyOn(User, 'findOne').mockResolvedValue(null);
+  vi.spyOn(User, 'findOne').mockImplementation(async (options: { where?: { guestTokenHash?: string } } = {}) => {
+    const hash = options.where?.guestTokenHash;
+    if (typeof hash !== 'string') return null;
+    return [...users.values()].find(user => user.guestTokenHash === hash) ?? null;
+  });
   vi.spyOn(User, 'create').mockImplementation(async (values: any) => {
     const user: any = { ...values, userId: nextId++ };
     user.update = vi.fn(async (changes: any) => {
@@ -116,5 +120,48 @@ describe('Guest account flow', () => {
     await agent.post('/api/auth/guest');
     expect((await agent.post('/api/auth/logout')).status).toBe(200);
     expect((await agent.get('/api/auth/me')).status).toBe(401);
+  });
+
+  it('resumes the same guest and balance from the cookie after logout', async () => {
+    const agent = request.agent(app);
+    const first = await agent.post('/api/auth/guest');
+    users.get(first.body.user.userId).balance = '180.00';
+    expect((await agent.post('/api/auth/logout')).status).toBe(200);
+    const again = await agent.post('/api/auth/guest');
+    expect(again.status).toBe(200);
+    expect(again.body.user.userId).toBe(first.body.user.userId);
+    expect(again.body.user.balance).toBe('180.00');
+    expect(User.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('starts a new guest at 500 when no guest cookie is sent', async () => {
+    const first = await request(app).post('/api/auth/guest');
+    expect(first.status).toBe(201);
+    const second = await request(app).post('/api/auth/guest');
+    expect(second.status).toBe(201);
+    expect(second.body.user.userId).not.toBe(first.body.user.userId);
+    expect(second.body.user.balance).toBe('500.00');
+    expect(User.create).toHaveBeenCalledTimes(2);
+  });
+
+  it('stores a guest cookie when the open session has none', async () => {
+    const agent = request.agent(app);
+    const started = await agent.post('/api/auth/guest');
+    users.get(started.body.user.userId).guestTokenHash = null;
+    const again = await agent.post('/api/auth/guest');
+    expect(again.status).toBe(200);
+    expect(users.get(started.body.user.userId).guestTokenHash).toEqual(expect.any(String));
+    expect(User.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not resume a banned guest cookie', async () => {
+    const agent = request.agent(app);
+    const started = await agent.post('/api/auth/guest');
+    users.get(started.body.user.userId).isBanned = true;
+    await agent.post('/api/auth/logout');
+    const again = await agent.post('/api/auth/guest');
+    expect(again.status).toBe(201);
+    expect(again.body.user.balance).toBe('500.00');
+    expect(again.body.user.userId).not.toBe(started.body.user.userId);
   });
 });

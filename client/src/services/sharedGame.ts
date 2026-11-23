@@ -5,8 +5,9 @@ export type SharedTable = {
   dealer: { cards: string[]; rank: string | null };
   own: { id: string; ante: number; action: 'raise' | 'fold' | null; cards: { cards: string[]; rank: string | null }; result: { anteNet: number; raiseNet: number; returned: number; net: number; message: string } | null };
   seats: TablePlayer[];
-  isHost: boolean; botCount: number; canAddBot: boolean;
+  isHost: boolean; botCount: number; canAddBot: boolean; cashOutPending?: boolean;
 };
+export type TableCashOut = { cashedOut: true; returned: number; accountBalance: number };
 export type SavedHand = { handId: number; roundId: number; playedAt: string; playerCards: string[]; dealerCards: string[]; ante: number; raise: number; returned: number; net: number; message: string };
 export class TableRequestError extends Error { constructor(message: string, public status: number) { super(message); } }
 async function request<T>(lobbyId: string, operation: string, body?: object): Promise<T> {
@@ -15,10 +16,10 @@ async function request<T>(lobbyId: string, operation: string, body?: object): Pr
   if (!response.ok) throw new TableRequestError(data.error || 'Could not update the table.', response.status);
   return data;
 }
-export const syncTable = (id: string) => request<SharedTable>(id, 'state', {});
+export const syncTable = (id: string, buyIn = false) => request<SharedTable | TableCashOut>(id, 'state', buyIn ? { buyIn: true } : {});
 export const placeAnte = (id: string, roundId: number, ante: number) => request<SharedTable>(id, 'ante', { roundId, ante });
 export const decide = (id: string, roundId: number, action: 'fold' | 'raise') => request<SharedTable>(id, 'action', { roundId, action });
-export const leaveTable = (id: string, roundId: number | null) => request<SharedTable>(id, 'leave', { roundId });
+export const leaveTable = (id: string, roundId: number | null) => request<SharedTable | TableCashOut>(id, 'leave', { roundId });
 export const loadHistory = (id: string) => request<SavedHand[]>(id, 'history');
 export const addBot = (id: string, requestId: string) => request<SharedTable>(id, 'bots', { requestId });
 

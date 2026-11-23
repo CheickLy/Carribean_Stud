@@ -10,6 +10,28 @@ import { sequelize } from '../../db/sequelize.js';
 export const authRouter = Router();
 
 const STARTING_CHIPS = '500.00';
+const GUEST_COOKIE = 'reef_guest';
+const GUEST_MAX_AGE = 400 * 24 * 60 * 60 * 1000;
+const guestCookieOptions = () => ({ httpOnly: true, sameSite: 'lax' as const, secure: process.env.NODE_ENV === 'production', maxAge: GUEST_MAX_AGE, path: '/' });
+
+function requestCookie(header: string | undefined, name: string) {
+  if (!header) return;
+  for (const part of header.split(';')) {
+    const [key, ...rest] = part.trim().split('=');
+    if (key === name) return decodeURIComponent(rest.join('='));
+  }
+}
+
+function guestTokenHash(token: string) {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+async function rememberGuest(res: import('express').Response, user: User) {
+  const token = crypto.randomBytes(32).toString('hex');
+  await user.update({ guestTokenHash: guestTokenHash(token) });
+  res.cookie(GUEST_COOKIE, token, guestCookieOptions());
+}
+
 const userDTO = (u: User) => ({
   userId: u.userId, username: u.username, role: u.role,
   isGuest: u.isGuest, balance: u.balance,
@@ -21,17 +43,35 @@ authRouter.post('/guest', async (req, res) => {
     if (req.session.userId) {
       const current = await User.findByPk(req.session.userId);
       if (current && !current.isBanned) {
+        if (!current.guestTokenHash) await rememberGuest(res, current);
         res.json({ message: 'Session already active', user: userDTO(current) });
         return;
       }
       req.session.userId = undefined;
     }
+    const cookie = requestCookie(req.headers.cookie, GUEST_COOKIE);
+    const remembered = cookie && /^[a-f0-9]{64}$/.test(cookie)
+      ? await User.findOne({ where: { guestTokenHash: guestTokenHash(cookie) } })
+      : null;
+    if (remembered && !remembered.isBanned) {
+      req.session.regenerate((error) => {
+        if (error) { res.status(500).json({ error: 'Could not establish session' }); return; }
+        req.session.userId = remembered.userId;
+        req.session.save((saveError) => {
+          if (saveError) { res.status(500).json({ error: 'Could not save session' }); return; }
+          res.json({ message: 'Guest session resumed', user: userDTO(remembered) });
+        });
+      });
+      return;
+    }
     const id = crypto.randomUUID();
+    const token = crypto.randomBytes(32).toString('hex');
     const guest = await User.create({
       username: 'guest_' + id, email: 'guest_' + id + '@guest.reefroyale.invalid',
       passwordHash: crypto.randomUUID(), role: 'player', isGuest: true,
-      isBanned: false, topupCount: 0, balance: STARTING_CHIPS
+      isBanned: false, topupCount: 0, balance: STARTING_CHIPS, guestTokenHash: guestTokenHash(token)
     });
+    res.cookie(GUEST_COOKIE, token, guestCookieOptions());
     req.session.regenerate((error) => {
       if (error) { res.status(500).json({ error: 'Could not establish session' }); return; }
       req.session.userId = guest.userId;
