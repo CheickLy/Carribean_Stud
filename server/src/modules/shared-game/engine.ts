@@ -5,7 +5,7 @@ import { PAYOUTS } from '../game/round.js';
 
 export const BET_MS = 20_000;
 export const DECISION_MS = 30_000;
-export const RESULT_MS = 7_000;
+export const RESULT_MS = 5_000;
 export const OFFLINE_MS = 15_000;
 export type Settings = { name: string; min: number; max: number; starting: number; maxPlayers: number; bots: boolean; allowBets: boolean; autoIncr: boolean; increase: number; every: number };
 export type Seat = { id: string; userId: number | null; name: string; bot: boolean; balance: number; lastSeen: number; active: boolean; pendingCashOut?: boolean; cashedOut?: boolean };

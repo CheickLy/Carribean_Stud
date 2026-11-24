@@ -241,7 +241,8 @@ describe('shared table screen', () => {
     expect(details.hasAttribute('open')).toBe(false);
     await userEvent.click(screen.getByText('Details'));
     expect(details.hasAttribute('open')).toBe(true);
-    expect(screen.getByText('Next hand starts automatically')).toBeTruthy();
+    expect(screen.getByRole('timer', { name: /Next hand in \d+ seconds/ })).toBeTruthy();
+    expect(screen.getByRole('progressbar', { name: 'Time until the next hand' })).toBeTruthy();
     expect(within(details).getByText('Payout returned')).toBeTruthy();
     expect(within(details).getByText('20 chips')).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: 'History' }));

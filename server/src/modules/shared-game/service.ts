@@ -171,7 +171,7 @@ export async function sharedTable(lobbyId: number, userId: number | null, comman
       if (round) {
         const session = await Session.create({ lobbyId, status: 'betting', dealerCards: null }, { transaction });
         round.id = session.sessionId;
-      }
+      } else table.round = null;
     }
     if (stored) await stored.update({ state: table }, { transaction });
     else await TableGame.create({ lobbyId, state: table }, { transaction });

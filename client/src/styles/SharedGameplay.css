@@ -26,6 +26,10 @@
 .shared-roster li:last-child { border-bottom: 0; }
 .shared-roster strong { color: #133f50; font-size: 12px; }
 .shared-waiting { padding: 12px 20px; color: #526f7a; font-size: 14px; }
+.shared-next-hand { display: grid; gap: 8px; min-width: 220px; margin: 0; padding: 4px 8px 2px; }
+.shared-next-hand p { margin: 0; color: #133f50; font-size: 15px; font-weight: 600; letter-spacing: -0.011em; line-height: 1.2; text-align: center; font-variant-numeric: tabular-nums; }
+.shared-next-hand-track { height: 4px; overflow: hidden; border-radius: 999px; background: rgba(19, 63, 80, 0.12); }
+.shared-next-hand-track span { display: block; width: 100%; height: 100%; border-radius: inherit; background: #087f9b; transform-origin: left center; transition: transform 240ms linear; }
 .shared-history ol { padding: 0; margin: 0; list-style: none; }
 .shared-history li { display: grid; gap: 3px; padding: 10px; border-bottom: 1px solid #edf2f3; font-size: 13px; }
 .shared-history li:last-child { border-bottom: 0; }

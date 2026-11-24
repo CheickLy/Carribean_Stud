@@ -8,6 +8,7 @@ import { removeBot, transferHost, addBot, decide, leaveTable, loadHistory, place
 import '../styles/Gameplay.css';
 import '../styles/SharedGameplay.css';
 
+const RESULT_PAUSE_MS = 5000;
 const format = (value: number) => value.toLocaleString(undefined, { maximumFractionDigits: 2 });
 const net = (value: number) => `${value > 0 ? '+' : ''}${format(value)} chips`;
 const positions = ['upper-left', 'lower-left', 'opposite', 'lower-right', 'upper-right'];
@@ -86,7 +87,9 @@ export default function SharedGameplay() {
     window.addEventListener('online', online);
     return () => { active = false; mounted.current = false; window.clearInterval(poll); window.clearInterval(ticker); window.removeEventListener('online', online); window.removeEventListener('offline', offline); document.removeEventListener('visibilitychange', visible); };
   }, [lobbyId]);
-  const seconds = table?.deadline ? Math.max(0, Math.ceil((table.deadline - clock - clockOffset.current) / 1000)) : null;
+  const remainingMs = table?.deadline != null ? Math.max(0, table.deadline - clock - clockOffset.current) : null;
+  const seconds = remainingMs == null ? null : Math.ceil(remainingMs / 1000);
+  const nextHandProgress = table?.phase === 'completed' && remainingMs != null ? Math.min(1, Math.max(0, 1 - remainingMs / RESULT_PAUSE_MS)) : 0;
   const self = table?.seats.find(seat => seat.isYou);
   const hasHand = Boolean(table?.own.ante && table.phase !== 'completed');
   const isBetting = table?.phase === 'betting' && self?.status === 'betting';
@@ -239,7 +242,7 @@ export default function SharedGameplay() {
       <div className="gameplay-bets" aria-label="Bet controls">
         {isBetting && <><div className="gameplay-ante-presets" role="group" aria-label="Quick ante">{[...new Set([table!.minBet, 5, 10, 25, 50].filter(value => value >= table!.minBet && value <= table!.maxBet))].sort((a, b) => a - b).map(value => <button key={value} aria-label={`Set ante to ${value} chips`} aria-pressed={ante === value} disabled={busy || value * 3 > table!.balance} onClick={() => setAnte(value)}>{format(value)}</button>)}</div><label>Ante <input aria-label="Ante chips" type="number" step="0.01" min={table!.minBet} max={table!.maxBet} value={ante ?? ''} onChange={event => setAnte(Number(event.target.value))} /></label><button disabled={busy || !connected || !ante || ante < table!.minBet || ante > table!.maxBet || Math.round(ante * 100) * 3 > Math.round(table!.balance * 100) || seconds === 0} onClick={() => void action(() => placeAnte(lobbyId, table!.roundId!, ante!))}>Place ante</button></>}
         {!!isDeciding && <><button disabled={busy || !connected || seconds === 0} onClick={() => void action(() => decide(lobbyId, table!.roundId!, 'fold'))}>Fold</button><button className="gameplay-raise" disabled={busy || !connected || seconds === 0} onClick={() => void action(() => decide(lobbyId, table!.roundId!, 'raise'))}>Raise · {format(table!.own.ante * 2)} chips</button></>}
-        {!isBetting && !isDeciding && <span className="shared-waiting">{self?.status === 'waiting for next hand' || self?.inRound === false ? 'You’re seated—joining the next hand.' : table?.phase === 'completed' ? 'Next hand starts automatically' : 'Waiting for the table'}</span>}
+        {!isBetting && !isDeciding && (table?.phase === 'completed' && seconds !== null && seconds > 0 ? <div className="shared-next-hand" role="timer" aria-label={`Next hand in ${seconds} seconds`}><p>Next hand in {seconds}s</p><div className="shared-next-hand-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(nextHandProgress * 100)} aria-label="Time until the next hand"><span style={{ transform: `scaleX(${nextHandProgress})` }} /></div></div> : <span className="shared-waiting">{table && table.balance < table.minBet * 3 ? `You need ${format(table.minBet * 3)} chips for the next hand.` : self?.status === 'waiting for next hand' || self?.inRound === false ? 'You’re seated—joining the next hand.' : table?.phase === 'completed' ? 'Waiting for the next hand.' : 'Waiting for the table'}</span>)}
       </div>
       <p className="gameplay-ante-help">{isBetting ? 'Keep 3× your ante available for the ante and raise. Antes lock when placed.' : 'The server controls the clock. Missed betting sits out; an unanswered decision folds automatically.'}</p>
     </div></div>
