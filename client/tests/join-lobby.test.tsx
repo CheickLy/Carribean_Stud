@@ -51,6 +51,13 @@ it('disables joining a full table', async () => {
   show(); expect(await screen.findByRole('button', { name: 'Full', exact: true })).toHaveProperty('disabled', true);
 });
 
+it('sends a former member back to the table list instead of the empty room', async () => {
+  vi.mocked(fetch).mockResolvedValueOnce(response({ error: 'Table not found or you are not a member.' }, 404) as Response);
+  render(<MemoryRouter initialEntries={['/lobbies/1']}><Routes><Route path="/lobbies/:lobbyId" element={<LobbyRoom />} /></Routes></MemoryRouter>);
+  await waitFor(() => expect(navigate).toHaveBeenCalledWith('/lobbies', { replace: true }));
+  expect(screen.queryByRole('alert')).toBeNull();
+});
+
 it('shows a reserved seat while waiting for the next hand', async () => {
   vi.mocked(fetch).mockResolvedValueOnce(response({ ...lobby, isHost: false, handInProgress: true, waitingForNextHand: true, players: [{ userId: 7, username: 'Alice', isHost: false, waitingForNextHand: true }] }) as Response);
   render(<MemoryRouter initialEntries={['/lobbies/1']}><Routes><Route path="/lobbies/:lobbyId" element={<LobbyRoom />} /></Routes></MemoryRouter>);

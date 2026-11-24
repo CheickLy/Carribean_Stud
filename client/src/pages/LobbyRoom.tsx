@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { getFriends, type Friend } from "../services/friends";
 import { sendLobbyInvitation } from "../services/invitations";
 import "../styles/LobbyRoom.css";
@@ -15,6 +15,7 @@ type Room = {
 export default function LobbyRoom() {
   const { lobbyId } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const [room, setRoom] = useState<Room | null>(null);
   const [error, setError] = useState("");
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -35,6 +36,7 @@ export default function LobbyRoom() {
           credentials: "include", signal: controller.signal,
         });
         const data = await readJson(response);
+        if (response.status === 404) { navigate("/lobbies", { replace: true }); return; }
         if (!response.ok) throw new Error(data.error || "Unable to load your table.");
         setRoom(data);
         setError("");
@@ -45,7 +47,7 @@ export default function LobbyRoom() {
     void refresh();
     const timer = window.setInterval(() => void refresh(), 5000);
     return () => { controller.abort(); window.clearInterval(timer); };
-  }, [lobbyId]);
+  }, [lobbyId, navigate]);
 
   async function openInvites() {
     dialog.current?.showModal();

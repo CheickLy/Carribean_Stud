@@ -195,7 +195,7 @@ export default function SharedGameplay() {
     : table.own.action ? 'Decision locked. Waiting for the other players.' : 'Raise twice your ante or fold before time runs out.';
   return <main data-theme={preferences.theme} className={`gameplay shared-gameplay${guideOpen ? ' gameplay-guide-open' : ''}${guideExpanded ? ' gameplay-guide-expanded' : ''}${preferences.reducedMotion ? ' gameplay-reduced-motion' : ''}${preferences.fastDeal ? ' gameplay-fast-deal' : ''}`}>
     <div className="gameplay-fit"><div className="gameplay-board">
-      <Link className="gameplay-lobbies" to={`/lobbies/${lobbyId}`}>← Back to lobby</Link>
+      <Link className="gameplay-lobbies" to="/lobbies">← Back to tables</Link>
       <div className="gameplay-table-identity"><h1 title={table?.name}>{table?.name ?? 'Your table'}</h1><small>{table ? `${format(table.minBet)}–${format(table.maxBet)} chip ante · Starting chips ${format(table.startingChips)}` : 'Connecting…'}</small>
       {table && <p className="shared-round-clock" role="timer" aria-label="Round timer">Hand {table.roundNumber} · {table.phase === 'betting' ? 'Place antes' : table.phase === 'deciding' ? 'Decide' : table.phase === 'completed' ? 'Next hand' : 'Waiting'}{seconds !== null ? ` · ${seconds}s` : ''}</p>}
       {table && <details className="shared-roster"><summary>{humanCount} {humanCount === 1 ? 'player' : 'players'} · {botCount} {botCount === 1 ? 'bot' : 'bots'}</summary><ul aria-label="Table roster">{table.seats.map(seat => <li key={seat.id}><strong>Seat {seat.seatNumber} · {seat.name}{seat.isYou ? ' (You)' : seat.bot ? ' (Bot)' : ''}{seat.isHost ? ' · Host' : ''}</strong><span>{seat.online ? seat.status : `Disconnected · ${seat.status}`} · {format(seat.balance)} chips</span></li>)}</ul></details>}

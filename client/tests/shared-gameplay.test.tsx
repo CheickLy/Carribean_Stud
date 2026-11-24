@@ -15,7 +15,7 @@ const base: SharedTable = {
 };
 const deciding: SharedTable = { ...base, phase: 'deciding', balance: 195, dealer: { cards: ['KC'], rank: null }, own: { ...base.own, ante: 5, cards: { cards: ['AS','AH','QD','JC','9S'], rank: 'pair' } }, seats: base.seats.map(seat => ({ ...seat, cardCount: 5, status: seat.bot ? 'folded' : 'deciding' })) };
 function show() {
-  const router = createMemoryRouter([{ path: '/lobbies/:lobbyId/game', element: <SharedGameplay /> }, { path: '/lobbies/7', element: <h1>Lobby room</h1> }], { initialEntries: ['/lobbies/7/game'] });
+  const router = createMemoryRouter([{ path: '/lobbies/:lobbyId/game', element: <SharedGameplay /> }, { path: '/lobbies', element: <h1>Tables</h1> }], { initialEntries: ['/lobbies/7/game'] });
   render(<RouterProvider router={router} />);
   return router;
 }
@@ -99,10 +99,10 @@ describe('shared table screen', () => {
     api.syncTable.mockResolvedValueOnce(base).mockReturnValueOnce(new Promise<SharedTable>(resolve => { finish = resolve; }));
     show(); await screen.findByRole('button', { name: 'Place ante' });
     fireEvent(window, new Event('online'));
-    await userEvent.click(screen.getByRole('link', { name: '← Back to lobby' }));
+    await userEvent.click(screen.getByRole('link', { name: '← Back to tables' }));
     expect(api.leaveTable).not.toHaveBeenCalled();
     await act(async () => finish(base));
-    expect(await screen.findByRole('heading', { name: 'Lobby room' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Tables' })).toBeTruthy();
     expect(api.leaveTable).toHaveBeenCalledWith('7', 42);
   });
   it('shows opponents participating with private card backs and the full table roster', async () => {
@@ -255,20 +255,20 @@ describe('shared table screen', () => {
     expect(screen.queryByRole('button', { name: 'Fold' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Place ante' })).toBeNull();
   });
-  it('confirms leaving and waits for the server fold before going to the lobby', async () => {
+  it('confirms leaving and waits for the server fold before returning to the table list', async () => {
     api.syncTable.mockResolvedValue(deciding);
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
     show(); await screen.findByRole('button', { name: 'Fold' });
-    await userEvent.click(screen.getByRole('link', { name: '← Back to lobby' }));
+    await userEvent.click(screen.getByRole('link', { name: '← Back to tables' }));
     expect(confirm).toHaveBeenCalledWith(expect.stringContaining('lose your 5 chip ante'));
     expect(api.leaveTable).toHaveBeenCalledWith('7', 42);
-    expect(await screen.findByRole('heading', { name: 'Lobby room' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Tables' })).toBeTruthy();
   });
   it('does not promise to cancel an already locked raise', async () => {
     api.syncTable.mockResolvedValue({ ...deciding, own: { ...deciding.own, action: 'raise' } });
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
     show(); await screen.findByText('Decision locked. Waiting for the other players.');
-    await userEvent.click(screen.getByRole('link', { name: '← Back to lobby' }));
+    await userEvent.click(screen.getByRole('link', { name: '← Back to tables' }));
     expect(confirm).toHaveBeenCalledWith(expect.stringContaining('will not cancel it'));
     expect(api.leaveTable).not.toHaveBeenCalled();
   });
