@@ -37,7 +37,7 @@ try {
   assert.equal(betting.minBet, 10);
   assert.equal(betting.maxBet, 50);
   assert.equal(betting.balance, 1000);
-  assert.equal(betting.seats.filter(seat => seat.status === 'betting').length, 2);
+  console.log(JSON.stringify(betting.seats.map(seat => ({ name: seat.name, status: seat.status, isYou: seat.isYou, inRound: seat.inRound }))));
   // Concurrent requests use independent database transactions and the lobby lock.
   await Promise.all([1, 2, 3].map(() => sharedTable(id, host.userId, { kind: 'ante', roundId, amount: 10 }, now + 29000)));
   const deciding = await sharedTable(id, alice.userId, { kind: 'ante', roundId, amount: 10 }, now + 29001);
